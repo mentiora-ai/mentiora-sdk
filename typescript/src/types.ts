@@ -1,5 +1,7 @@
 /**
- * Trace event types and configuration.
+ * SDK type definitions.
+ * Includes tracing-specific types and shared configuration types.
+ * Future: Additional feature-specific types will be added here.
  */
 
 export type TraceType = 'llm' | 'tool' | 'chat' | 'error' | 'custom';
@@ -41,7 +43,11 @@ export interface TraceEvent {
   error?: TraceError;
 }
 
-export interface MentioraTracingConfig {
+/**
+ * Main SDK configuration.
+ * Future: Additional feature-specific configs will be added here.
+ */
+export interface MentioraConfig {
   /** Project API key (from Mentiora platform) */
   apiKey: string;
   /** Target environment */

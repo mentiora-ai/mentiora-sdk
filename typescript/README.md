@@ -1,25 +1,33 @@
-# @mentiora/tracing-sdk
+# @mentiora/sdk
 
-TypeScript/JavaScript SDK for sending agent traces to the Mentiora platform.
+TypeScript/JavaScript SDK for the Mentiora platform. Provides access to tracing, vector database operations, and other platform features.
 
 ## Installation
 
 ```bash
-npm install @mentiora/tracing-sdk
+npm install @mentiora/sdk
 ```
 
 ## Usage
 
-```typescript
-import { MentioraTracing } from '@mentiora/tracing-sdk';
+### Basic Setup
 
-const tracing = new MentioraTracing({
+```typescript
+import { MentioraClient } from '@mentiora/sdk';
+
+const client = new MentioraClient({
   apiKey: process.env.MENTIORA_API_KEY,
   environment: 'production', // or 'staging'
 });
+```
 
+### Tracing
+
+Send agent traces to the Mentiora platform:
+
+```typescript
 // Send a trace
-const result = await tracing.sendTrace({
+const result = await client.tracing.sendTrace({
   traceId: 'trace-123',
   spanId: 'span-456',
   parentSpanId: 'span-parent', // optional
@@ -44,7 +52,18 @@ if (result.success) {
 }
 
 // Flush pending traces
-await tracing.flush();
+await client.tracing.flush();
+```
+
+### Vector DB (Coming Soon)
+
+Vector database operations will be available through `client.vectordb`:
+
+```typescript
+// Future API
+await client.vectordb.uploadFile(...);
+await client.vectordb.deleteFile(...);
+await client.vectordb.query(...);
 ```
 
 ## Configuration
@@ -63,7 +82,7 @@ await tracing.flush();
 The SDK returns typed results instead of throwing errors:
 
 ```typescript
-const result = await tracing.sendTrace(event);
+const result = await client.tracing.sendTrace(event);
 
 if (!result.success) {
   // Handle error

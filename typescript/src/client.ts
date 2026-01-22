@@ -1,15 +1,14 @@
 /**
- * Mentiora Tracing SDK client.
+ * Mentiora SDK client.
+ *
+ * Main entry point for the Mentiora SDK. Provides access to all SDK features
+ * through namespaced properties (e.g., client.tracing, client.vectordb).
  */
 
-import { ConfigurationError, NetworkError, ValidationError } from './errors';
+import { ConfigurationError } from './errors';
 import { HttpClient } from './http';
-import type {
-  Environment,
-  MentioraTracingConfig,
-  SendTraceResult,
-  TraceEvent,
-} from './types';
+import { TracingClient } from './tracing/client';
+import type { Environment, MentioraConfig } from './types';
 
 const ENVIRONMENT_URLS: Record<Environment, string> = {
   staging: 'https://staging.mentiora.ai',
@@ -17,13 +16,20 @@ const ENVIRONMENT_URLS: Record<Environment, string> = {
 };
 
 /**
- * Mentiora Tracing SDK client.
+ * Main Mentiora SDK client.
+ *
+ * Provides access to all SDK features through namespaced properties:
+ * - `client.tracing` - Send agent traces
+ * - `client.vectordb` - Vector database operations (coming soon)
  */
-export class MentioraTracing {
+export class MentioraClient {
+  public readonly tracing: TracingClient;
+  // Future: public readonly vectordb: VectorDBClient;
+
   private readonly httpClient: HttpClient;
   private readonly baseUrl: string;
 
-  constructor(config: MentioraTracingConfig) {
+  constructor(config: MentioraConfig) {
     this.validateConfig(config);
     this.baseUrl = config.baseUrl ?? ENVIRONMENT_URLS[config.environment];
     this.httpClient = new HttpClient({
@@ -32,12 +38,16 @@ export class MentioraTracing {
       timeout: config.timeout ?? 30000,
       retries: config.retries ?? 3,
     });
+
+    // Initialize feature clients
+    this.tracing = new TracingClient(this.httpClient, this.baseUrl);
+    // Future: this.vectordb = new VectorDBClient(this.httpClient, this.baseUrl);
   }
 
   /**
    * Validate configuration.
    */
-  private validateConfig(config: MentioraTracingConfig): void {
+  private validateConfig(config: MentioraConfig): void {
     if (!config.apiKey || typeof config.apiKey !== 'string') {
       throw new ConfigurationError('apiKey is required and must be a string');
     }
@@ -47,66 +57,5 @@ export class MentioraTracing {
         'environment must be either "staging" or "production"',
       );
     }
-  }
-
-  /**
-   * Validate trace event.
-   */
-  private validateTraceEvent(event: TraceEvent): void {
-    if (!event.traceId || typeof event.traceId !== 'string') {
-      throw new ValidationError('traceId is required and must be a string');
-    }
-
-    if (!event.spanId || typeof event.spanId !== 'string') {
-      throw new ValidationError('spanId is required and must be a string');
-    }
-
-    if (!event.name || typeof event.name !== 'string') {
-      throw new ValidationError('name is required and must be a string');
-    }
-
-    if (!event.type || !['llm', 'tool', 'chat', 'error', 'custom'].includes(event.type)) {
-      throw new ValidationError(
-        'type must be one of: llm, tool, chat, error, custom',
-      );
-    }
-
-    if (!event.startTime) {
-      throw new ValidationError('startTime is required');
-    }
-  }
-
-  /**
-   * Send a trace event to the Mentiora platform.
-   */
-  async sendTrace(event: TraceEvent): Promise<SendTraceResult> {
-    this.validateTraceEvent(event);
-
-    try {
-      await this.httpClient.sendTrace(event);
-      return {
-        success: true,
-        traceId: event.traceId,
-        spanId: event.spanId,
-      };
-    } catch (error) {
-      if (error instanceof NetworkError) {
-        return {
-          success: false,
-          traceId: event.traceId,
-          spanId: event.spanId,
-          error: error.message,
-        };
-      }
-      throw error;
-    }
-  }
-
-  /**
-   * Flush pending traces (no-op for now, reserved for future batching).
-   */
-  async flush(): Promise<void> {
-    // No-op for MVP - reserved for future batching/buffering
-    return Promise.resolve();
   }
 }

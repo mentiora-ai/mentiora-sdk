@@ -1,22 +1,22 @@
 /**
- * @mentiora/tracing-sdk
+ * @mentiora/sdk
  *
- * SDK for sending agent traces to the Mentiora platform.
+ * Official SDK for the Mentiora platform.
+ * Provides access to tracing, vector DB, and other platform features.
  */
 
-export { MentioraTracing } from './client';
+export { MentioraClient } from './client';
 export {
   ConfigurationError,
-  MentioraTracingError,
+  MentioraError,
   NetworkError,
   ValidationError
 } from './errors';
 export type {
   Environment,
-  MentioraTracingConfig,
+  MentioraConfig,
   SendTraceResult,
   TraceError,
   TraceEvent,
   TraceType
 } from './types';
-

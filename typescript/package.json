@@ -1,7 +1,7 @@
 {
-  "name": "@mentiora/tracing-sdk",
+  "name": "@mentiora/sdk",
   "version": "0.1.0",
-  "description": "SDK for sending agent traces to the Mentiora platform",
+  "description": "Official SDK for the Mentiora platform - tracing, vector DB, and more",
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
@@ -24,16 +24,18 @@
   ],
   "keywords": [
     "mentiora",
+    "sdk",
+    "typescript",
     "tracing",
     "observability",
-    "sdk",
-    "typescript"
+    "vectordb",
+    "qdrant"
   ],
   "author": "Mentiora",
   "license": "UNLICENSED",
   "repository": {
     "type": "git",
-    "url": "https://github.com/periscoop/mentiora-tracing-sdk.git",
+    "url": "https://github.com/periscoop/mentiora-sdk.git",
     "directory": "typescript"
   },
   "scripts": {
