@@ -40,3 +40,5 @@ coverage/
 
 # Husky
 .husky/_/
+
+code_specs/

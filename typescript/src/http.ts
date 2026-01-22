@@ -79,7 +79,7 @@ export class HttpClient {
     const body = normalizeTraceEvent(event);
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
-      'X-API-Key': this.config.apiKey,
+      'Authorization': `Bearer ${this.config.apiKey}`,
     };
 
     let lastError: Error | undefined;
