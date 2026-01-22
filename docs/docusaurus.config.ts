@@ -104,7 +104,7 @@ const config: Config = {
           ],
         },
       ],
-      copyright: `Copyright © ${new Date().getFullYear()} Mentiora. Built with Docusaurus.`,
+      copyright: `Copyright © ${new Date().getFullYear()} Mentiora.`,
     },
     prism: {
       theme: prismThemes.github,
