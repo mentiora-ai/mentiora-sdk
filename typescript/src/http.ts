@@ -75,7 +75,7 @@ export class HttpClient {
    * Send trace event to the API with retry logic.
    */
   async sendTrace(event: TraceEvent): Promise<HttpResponse> {
-    const url = `${this.config.baseUrl}/api/traces`;
+    const url = `${this.config.baseUrl}/api/v1/traces`;
     const body = normalizeTraceEvent(event);
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
