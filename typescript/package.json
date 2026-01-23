@@ -61,13 +61,27 @@
   "engines": {
     "node": ">=18.0.0"
   },
+  "peerDependencies": {
+    "@langchain/core": "1.1.16",
+    "openai": "6.16.0"
+  },
+  "peerDependenciesMeta": {
+    "openai": {
+      "optional": true
+    },
+    "@langchain/core": {
+      "optional": true
+    }
+  },
   "devDependencies": {
+    "@langchain/core": "^1.1.16",
     "@types/node": "^25.0.9",
     "@typescript-eslint/eslint-plugin": "^8.53.1",
     "@typescript-eslint/parser": "^8.53.1",
     "eslint": "^9.39.2",
     "husky": "^9.1.7",
     "lint-staged": "^16.2.7",
+    "openai": "^6.16.0",
     "prettier": "^3.8.1",
     "tsup": "^8.5.1",
     "typescript": "^5.9.3",

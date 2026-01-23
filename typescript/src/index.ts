@@ -20,3 +20,8 @@ export type {
   TraceEvent,
   TraceType
 } from './types';
+export { trackOpenAI, MentioraTracingLangChain } from './plugins';
+export type {
+  TrackOpenAIOptions,
+  MentioraTracingLangChainOptions
+} from './plugins/types';

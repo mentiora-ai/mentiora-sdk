@@ -43,15 +43,17 @@ Client for sending traces to the Mentiora platform.
 
 ### Methods
 
-#### `sendTrace(event: TraceEvent): Promise<TraceResult>`
+#### `sendTrace(event: TraceEvent): Promise<SendTraceResult>`
 
-Send a trace event to the platform.
+Send a trace event to the platform (async only).
 
 **Parameters:**
 
 - `event: TraceEvent` - The trace event to send
 
-**Returns:** `Promise<TraceResult>`
+**Returns:** `Promise<SendTraceResult>`
+
+**Note:** TypeScript SDK methods are async-only. For synchronous operations, use Python SDK's `send_trace()` method.
 
 **Example:**
 
@@ -68,9 +70,11 @@ const result = await client.tracing.sendTrace({
 
 #### `flush(): Promise<void>`
 
-Flush any pending traces in the queue.
+Flush any pending traces in the queue (async only).
 
 **Returns:** `Promise<void>`
+
+**Note:** Currently a no-op, reserved for future batching functionality.
 
 **Example:**
 
@@ -104,12 +108,15 @@ interface TraceEvent {
 }
 ```
 
-### TraceResult
+### SendTraceResult
 
 ```typescript
-type TraceResult = 
-  | { success: true; traceId: string }
-  | { success: false; error: string };
+interface SendTraceResult {
+  success: boolean;
+  traceId: string;
+  spanId: string;
+  error?: string;
+}
 ```
 
 ## Errors
@@ -144,3 +151,78 @@ class NetworkError extends Error {
   constructor(message: string, statusCode?: number);
 }
 ```
+
+## Plugins
+
+### trackOpenAI
+
+Wraps an OpenAI client to automatically trace API calls.
+
+```typescript
+function trackOpenAI(
+  openaiClient: OpenAI,
+  options: TrackOpenAIOptions
+): OpenAI
+```
+
+**Parameters:**
+
+- `openaiClient: OpenAI` - The OpenAI client instance to wrap
+- `options: TrackOpenAIOptions` - Plugin configuration options
+
+**Returns:** Wrapped OpenAI client with tracing enabled
+
+**TrackOpenAIOptions:**
+
+| Option | Type | Required | Description |
+|--------|------|----------|-------------|
+| `mentioraClient` | `MentioraClient` | Yes | Mentiora client instance for sending traces |
+| `tags` | `string[]` | No | Optional tags to add to all traces |
+| `metadata` | `Record<string, unknown>` | No | Optional metadata to add to all traces |
+| `projectId` | `string` | No | Optional project ID override |
+
+**Example:**
+
+```typescript
+import { trackOpenAI } from '@mentiora/sdk';
+import OpenAI from 'openai';
+
+const trackedClient = trackOpenAI(openaiClient, {
+  mentioraClient,
+  tags: ['production'],
+});
+```
+
+### MentioraTracingLangChain
+
+Callback handler for automatically tracing LangChain executions.
+
+```typescript
+class MentioraTracingLangChain extends BaseCallbackHandler {
+  constructor(options: MentioraTracingLangChainOptions)
+}
+```
+
+**MentioraTracingLangChainOptions:**
+
+| Option | Type | Required | Description |
+|--------|------|----------|-------------|
+| `mentioraClient` | `MentioraClient` | Yes | Mentiora client instance for sending traces |
+| `tags` | `string[]` | No | Optional tags to add to all traces |
+| `metadata` | `Record<string, unknown>` | No | Optional metadata to add to all traces |
+| `projectId` | `string` | No | Optional project ID override |
+
+**Example:**
+
+```typescript
+import { MentioraTracingLangChain } from '@mentiora/sdk';
+
+const callback = new MentioraTracingLangChain({
+  mentioraClient,
+  tags: ['production'],
+});
+
+await chain.invoke({ input: '...' }, { callbacks: [callback] });
+```
+
+**Note:** This class extends LangChain's `BaseCallbackHandler` and implements all required callback methods for tracing LLM calls, chain executions, tool calls, and agent operations.

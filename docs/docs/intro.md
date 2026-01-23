@@ -18,11 +18,11 @@ Mentiora is a platform for building, deploying, and observing AI agents. The SDK
 ## SDKs Available
 
 - **[TypeScript/JavaScript SDK](./typescript/installation)** - For Node.js and browser applications
-- **Python SDK** - Coming soon
+- **[Python SDK](./python/installation)** - For Python applications
 
 ## Quick Start
 
-Get started with the TypeScript SDK in minutes:
+### TypeScript/JavaScript
 
 ```bash
 npm install @mentiora/sdk
@@ -37,4 +37,22 @@ const client = new MentioraClient({
 });
 ```
 
-Ready to dive in? Check out the [Getting Started guide](./getting-started) or jump to the [TypeScript SDK documentation](./typescript/installation).
+### Python
+
+```bash
+pip install mentiora-sdk
+```
+
+```python
+from mentiora import MentioraClient, MentioraConfig
+import os
+
+config = MentioraConfig(
+    api_key=os.getenv('MENTIORA_API_KEY'),
+    environment='production',
+)
+
+client = MentioraClient(config)
+```
+
+Ready to dive in? Check out the [Getting Started guide](./getting-started) or jump to the [TypeScript SDK documentation](./typescript/installation) or [Python SDK documentation](./python/installation).

@@ -25,6 +25,15 @@ const sidebars: SidebarsConfig = {
         'typescript/api-reference',
       ],
     },
+    {
+      type: 'category',
+      label: 'Python SDK',
+      items: [
+        'python/installation',
+        'python/usage',
+        'python/api-reference',
+      ],
+    },
   ],
 };
 
