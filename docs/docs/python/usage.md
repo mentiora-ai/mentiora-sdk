@@ -30,12 +30,12 @@ Send agent traces to the Mentiora platform for observability and debugging.
 
 ```python
 from datetime import datetime
-from mentiora import TraceEvent
+from mentiora import TraceEvent, UsageInfo
 
 result = await client.tracing.send_trace_async(TraceEvent(
-    trace_id='trace-123',
-    span_id='span-456',
-    parent_span_id='span-parent',  # optional
+    trace_id='019505a0-b7c2-7000-8000-000000000001',  # UUID v7 format
+    span_id='019505a0-b7c2-7000-8000-000000000002',  # UUID v7 format
+    parent_span_id='019505a0-b7c2-7000-8000-000000000003',  # optional, UUID v7 format
     name='llm.call',
     type='llm',  # 'llm' | 'tool' | 'chat' | 'error' | 'custom'
     input={'messages': [{'role': 'user', 'content': 'Hello'}]},
@@ -43,9 +43,15 @@ result = await client.tracing.send_trace_async(TraceEvent(
     start_time=datetime.now(),
     end_time=datetime.now(),
     duration_ms=1000,
+    usage=UsageInfo(
+        prompt_tokens=10,
+        completion_tokens=25,
+        total_tokens=35,
+    ),
+    model='gpt-4o-mini',
+    provider='openai',
     metadata={
-        'model': 'gpt-4o-mini',
-        'provider': 'openai',
+        'environment': 'prod',
     },
     tags=['production', 'support-agent'],
 ))
@@ -63,9 +69,9 @@ from datetime import datetime
 from mentiora import TraceEvent
 
 result = client.tracing.send_trace(TraceEvent(
-    trace_id='trace-123',
-    span_id='span-456',
-    parent_span_id='span-parent',  # optional
+    trace_id='019505a0-b7c2-7000-8000-000000000001',  # UUID v7 format
+    span_id='019505a0-b7c2-7000-8000-000000000002',  # UUID v7 format
+    parent_span_id='019505a0-b7c2-7000-8000-000000000003',  # optional, UUID v7 format
     name='llm.call',
     type='llm',
     input={'messages': [{'role': 'user', 'content': 'Hello'}]},
@@ -73,9 +79,15 @@ result = client.tracing.send_trace(TraceEvent(
     start_time=datetime.now(),
     end_time=datetime.now(),
     duration_ms=1000,
+    usage=UsageInfo(
+        prompt_tokens=10,
+        completion_tokens=25,
+        total_tokens=35,
+    ),
+    model='gpt-4o-mini',
+    provider='openai',
     metadata={
-        'model': 'gpt-4o-mini',
-        'provider': 'openai',
+        'environment': 'prod',
     },
     tags=['production', 'support-agent'],
 ))
@@ -119,8 +131,8 @@ Create nested traces using `parent_span_id`:
 ```python
 # Parent trace
 await client.tracing.send_trace_async(TraceEvent(
-    trace_id='trace-123',
-    span_id='span-parent',
+    trace_id='019505a0-b7c2-7000-8000-000000000001',  # UUID v7 format
+    span_id='019505a0-b7c2-7000-8000-000000000002',  # UUID v7 format
     name='agent.run',
     type='custom',
     start_time=datetime.now(),
@@ -128,9 +140,9 @@ await client.tracing.send_trace_async(TraceEvent(
 
 # Child trace
 await client.tracing.send_trace_async(TraceEvent(
-    trace_id='trace-123',
-    span_id='span-child',
-    parent_span_id='span-parent',
+    trace_id='019505a0-b7c2-7000-8000-000000000001',  # Same trace ID
+    span_id='019505a0-b7c2-7000-8000-000000000003',  # UUID v7 format
+    parent_span_id='019505a0-b7c2-7000-8000-000000000002',  # Parent span ID
     name='llm.call',
     type='llm',
     start_time=datetime.now(),

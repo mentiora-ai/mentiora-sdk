@@ -87,10 +87,16 @@ await client.tracing.flush();
 ### TraceEvent
 
 ```typescript
+interface UsageInfo {
+  prompt_tokens?: number;
+  completion_tokens?: number;
+  total_tokens?: number;
+}
+
 interface TraceEvent {
-  traceId: string;           // Unique trace ID
-  spanId: string;            // Unique span ID
-  parentSpanId?: string;     // Parent span for nesting
+  traceId: string;           // Unique trace ID (UUID v7 format)
+  spanId: string;            // Unique span ID (UUID v7 format)
+  parentSpanId?: string;     // Parent span for nesting (UUID v7 format)
   name: string;              // Span name, e.g., 'llm.call', 'tool.execute'
   type: 'llm' | 'tool' | 'chat' | 'error' | 'custom';
   input?: unknown;           // Prompt, tool input, etc.
@@ -105,8 +111,13 @@ interface TraceEvent {
     type?: string;
     stack?: string;
   };
+  usage?: UsageInfo;         // Token usage (LLM-specific)
+  model?: string;            // Model name (e.g., 'gpt-4', 'claude-3')
+  provider?: string;         // Provider name (e.g., 'openai', 'anthropic')
 }
 ```
+
+**Note:** `traceId` and `spanId` must be in UUID v7 format. The plugins automatically generate UUID v7 IDs.
 
 ### SendTraceResult
 

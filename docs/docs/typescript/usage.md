@@ -25,9 +25,9 @@ Send agent traces to the Mentiora platform for observability and debugging:
 
 ```typescript
 const result = await client.tracing.sendTrace({
-  traceId: 'trace-123',
-  spanId: 'span-456',
-  parentSpanId: 'span-parent', // optional
+  traceId: '019505a0-b7c2-7000-8000-000000000001', // UUID v7 format
+  spanId: '019505a0-b7c2-7000-8000-000000000002', // UUID v7 format
+  parentSpanId: '019505a0-b7c2-7000-8000-000000000003', // optional, UUID v7 format
   name: 'llm.call',
   type: 'llm', // 'llm' | 'tool' | 'chat' | 'error' | 'custom'
   input: { messages: [{ role: 'user', content: 'Hello' }] },
@@ -35,9 +35,15 @@ const result = await client.tracing.sendTrace({
   startTime: new Date(),
   endTime: new Date(),
   durationMs: 1000,
+  usage: {
+    prompt_tokens: 10,
+    completion_tokens: 25,
+    total_tokens: 35,
+  },
+  model: 'gpt-4o-mini',
+  provider: 'openai',
   metadata: {
-    model: 'gpt-4o-mini',
-    provider: 'openai',
+    environment: 'prod',
   },
   tags: ['production', 'support-agent'],
 });
@@ -74,8 +80,8 @@ Create nested traces using `parentSpanId`:
 ```typescript
 // Parent trace
 await client.tracing.sendTrace({
-  traceId: 'trace-123',
-  spanId: 'span-parent',
+  traceId: '019505a0-b7c2-7000-8000-000000000001', // UUID v7 format
+  spanId: '019505a0-b7c2-7000-8000-000000000002', // UUID v7 format
   name: 'agent.run',
   type: 'custom',
   startTime: new Date(),
@@ -83,9 +89,9 @@ await client.tracing.sendTrace({
 
 // Child trace
 await client.tracing.sendTrace({
-  traceId: 'trace-123',
-  spanId: 'span-child',
-  parentSpanId: 'span-parent',
+  traceId: '019505a0-b7c2-7000-8000-000000000001', // Same trace ID
+  spanId: '019505a0-b7c2-7000-8000-000000000003', // UUID v7 format
+  parentSpanId: '019505a0-b7c2-7000-8000-000000000002', // Parent span ID
   name: 'llm.call',
   type: 'llm',
   startTime: new Date(),

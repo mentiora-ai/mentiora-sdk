@@ -51,9 +51,9 @@ client = MentioraClient(MentioraConfig(
 
 # Send a trace
 result = await client.tracing.send_trace_async(TraceEvent(
-    trace_id='trace-123',
-    span_id='span-456',
-    parent_span_id='span-parent',  # optional
+    trace_id='019505a0-b7c2-7000-8000-000000000001',  # UUID v7 format
+    span_id='019505a0-b7c2-7000-8000-000000000002',  # UUID v7 format
+    parent_span_id='019505a0-b7c2-7000-8000-000000000003',  # optional, UUID v7 format
     name='llm.call',
     type='llm',  # 'llm' | 'tool' | 'chat' | 'error' | 'custom'
     input={'messages': [{'role': 'user', 'content': 'Hello'}]},
@@ -61,9 +61,15 @@ result = await client.tracing.send_trace_async(TraceEvent(
     start_time=datetime.now(),
     end_time=datetime.now(),
     duration_ms=1000,
+    usage=UsageInfo(
+        prompt_tokens=10,
+        completion_tokens=25,
+        total_tokens=35,
+    ),
+    model='gpt-4o-mini',
+    provider='openai',
     metadata={
-        'model': 'gpt-4o-mini',
-        'provider': 'openai',
+        'environment': 'prod',
     },
     tags=['production', 'support-agent'],
 ))
@@ -218,10 +224,15 @@ For configuration or validation errors, the SDK raises:
 ## TraceEvent Schema
 
 ```python
+class UsageInfo:
+    prompt_tokens: int | None
+    completion_tokens: int | None
+    total_tokens: int | None
+
 class TraceEvent:
-    trace_id: str              # Unique trace ID
-    span_id: str               # Unique span ID
-    parent_span_id: str | None  # Parent span for nesting
+    trace_id: str              # Unique trace ID (UUID v7 format)
+    span_id: str               # Unique span ID (UUID v7 format)
+    parent_span_id: str | None  # Parent span for nesting (UUID v7 format)
     name: str                   # Span name, e.g., 'llm.call', 'tool.execute'
     type: 'llm' | 'tool' | 'chat' | 'error' | 'custom'
     input: dict | None          # Prompt, tool input, etc.
@@ -232,12 +243,17 @@ class TraceEvent:
     metadata: dict[str, Any] | None
     tags: list[str] | None
     error: TraceError | None
+    usage: UsageInfo | None     # Token usage (LLM-specific)
+    model: str | None           # Model name (e.g., 'gpt-4', 'claude-3')
+    provider: str | None        # Provider name (e.g., 'openai', 'anthropic')
 
 class TraceError:
     message: str
     type: str | None
     stack: str | None
 ```
+
+**Note:** `trace_id` and `span_id` must be in UUID v7 format (e.g., `019505a0-b7c2-7000-8000-000000000001`). The plugins automatically generate UUID v7 IDs.
 
 ## Requirements
 

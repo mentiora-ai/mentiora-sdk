@@ -41,6 +41,9 @@ function normalizeTraceEvent(event: TraceEvent): Record<string, unknown> {
     metadata: event.metadata ?? null,
     tags: event.tags ?? [],
     error: event.error ?? null,
+    usage: event.usage ?? null,
+    model: event.model ?? null,
+    provider: event.provider ?? null,
   };
 }
 

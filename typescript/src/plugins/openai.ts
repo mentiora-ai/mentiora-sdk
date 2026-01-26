@@ -4,39 +4,36 @@
  */
 
 import type OpenAI from 'openai';
-import type { TraceEvent } from '../types';
+import type { TraceEvent, UsageInfo } from '../types';
 import type { TrackOpenAIOptions } from './types';
 
 /**
- * Generate a random hex string for trace ID (32 hex chars = 16 bytes).
- * OpenTelemetry spec requires trace_id to be 16 bytes (32 hex characters).
+ * Generate a UUID v7 (timestamp-based) for trace/span IDs.
+ * Format: xxxxxxxx-xxxx-7xxx-yxxx-xxxxxxxxxxxx
+ * Opik requires UUID v7 format for all IDs.
  */
-function generateTraceId(): string {
-  const bytes = new Uint8Array(16);
-  crypto.getRandomValues(bytes);
-  return Array.from(bytes)
+function generateUuidV7(): string {
+  const timestamp = Date.now();
+  const timestampHex = timestamp.toString(16).padStart(12, '0');
+  const randomBytes = new Uint8Array(10);
+  crypto.getRandomValues(randomBytes);
+  
+  // Build UUID v7: timestamp (48 bits) + version (4 bits) + random (12 bits) + variant (2 bits) + random (62 bits)
+  const timeLow = timestampHex.slice(0, 8);
+  const timeMid = timestampHex.slice(8, 12);
+  const versionAndRandom = `7${randomBytes[0].toString(16).padStart(2, '0').slice(1)}${randomBytes[1].toString(16).padStart(2, '0')}`;
+  const variantAndRandom = `${((randomBytes[2] & 0x3f) | 0x80).toString(16).padStart(2, '0')}${randomBytes[3].toString(16).padStart(2, '0')}`;
+  const randomEnd = Array.from(randomBytes.slice(4))
     .map((b) => b.toString(16).padStart(2, '0'))
     .join('');
+  
+  return `${timeLow}-${timeMid}-${versionAndRandom}-${variantAndRandom}-${randomEnd}`;
 }
 
 /**
- * Generate a random hex string for span ID (16 hex chars = 8 bytes).
- * OpenTelemetry spec requires span_id to be 8 bytes (16 hex characters).
+ * Extract token usage from OpenAI response in API format (snake_case).
  */
-function generateSpanId(): string {
-  const bytes = new Uint8Array(8);
-  crypto.getRandomValues(bytes);
-  return Array.from(bytes)
-    .map((b) => b.toString(16).padStart(2, '0'))
-    .join('');
-}
-
-/**
- * Extract token usage from OpenAI response.
- */
-function extractTokenUsage(
-  response: unknown,
-): { promptTokens?: number; completionTokens?: number; totalTokens?: number } | undefined {
+function extractTokenUsage(response: unknown): UsageInfo | undefined {
   if (!response || typeof response !== 'object') {
     return undefined;
   }
@@ -51,9 +48,9 @@ function extractTokenUsage(
   }
 
   return {
-    promptTokens: usage.prompt_tokens,
-    completionTokens: usage.completion_tokens,
-    totalTokens: usage.total_tokens,
+    prompt_tokens: usage.prompt_tokens,
+    completion_tokens: usage.completion_tokens,
+    total_tokens: usage.total_tokens,
   };
 }
 
@@ -126,8 +123,8 @@ function wrapMethod<T extends (...args: unknown[]) => Promise<unknown>>(
 ): T {
   return (async (...args: Parameters<T>) => {
     const startTime = new Date();
-    const spanId = generateSpanId();
-    const currentTraceId = traceId ?? generateTraceId();
+    const spanId = generateUuidV7();
+    const currentTraceId = traceId ?? generateUuidV7();
 
     // Extract request data
     const request = args[0] as Record<string, unknown> | undefined;
@@ -182,12 +179,12 @@ function wrapMethod<T extends (...args: unknown[]) => Promise<unknown>>(
           endTime,
           durationMs,
           metadata: {
-            provider: 'openai',
-            model,
             method: methodName,
             ...options.metadata,
           },
           tags: options.tags,
+          model,
+          provider: 'openai',
         };
 
         await sendTraceSafely(options.mentioraClient, traceEvent);
@@ -230,17 +227,13 @@ function wrapMethod<T extends (...args: unknown[]) => Promise<unknown>>(
         endTime,
         durationMs,
         metadata: {
-          provider: 'openai',
-          model,
           method: methodName,
-          ...(tokenUsage && {
-            promptTokens: tokenUsage.promptTokens,
-            completionTokens: tokenUsage.completionTokens,
-            totalTokens: tokenUsage.totalTokens,
-          }),
           ...options.metadata,
         },
         tags: options.tags,
+        usage: tokenUsage,
+        model,
+        provider: 'openai',
       };
 
       await sendTraceSafely(options.mentioraClient, traceEvent);
@@ -266,12 +259,12 @@ function wrapMethod<T extends (...args: unknown[]) => Promise<unknown>>(
         durationMs,
         error,
         metadata: {
-          provider: 'openai',
-          model,
           method: methodName,
           ...options.metadata,
         },
         tags: options.tags,
+        model,
+        provider: 'openai',
       };
 
       await sendTraceSafely(options.mentioraClient, traceEvent);

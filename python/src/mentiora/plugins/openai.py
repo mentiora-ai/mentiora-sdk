@@ -4,12 +4,14 @@ Wraps OpenAI client to automatically trace API calls.
 """
 
 import logging
+import os
 import secrets
+import time
 from datetime import datetime
 from functools import wraps
 from typing import Any, Callable, TypeVar
 
-from ..types import TraceEvent, TraceError
+from ..types import TraceEvent, TraceError, UsageInfo
 from .types import TrackOpenAIOptions
 
 logger = logging.getLogger(__name__)
@@ -17,24 +19,31 @@ logger = logging.getLogger(__name__)
 T = TypeVar('T', bound=Callable[..., Any])
 
 
-def _generate_trace_id() -> str:
-    """Generate a random hex string for trace ID (32 hex chars = 16 bytes).
+def _generate_uuid_v7() -> str:
+    """Generate a UUID v7 (timestamp-based) for trace/span IDs.
 
-    OpenTelemetry spec requires trace_id to be 16 bytes (32 hex characters).
+    Format: xxxxxxxx-xxxx-7xxx-yxxx-xxxxxxxxxxxx
+    Opik requires UUID v7 format for all IDs.
     """
-    return secrets.token_hex(16)
+    # Get timestamp in milliseconds
+    timestamp_ms = int(time.time() * 1000)
+    timestamp_hex = format(timestamp_ms, '012x')
+
+    # Generate random bytes
+    random_bytes = os.urandom(10)
+
+    # Build UUID v7 components
+    time_low = timestamp_hex[:8]
+    time_mid = timestamp_hex[8:12]
+    version_and_random = f'7{random_bytes[0]:02x}'[0:4]
+    variant_and_random = f'{(random_bytes[2] & 0x3f) | 0x80:02x}{random_bytes[3]:02x}'
+    random_end = ''.join(f'{b:02x}' for b in random_bytes[4:])
+
+    return f'{time_low}-{time_mid}-{version_and_random}-{variant_and_random}-{random_end}'
 
 
-def _generate_span_id() -> str:
-    """Generate a random hex string for span ID (16 hex chars = 8 bytes).
-
-    OpenTelemetry spec requires span_id to be 8 bytes (16 hex characters).
-    """
-    return secrets.token_hex(8)
-
-
-def _extract_token_usage(response: dict[str, Any] | None) -> dict[str, int] | None:
-    """Extract token usage from OpenAI response."""
+def _extract_token_usage(response: dict[str, Any] | None) -> UsageInfo | None:
+    """Extract token usage from OpenAI response in API format (snake_case)."""
     if not response or not isinstance(response, dict):
         return None
 
@@ -42,11 +51,11 @@ def _extract_token_usage(response: dict[str, Any] | None) -> dict[str, int] | No
     if not usage or not isinstance(usage, dict):
         return None
 
-    return {
-        'promptTokens': usage.get('prompt_tokens'),
-        'completionTokens': usage.get('completion_tokens'),
-        'totalTokens': usage.get('total_tokens'),
-    }
+    return UsageInfo(
+        prompt_tokens=usage.get('prompt_tokens'),
+        completion_tokens=usage.get('completion_tokens'),
+        total_tokens=usage.get('total_tokens'),
+    )
 
 
 def _extract_model(request: dict[str, Any] | None, response: dict[str, Any] | None) -> str | None:
@@ -101,8 +110,8 @@ def _wrap_method(
     @wraps(original_method)
     async def wrapped(*args: Any, **kwargs: Any) -> Any:
         start_time = datetime.now()
-        span_id = _generate_span_id()
-        current_trace_id = trace_id or _generate_trace_id()
+        span_id = _generate_uuid_v7()
+        current_trace_id = trace_id or _generate_uuid_v7()
 
         # Extract request data
         request = args[0] if args else kwargs
@@ -161,12 +170,12 @@ def _wrap_method(
                     end_time=end_time,
                     duration_ms=duration_ms,
                     metadata={
-                        'provider': 'openai',
-                        'model': model,
                         'method': method_name,
                         **(options.metadata or {}),
                     },
                     tags=options.tags,
+                    model=model,
+                    provider='openai',
                 )
 
                 await _send_trace_safely(options.mentiora_client, trace_event)
@@ -199,16 +208,6 @@ def _wrap_method(
             token_usage = _extract_token_usage(response if isinstance(response, dict) else None)
             model = _extract_model(request, response if isinstance(response, dict) else None)
 
-            metadata: dict[str, Any] = {
-                'provider': 'openai',
-                'method': method_name,
-                **(options.metadata or {}),
-            }
-            if model:
-                metadata['model'] = model
-            if token_usage:
-                metadata.update(token_usage)
-
             trace_event = TraceEvent(
                 trace_id=current_trace_id,
                 span_id=span_id,
@@ -219,8 +218,14 @@ def _wrap_method(
                 start_time=start_time,
                 end_time=end_time,
                 duration_ms=duration_ms,
-                metadata=metadata,
+                metadata={
+                    'method': method_name,
+                    **(options.metadata or {}),
+                },
                 tags=options.tags,
+                usage=token_usage,
+                model=model,
+                provider='openai',
             )
 
             await _send_trace_safely(options.mentiora_client, trace_event)
@@ -247,12 +252,12 @@ def _wrap_method(
                 duration_ms=duration_ms,
                 error=error,
                 metadata={
-                    'provider': 'openai',
-                    'model': model,
                     'method': method_name,
                     **(options.metadata or {}),
                 },
                 tags=options.tags,
+                model=model,
+                provider='openai',
             )
 
             await _send_trace_safely(options.mentiora_client, trace_event)

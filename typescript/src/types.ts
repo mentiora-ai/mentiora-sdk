@@ -14,6 +14,15 @@ export interface TraceError {
   stack?: string;
 }
 
+export interface UsageInfo {
+  /** Number of input/prompt tokens */
+  prompt_tokens?: number;
+  /** Number of output/completion tokens */
+  completion_tokens?: number;
+  /** Total tokens (prompt + completion) */
+  total_tokens?: number;
+}
+
 export interface TraceEvent {
   /** Unique trace ID (user request / conversation) */
   traceId: string;
@@ -41,6 +50,12 @@ export interface TraceEvent {
   tags?: string[];
   /** Error details (if type === 'error') */
   error?: TraceError;
+  /** Token usage (LLM-specific) */
+  usage?: UsageInfo;
+  /** Model name (e.g., 'gpt-4', 'claude-3') */
+  model?: string;
+  /** Provider name (e.g., 'openai', 'anthropic') */
+  provider?: string;
 }
 
 /**

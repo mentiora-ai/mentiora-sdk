@@ -4,33 +4,41 @@ Callback handler for automatically tracing LangChain executions.
 """
 
 import logging
-import secrets
+import os
+import time
 from datetime import datetime
 from typing import Any
 
 from langchain_core.callbacks import BaseCallbackHandler
 from langchain_core.outputs import LLMResult
 
-from ..types import TraceError, TraceEvent, TraceType
+from ..types import TraceError, TraceEvent, TraceType, UsageInfo
 from .types import MentioraTracingLangChainOptions
 
 logger = logging.getLogger(__name__)
 
 
-def _generate_trace_id() -> str:
-    """Generate a random hex string for trace ID (32 hex chars = 16 bytes).
+def _generate_uuid_v7() -> str:
+    """Generate a UUID v7 (timestamp-based) for trace/span IDs.
 
-    OpenTelemetry spec requires trace_id to be 16 bytes (32 hex characters).
+    Format: xxxxxxxx-xxxx-7xxx-yxxx-xxxxxxxxxxxx
+    Opik requires UUID v7 format for all IDs.
     """
-    return secrets.token_hex(16)
+    # Get timestamp in milliseconds
+    timestamp_ms = int(time.time() * 1000)
+    timestamp_hex = format(timestamp_ms, '012x')
 
+    # Generate random bytes
+    random_bytes = os.urandom(10)
 
-def _generate_span_id() -> str:
-    """Generate a random hex string for span ID (16 hex chars = 8 bytes).
+    # Build UUID v7 components
+    time_low = timestamp_hex[:8]
+    time_mid = timestamp_hex[8:12]
+    version_and_random = f'7{random_bytes[0]:02x}'[0:4]
+    variant_and_random = f'{(random_bytes[2] & 0x3f) | 0x80:02x}{random_bytes[3]:02x}'
+    random_end = ''.join(f'{b:02x}' for b in random_bytes[4:])
 
-    OpenTelemetry spec requires span_id to be 8 bytes (16 hex characters).
-    """
-    return secrets.token_hex(8)
+    return f'{time_low}-{time_mid}-{version_and_random}-{variant_and_random}-{random_end}'
 
 
 def _map_run_type_to_trace_type(run_type: str) -> TraceType:
@@ -121,7 +129,7 @@ class MentioraTracingLangChain(BaseCallbackHandler):
             parent_run = self.active_runs.get(parent_run_id)
             if parent_run:
                 return parent_run.trace_id
-        return _generate_trace_id()
+        return _generate_uuid_v7()
 
     def _get_span_id(self, run_id: str) -> str | None:
         """Get span ID for a run (from active_runs if exists, otherwise generate)."""
@@ -179,7 +187,7 @@ class MentioraTracingLangChain(BaseCallbackHandler):
         """Handle LLM start."""
         trace_id = self._get_or_create_trace_id(run_id, parent_run_id)
         parent_span_id = self._get_span_id(parent_run_id) if parent_run_id else None
-        span_id = _generate_span_id()
+        span_id = _generate_uuid_v7()
 
         self.active_runs[run_id] = ActiveRun(
             start_time=datetime.now(),
@@ -214,25 +222,16 @@ class MentioraTracingLangChain(BaseCallbackHandler):
                 for gen_list in response.generations
             ]
 
-        # Extract token usage
-        token_usage = None
+        # Extract token usage in API format (snake_case)
+        usage_info: UsageInfo | None = None
         if response.llm_output and isinstance(response.llm_output, dict):
             usage = response.llm_output.get('tokenUsage')
             if usage and isinstance(usage, dict):
-                token_usage = {
-                    'promptTokens': usage.get('promptTokens'),
-                    'completionTokens': usage.get('completionTokens'),
-                    'totalTokens': usage.get('totalTokens'),
-                }
-
-        metadata: dict[str, Any] = {
-            'provider': 'langchain',
-            'runType': 'llm',
-            'model': run.name,
-            **self.metadata,
-        }
-        if token_usage:
-            metadata.update(token_usage)
+                usage_info = UsageInfo(
+                    prompt_tokens=usage.get('promptTokens'),
+                    completion_tokens=usage.get('completionTokens'),
+                    total_tokens=usage.get('totalTokens'),
+                )
 
         trace_event = TraceEvent(
             trace_id=run.trace_id,
@@ -245,8 +244,14 @@ class MentioraTracingLangChain(BaseCallbackHandler):
             start_time=run.start_time,
             end_time=end_time,
             duration_ms=duration_ms,
-            metadata=metadata,
+            metadata={
+                'runType': 'llm',
+                **self.metadata,
+            },
             tags=self.tags,
+            usage=usage_info,
+            model=run.name,
+            provider='langchain',
         )
 
         await _send_trace_safely(self.mentiora_client, trace_event)
@@ -276,12 +281,12 @@ class MentioraTracingLangChain(BaseCallbackHandler):
                 stack=str(error.__traceback__) if hasattr(error, '__traceback__') else None,
             ),
             metadata={
-                'provider': 'langchain',
                 'runType': 'llm',
-                'model': run.name,
                 **self.metadata,
             },
             tags=self.tags,
+            model=run.name,
+            provider='langchain',
         )
 
         await _send_trace_safely(self.mentiora_client, trace_event)
@@ -299,7 +304,7 @@ class MentioraTracingLangChain(BaseCallbackHandler):
         """Handle chain start."""
         trace_id = self._get_or_create_trace_id(run_id, parent_run_id)
         parent_span_id = self._get_span_id(parent_run_id) if parent_run_id else None
-        span_id = _generate_span_id()
+        span_id = _generate_uuid_v7()
 
         self.active_runs[run_id] = ActiveRun(
             start_time=datetime.now(),
@@ -338,11 +343,11 @@ class MentioraTracingLangChain(BaseCallbackHandler):
             end_time=end_time,
             duration_ms=duration_ms,
             metadata={
-                'provider': 'langchain',
                 'runType': run.run_type,
                 **self.metadata,
             },
             tags=self.tags,
+            provider='langchain',
         )
 
         await _send_trace_safely(self.mentiora_client, trace_event)
@@ -372,11 +377,11 @@ class MentioraTracingLangChain(BaseCallbackHandler):
                 stack=str(error.__traceback__) if hasattr(error, '__traceback__') else None,
             ),
             metadata={
-                'provider': 'langchain',
                 'runType': run.run_type,
                 **self.metadata,
             },
             tags=self.tags,
+            provider='langchain',
         )
 
         await _send_trace_safely(self.mentiora_client, trace_event)
@@ -394,7 +399,7 @@ class MentioraTracingLangChain(BaseCallbackHandler):
         """Handle tool start."""
         trace_id = self._get_or_create_trace_id(run_id, parent_run_id)
         parent_span_id = self._get_span_id(parent_run_id) if parent_run_id else None
-        span_id = _generate_span_id()
+        span_id = _generate_uuid_v7()
 
         self.active_runs[run_id] = ActiveRun(
             start_time=datetime.now(),
@@ -427,11 +432,11 @@ class MentioraTracingLangChain(BaseCallbackHandler):
             end_time=end_time,
             duration_ms=duration_ms,
             metadata={
-                'provider': 'langchain',
                 'runType': 'tool',
                 **self.metadata,
             },
             tags=self.tags,
+            provider='langchain',
         )
 
         await _send_trace_safely(self.mentiora_client, trace_event)
@@ -461,11 +466,11 @@ class MentioraTracingLangChain(BaseCallbackHandler):
                 stack=str(error.__traceback__) if hasattr(error, '__traceback__') else None,
             ),
             metadata={
-                'provider': 'langchain',
                 'runType': 'tool',
                 **self.metadata,
             },
             tags=self.tags,
+            provider='langchain',
         )
 
         await _send_trace_safely(self.mentiora_client, trace_event)

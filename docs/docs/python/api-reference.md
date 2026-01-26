@@ -136,10 +136,15 @@ await client.tracing.flush_async()
 ### TraceEvent
 
 ```python
+class UsageInfo:
+    prompt_tokens: int | None
+    completion_tokens: int | None
+    total_tokens: int | None
+
 class TraceEvent:
-    trace_id: str              # Unique trace ID
-    span_id: str               # Unique span ID
-    parent_span_id: str | None  # Parent span for nesting
+    trace_id: str              # Unique trace ID (UUID v7 format)
+    span_id: str               # Unique span ID (UUID v7 format)
+    parent_span_id: str | None  # Parent span for nesting (UUID v7 format)
     name: str                   # Span name, e.g., 'llm.call', 'tool.execute'
     type: 'llm' | 'tool' | 'chat' | 'error' | 'custom'
     input: dict | None          # Prompt, tool input, etc.
@@ -150,7 +155,12 @@ class TraceEvent:
     metadata: dict[str, Any] | None
     tags: list[str] | None
     error: TraceError | None
+    usage: UsageInfo | None     # Token usage (LLM-specific)
+    model: str | None           # Model name (e.g., 'gpt-4', 'claude-3')
+    provider: str | None        # Provider name (e.g., 'openai', 'anthropic')
 ```
+
+**Note:** `trace_id` and `span_id` must be in UUID v7 format. The plugins automatically generate UUID v7 IDs.
 
 ### TraceError
 

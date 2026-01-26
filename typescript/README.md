@@ -28,9 +28,9 @@ Send agent traces to the Mentiora platform:
 ```typescript
 // Send a trace
 const result = await client.tracing.sendTrace({
-  traceId: 'trace-123',
-  spanId: 'span-456',
-  parentSpanId: 'span-parent', // optional
+  traceId: '019505a0-b7c2-7000-8000-000000000001', // UUID v7 format
+  spanId: '019505a0-b7c2-7000-8000-000000000002', // UUID v7 format
+  parentSpanId: '019505a0-b7c2-7000-8000-000000000003', // optional, UUID v7 format
   name: 'llm.call',
   type: 'llm', // 'llm' | 'tool' | 'chat' | 'error' | 'custom'
   input: { messages: [{ role: 'user', content: 'Hello' }] },
@@ -38,9 +38,15 @@ const result = await client.tracing.sendTrace({
   startTime: new Date(),
   endTime: new Date(),
   durationMs: 1000,
+  usage: {
+    prompt_tokens: 10,
+    completion_tokens: 25,
+    total_tokens: 35,
+  },
+  model: 'gpt-4o-mini',
+  provider: 'openai',
   metadata: {
-    model: 'gpt-4o-mini',
-    provider: 'openai',
+    environment: 'prod',
   },
   tags: ['production', 'support-agent'],
 });
@@ -198,10 +204,16 @@ For configuration or validation errors, the SDK throws:
 ## TraceEvent Schema
 
 ```typescript
+interface UsageInfo {
+  prompt_tokens?: number;
+  completion_tokens?: number;
+  total_tokens?: number;
+}
+
 interface TraceEvent {
-  traceId: string;           // Unique trace ID
-  spanId: string;            // Unique span ID
-  parentSpanId?: string;     // Parent span for nesting
+  traceId: string;           // Unique trace ID (UUID v7 format)
+  spanId: string;           // Unique span ID (UUID v7 format)
+  parentSpanId?: string;    // Parent span for nesting (UUID v7 format)
   name: string;              // Span name, e.g., 'llm.call', 'tool.execute'
   type: 'llm' | 'tool' | 'chat' | 'error' | 'custom';
   input?: unknown;           // Prompt, tool input, etc.
@@ -216,8 +228,13 @@ interface TraceEvent {
     type?: string;
     stack?: string;
   };
+  usage?: UsageInfo;        // Token usage (LLM-specific)
+  model?: string;           // Model name (e.g., 'gpt-4', 'claude-3')
+  provider?: string;        // Provider name (e.g., 'openai', 'anthropic')
 }
 ```
+
+**Note:** `traceId` and `spanId` must be in UUID v7 format (e.g., `019505a0-b7c2-7000-8000-000000000001`). The plugins automatically generate UUID v7 IDs.
 
 ## Requirements
 

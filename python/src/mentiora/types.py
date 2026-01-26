@@ -22,6 +22,14 @@ class TraceError(BaseModel):
     stack: Optional[str] = None
 
 
+class UsageInfo(BaseModel):
+    """Token usage information for LLM calls."""
+
+    prompt_tokens: Optional[int] = None
+    completion_tokens: Optional[int] = None
+    total_tokens: Optional[int] = None
+
+
 class TraceEvent(BaseModel):
     """Trace event for sending to the Mentiora platform."""
 
@@ -38,6 +46,9 @@ class TraceEvent(BaseModel):
     metadata: Optional[dict[str, Any]] = None
     tags: Optional[list[str]] = None
     error: Optional[TraceError] = None
+    usage: Optional[UsageInfo] = None
+    model: Optional[str] = None
+    provider: Optional[str] = None
 
     @field_validator('type')
     @classmethod
@@ -81,6 +92,9 @@ class TraceEvent(BaseModel):
         metadata = getattr(self, 'metadata', None)
         tags = getattr(self, 'tags', None)
         error = getattr(self, 'error', None)
+        usage = getattr(self, 'usage', None)
+        model = getattr(self, 'model', None)
+        provider = getattr(self, 'provider', None)
 
         # Convert datetime to ISO string
         start_time = self.start_time
@@ -98,6 +112,15 @@ class TraceEvent(BaseModel):
         elif end_time is None:
             end_time = None
 
+        # Convert usage to dict if present
+        usage_dict = None
+        if usage is not None:
+            usage_dict = {
+                'prompt_tokens': usage.prompt_tokens,
+                'completion_tokens': usage.completion_tokens,
+                'total_tokens': usage.total_tokens,
+            }
+
         # Map to API snake_case format (matching TypeScript normalizeTraceEvent)
         return {
             'trace_id': self.trace_id,
@@ -113,6 +136,9 @@ class TraceEvent(BaseModel):
             'metadata': metadata if metadata is not None else None,
             'tags': tags if tags is not None else [],  # Always array, never null (matches TS)
             'error': error if error is not None else None,
+            'usage': usage_dict,
+            'model': model,
+            'provider': provider,
         }
 
 

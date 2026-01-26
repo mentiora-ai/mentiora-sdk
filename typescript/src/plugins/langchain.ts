@@ -6,31 +6,30 @@
 import { BaseCallbackHandler } from '@langchain/core/callbacks/base';
 import type { Serialized } from '@langchain/core/load/serializable';
 import type { LLMResult } from '@langchain/core/outputs';
-import type { TraceEvent, TraceType } from '../types';
+import type { TraceEvent, TraceType, UsageInfo } from '../types';
 import type { MentioraTracingLangChainOptions } from './types';
 
 /**
- * Generate a random hex string for trace ID (32 hex chars = 16 bytes).
- * OpenTelemetry spec requires trace_id to be 16 bytes (32 hex characters).
+ * Generate a UUID v7 (timestamp-based) for trace/span IDs.
+ * Format: xxxxxxxx-xxxx-7xxx-yxxx-xxxxxxxxxxxx
+ * Opik requires UUID v7 format for all IDs.
  */
-function generateTraceId(): string {
-  const bytes = new Uint8Array(16);
-  crypto.getRandomValues(bytes);
-  return Array.from(bytes)
+function generateUuidV7(): string {
+  const timestamp = Date.now();
+  const timestampHex = timestamp.toString(16).padStart(12, '0');
+  const randomBytes = new Uint8Array(10);
+  crypto.getRandomValues(randomBytes);
+  
+  // Build UUID v7: timestamp (48 bits) + version (4 bits) + random (12 bits) + variant (2 bits) + random (62 bits)
+  const timeLow = timestampHex.slice(0, 8);
+  const timeMid = timestampHex.slice(8, 12);
+  const versionAndRandom = `7${randomBytes[0].toString(16).padStart(2, '0').slice(1)}${randomBytes[1].toString(16).padStart(2, '0')}`;
+  const variantAndRandom = `${((randomBytes[2] & 0x3f) | 0x80).toString(16).padStart(2, '0')}${randomBytes[3].toString(16).padStart(2, '0')}`;
+  const randomEnd = Array.from(randomBytes.slice(4))
     .map((b) => b.toString(16).padStart(2, '0'))
     .join('');
-}
-
-/**
- * Generate a random hex string for span ID (16 hex chars = 8 bytes).
- * OpenTelemetry spec requires span_id to be 8 bytes (16 hex characters).
- */
-function generateSpanId(): string {
-  const bytes = new Uint8Array(8);
-  crypto.getRandomValues(bytes);
-  return Array.from(bytes)
-    .map((b) => b.toString(16).padStart(2, '0'))
-    .join('');
+  
+  return `${timeLow}-${timeMid}-${versionAndRandom}-${variantAndRandom}-${randomEnd}`;
 }
 
 /**
@@ -131,7 +130,7 @@ export class MentioraTracingLangChain extends BaseCallbackHandler {
   ): Promise<void> {
     const traceId = this.getOrCreateTraceId(runId, parentRunId);
     const parentSpanId = parentRunId ? this.getSpanId(parentRunId) : undefined;
-    const spanId = generateSpanId();
+    const spanId = generateUuidV7();
 
     this.activeRuns.set(runId, {
       startTime: new Date(),
@@ -164,10 +163,15 @@ export class MentioraTracingLangChain extends BaseCallbackHandler {
       })),
     );
 
-    // Extract token usage
-    const tokenUsage = output.llmOutput?.tokenUsage as
+    // Extract token usage in API format (snake_case)
+    const rawTokenUsage = output.llmOutput?.tokenUsage as
       | { promptTokens?: number; completionTokens?: number; totalTokens?: number }
       | undefined;
+    const usage: UsageInfo | undefined = rawTokenUsage ? {
+      prompt_tokens: rawTokenUsage.promptTokens,
+      completion_tokens: rawTokenUsage.completionTokens,
+      total_tokens: rawTokenUsage.totalTokens,
+    } : undefined;
 
     const traceEvent: TraceEvent = {
       traceId: run.traceId,
@@ -181,17 +185,13 @@ export class MentioraTracingLangChain extends BaseCallbackHandler {
       endTime,
       durationMs,
       metadata: {
-        provider: 'langchain',
         runType: 'llm',
-        model: run.name,
-        ...(tokenUsage && {
-          promptTokens: tokenUsage.promptTokens,
-          completionTokens: tokenUsage.completionTokens,
-          totalTokens: tokenUsage.totalTokens,
-        }),
         ...this.metadata,
       },
       tags: this.tags,
+      usage,
+      model: run.name,
+      provider: 'langchain',
     };
 
     await sendTraceSafely(this.mentioraClient, traceEvent);
@@ -225,12 +225,12 @@ export class MentioraTracingLangChain extends BaseCallbackHandler {
         stack: err.stack,
       },
       metadata: {
-        provider: 'langchain',
         runType: 'llm',
-        model: run.name,
         ...this.metadata,
       },
       tags: this.tags,
+      model: run.name,
+      provider: 'langchain',
     };
 
     await sendTraceSafely(this.mentioraClient, traceEvent);
@@ -250,7 +250,7 @@ export class MentioraTracingLangChain extends BaseCallbackHandler {
   ): Promise<void> {
     const traceId = this.getOrCreateTraceId(runId, parentRunId);
     const parentSpanId = parentRunId ? this.getSpanId(parentRunId) : undefined;
-    const spanId = generateSpanId();
+    const spanId = generateUuidV7();
 
     this.activeRuns.set(runId, {
       startTime: new Date(),
@@ -290,11 +290,11 @@ export class MentioraTracingLangChain extends BaseCallbackHandler {
       endTime,
       durationMs,
       metadata: {
-        provider: 'langchain',
         runType: run.runType,
         ...this.metadata,
       },
       tags: this.tags,
+      provider: 'langchain',
     };
 
     await sendTraceSafely(this.mentioraClient, traceEvent);
@@ -328,11 +328,11 @@ export class MentioraTracingLangChain extends BaseCallbackHandler {
         stack: err.stack,
       },
       metadata: {
-        provider: 'langchain',
         runType: run.runType,
         ...this.metadata,
       },
       tags: this.tags,
+      provider: 'langchain',
     };
 
     await sendTraceSafely(this.mentioraClient, traceEvent);
@@ -352,7 +352,7 @@ export class MentioraTracingLangChain extends BaseCallbackHandler {
   ): Promise<void> {
     const traceId = this.getOrCreateTraceId(runId, parentRunId);
     const parentSpanId = parentRunId ? this.getSpanId(parentRunId) : undefined;
-    const spanId = generateSpanId();
+    const spanId = generateUuidV7();
 
     this.activeRuns.set(runId, {
       startTime: new Date(),
@@ -389,11 +389,11 @@ export class MentioraTracingLangChain extends BaseCallbackHandler {
       endTime,
       durationMs,
       metadata: {
-        provider: 'langchain',
         runType: 'tool',
         ...this.metadata,
       },
       tags: this.tags,
+      provider: 'langchain',
     };
 
     await sendTraceSafely(this.mentioraClient, traceEvent);
@@ -427,11 +427,11 @@ export class MentioraTracingLangChain extends BaseCallbackHandler {
         stack: err.stack,
       },
       metadata: {
-        provider: 'langchain',
         runType: 'tool',
         ...this.metadata,
       },
       tags: this.tags,
+      provider: 'langchain',
     };
 
     await sendTraceSafely(this.mentioraClient, traceEvent);
@@ -448,7 +448,7 @@ export class MentioraTracingLangChain extends BaseCallbackHandler {
         return parentRun.traceId;
       }
     }
-    return generateTraceId();
+    return generateUuidV7();
   }
 
   /**
