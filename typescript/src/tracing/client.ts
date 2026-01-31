@@ -12,7 +12,6 @@ import type { SendTraceResult, TraceEvent } from '../types';
 export class TracingClient {
   constructor(
     private readonly httpClient: HttpClient,
-    private readonly baseUrl: string,
   ) {}
 
   /**
@@ -46,10 +45,21 @@ export class TracingClient {
    * Send a trace event to the Mentiora platform.
    */
   async sendTrace(event: TraceEvent): Promise<SendTraceResult> {
+    console.log('[Mentiora SDK] TracingClient.sendTrace called:', {
+      traceId: event.traceId,
+      spanId: event.spanId,
+      type: event.type,
+      name: event.name,
+    });
+
     this.validateTraceEvent(event);
 
     try {
       await this.httpClient.sendTrace(event);
+      console.log('[Mentiora SDK] TracingClient.sendTrace succeeded:', {
+        traceId: event.traceId,
+        spanId: event.spanId,
+      });
       return {
         success: true,
         traceId: event.traceId,
@@ -57,6 +67,11 @@ export class TracingClient {
       };
     } catch (error) {
       if (error instanceof NetworkError) {
+        console.error('[Mentiora SDK] TracingClient.sendTrace failed:', {
+          traceId: event.traceId,
+          spanId: event.spanId,
+          error: error.message,
+        });
         return {
           success: false,
           traceId: event.traceId,

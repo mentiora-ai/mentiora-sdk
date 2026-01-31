@@ -40,7 +40,7 @@ export class MentioraClient {
     });
 
     // Initialize feature clients
-    this.tracing = new TracingClient(this.httpClient, this.baseUrl);
+    this.tracing = new TracingClient(this.httpClient);
     // Future: this.vectordb = new VectorDBClient(this.httpClient, this.baseUrl);
   }
 

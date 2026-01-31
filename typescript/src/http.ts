@@ -36,7 +36,7 @@ function normalizeTraceEvent(event: TraceEvent): Record<string, unknown> {
     end_time:
       event.endTime instanceof Date
         ? event.endTime.toISOString()
-        : event.endTime ?? null,
+        : (event.endTime ?? null),
     duration_ms: event.durationMs ?? null,
     metadata: event.metadata ?? null,
     tags: event.tags ?? [],
@@ -82,14 +82,28 @@ export class HttpClient {
     const body = normalizeTraceEvent(event);
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${this.config.apiKey}`,
+      Authorization: `Bearer ${this.config.apiKey}`,
     };
+
+    console.log('[Mentiora SDK] Sending trace:', {
+      url,
+      traceId: event.traceId,
+      spanId: event.spanId,
+      type: event.type,
+      name: event.name,
+    });
 
     let lastError: Error | undefined;
     const maxAttempts = this.config.retries + 1;
 
     for (let attempt = 0; attempt < maxAttempts; attempt++) {
       try {
+        if (attempt > 0) {
+          console.log(
+            `[Mentiora SDK] Retry attempt ${attempt + 1}/${maxAttempts}`,
+          );
+        }
+
         const controller = new AbortController();
         const timeoutId = setTimeout(
           () => controller.abort(),
@@ -107,8 +121,20 @@ export class HttpClient {
 
         const responseBody = await response.json().catch(() => ({}));
 
+        console.log('[Mentiora SDK] Response:', {
+          status: response.status,
+          statusText: response.statusText,
+          traceId: event.traceId,
+        });
+
         // Don't retry on 4xx errors (client error)
         if (response.status >= 400 && response.status < 500) {
+          console.error('[Mentiora SDK] Client error:', {
+            status: response.status,
+            statusText: response.statusText,
+            body: responseBody,
+            traceId: event.traceId,
+          });
           throw new NetworkError(
             `Client error: ${response.statusText}`,
             response.status,
@@ -117,6 +143,12 @@ export class HttpClient {
 
         // Retry on 5xx errors
         if (isRetryableError(response.status)) {
+          console.warn('[Mentiora SDK] Server error (retryable):', {
+            status: response.status,
+            statusText: response.statusText,
+            attempt: attempt + 1,
+            traceId: event.traceId,
+          });
           if (attempt < maxAttempts - 1) {
             const delay = getBackoffDelay(attempt);
             await sleep(delay);
@@ -127,6 +159,11 @@ export class HttpClient {
             response.status,
           );
         }
+
+        console.log('[Mentiora SDK] Trace sent successfully:', {
+          traceId: event.traceId,
+          spanId: event.spanId,
+        });
 
         return {
           status: response.status,
@@ -140,10 +177,21 @@ export class HttpClient {
         // Handle abort (timeout) or network errors
         if (error instanceof Error) {
           if (error.name === 'AbortError') {
-            throw new NetworkError(`Request timeout after ${this.config.timeout}ms`);
+            console.error('[Mentiora SDK] Request timeout:', {
+              timeout: this.config.timeout,
+              traceId: event.traceId,
+            });
+            throw new NetworkError(
+              `Request timeout after ${this.config.timeout}ms`,
+            );
           }
 
           lastError = error;
+          console.error('[Mentiora SDK] Network error:', {
+            error: error.message,
+            attempt: attempt + 1,
+            traceId: event.traceId,
+          });
 
           // Retry on network errors (except on last attempt)
           if (attempt < maxAttempts - 1) {
@@ -154,6 +202,12 @@ export class HttpClient {
         }
       }
     }
+
+    console.error('[Mentiora SDK] Failed after all retries:', {
+      attempts: maxAttempts,
+      error: lastError?.message ?? 'Unknown error',
+      traceId: event.traceId,
+    });
 
     throw new NetworkError(
       `Failed after ${maxAttempts} attempts: ${lastError?.message ?? 'Unknown error'}`,
