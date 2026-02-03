@@ -63,7 +63,7 @@ const config: Config = {
       title: 'Mentiora SDK',
       logo: {
         alt: 'Mentiora SDK Logo',
-        src: 'img/logo.svg',
+        src: 'img/logo.png',
       },
       items: [
         {
@@ -101,6 +101,15 @@ const config: Config = {
             {
               label: 'GitHub',
               href: 'https://github.com/periscoop/mentiora-sdk',
+            },
+          ],
+        },
+        {
+          title: 'More',
+          items: [
+            {
+              label: 'Mentiora Platform',
+              href: 'https://mentiora.ai',
             },
           ],
         },
