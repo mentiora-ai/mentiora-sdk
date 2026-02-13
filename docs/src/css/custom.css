@@ -1,0 +1,42 @@
+@import '@fontsource-variable/mona-sans';
+@import '@fontsource/geist-sans/400.css';
+@import '@fontsource/geist-sans/500.css';
+@import '@fontsource/geist-sans/600.css';
+@import '@fontsource/geist-sans/700.css';
+
+/**
+ * Any CSS included here will be global. The classic template
+ * bundles Infima by default. Infima is a CSS framework designed to
+ * work well for content-centric websites.
+ */
+
+/* You can override the default Infima variables here. */
+:root {
+  --ifm-font-family-base: 'Geist Sans', system-ui, -apple-system, sans-serif;
+  --ifm-heading-font-family: 'Mona Sans', system-ui, -apple-system, sans-serif;
+  --ifm-color-primary: #3869DE;
+  --ifm-color-primary-dark: #2A5AD0;
+  --ifm-color-primary-darker: #2654C5;
+  --ifm-color-primary-darkest: #1F45A2;
+  --ifm-color-primary-light: #527AE4;
+  --ifm-color-primary-lighter: #6489E8;
+  --ifm-color-primary-lightest: #8AA6EF;
+  --ifm-code-font-size: 95%;
+  --docusaurus-highlighted-code-line-bg: rgba(56, 105, 222, 0.1);
+}
+
+.navbar__title {
+  font-family: var(--ifm-heading-font-family);
+}
+
+/* For readability concerns, you should choose a lighter palette in dark mode. */
+[data-theme='dark'] {
+  --ifm-color-primary: #6489E8;
+  --ifm-color-primary-dark: #527AE4;
+  --ifm-color-primary-darker: #3869DE;
+  --ifm-color-primary-darkest: #2A5AD0;
+  --ifm-color-primary-light: #8AA6EF;
+  --ifm-color-primary-lighter: #A1B6F3;
+  --ifm-color-primary-lightest: #B8C7F6;
+  --docusaurus-highlighted-code-line-bg: rgba(56, 105, 222, 0.3);
+}

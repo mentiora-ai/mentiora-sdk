@@ -1,0 +1,13 @@
+set -e
+
+# TypeScript
+cd typescript
+npm run type-check
+npm test
+cd ..
+
+# Python
+cd python
+.venv/bin/mypy src/
+.venv/bin/pytest
+cd ..

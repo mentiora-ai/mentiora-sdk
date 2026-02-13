@@ -1,0 +1,12 @@
+set -e
+
+# TypeScript
+cd typescript
+npx lint-staged
+cd ..
+
+# Python
+cd python
+.venv/bin/ruff check .
+.venv/bin/ruff format --check .
+cd ..

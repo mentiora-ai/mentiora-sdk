@@ -1,0 +1,3 @@
+mentiora-sdk
+python-dotenv
+uuid-utils

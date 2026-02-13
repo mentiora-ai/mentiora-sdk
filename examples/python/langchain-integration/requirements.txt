@@ -1,0 +1,4 @@
+mentiora-sdk[langchain]
+python-dotenv
+uuid-utils
+langchain-openai

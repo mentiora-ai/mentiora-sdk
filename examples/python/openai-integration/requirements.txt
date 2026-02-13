@@ -1,0 +1,3 @@
+mentiora-sdk[openai]
+python-dotenv
+uuid-utils

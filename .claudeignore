@@ -1,0 +1,47 @@
+# Dependencies
+node_modules/
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Build outputs
+typescript/dist/
+python/dist/
+python/build/
+*.egg-info/
+.tsbuildinfo
+
+# Documentation site
+docs/build/
+docs/.docusaurus/
+docs/node_modules/
+
+# Test coverage and caches
+.coverage
+htmlcov/
+coverage/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+
+# Lock files (large, generated)
+package-lock.json
+pnpm-lock.yaml
+poetry.lock
+uv.lock
+
+# Session transcripts (large log files)
+*.jsonl
+
+# IDE and OS files
+.DS_Store
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Logs
+*.log
+npm-debug.log*
