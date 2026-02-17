@@ -11,7 +11,7 @@
  *   6. Error handling (ValidationError, NetworkError, streaming errors)
  */
 
-import { MentioraClient, NetworkError, ValidationError } from '@mentiora/sdk';
+import { MentioraClient, NetworkError, ValidationError } from '@mentiora.ai/sdk';
 import * as dotenv from 'dotenv';
 
 dotenv.config({ override: false });

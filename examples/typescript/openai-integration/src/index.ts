@@ -12,7 +12,7 @@
  *   npm start
  */
 
-import { MentioraClient, trackOpenAI } from '@mentiora/sdk';
+import { MentioraClient, trackOpenAI } from '@mentiora.ai/sdk';
 import * as dotenv from 'dotenv';
 import OpenAI from 'openai';
 import { v7 as uuidv7 } from 'uuid';

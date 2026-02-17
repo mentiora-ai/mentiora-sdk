@@ -11,7 +11,7 @@
  *   6. Flushing pending traces before exit
  */
 
-import { MentioraClient } from '@mentiora/sdk';
+import { MentioraClient } from '@mentiora.ai/sdk';
 import * as dotenv from 'dotenv';
 import { v7 as uuidv7 } from 'uuid';
 

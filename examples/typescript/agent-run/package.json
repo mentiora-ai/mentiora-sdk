@@ -8,7 +8,7 @@
     "dev": "tsx watch src/index.ts"
   },
   "dependencies": {
-    "@mentiora/sdk": "../../../typescript",
+    "@mentiora.ai/sdk": "../../../typescript",
     "dotenv": "^16.4.5"
   },
   "devDependencies": {

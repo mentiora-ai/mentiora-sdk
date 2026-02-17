@@ -8,7 +8,7 @@ importers:
 
   .:
     dependencies:
-      '@mentiora/sdk':
+      '@mentiora.ai/sdk':
         specifier: ../../../typescript
         version: link:../../../typescript
       dotenv:

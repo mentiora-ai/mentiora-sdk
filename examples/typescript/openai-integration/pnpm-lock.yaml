@@ -8,9 +8,9 @@ importers:
 
   .:
     dependencies:
-      '@mentiora/sdk':
-        specifier: file:../../../typescript
-        version: file:../../../typescript(openai@4.104.0)
+      '@mentiora.ai/sdk':
+        specifier: ../../../typescript
+        version: link:../../../typescript
       dotenv:
         specifier: ^16.4.5
         version: 16.6.1
@@ -188,18 +188,6 @@ packages:
     engines: {node: '>=18'}
     cpu: [x64]
     os: [win32]
-
-  '@mentiora/sdk@file:../../../typescript':
-    resolution: {directory: ../../../typescript, type: directory}
-    engines: {node: '>=20.0.0'}
-    peerDependencies:
-      '@langchain/core': '>=1.1.0'
-      openai: '>=6.0.0'
-    peerDependenciesMeta:
-      '@langchain/core':
-        optional: true
-      openai:
-        optional: true
 
   '@types/node-fetch@2.6.13':
     resolution: {integrity: sha512-QGpRVpzSaUs30JBSGPjOg4Uveu384erbHBoT1zeONvyCfwQxIkUshLAOqN/k9EjGviPRmWTTe6aH2qySWKTVSw==}
@@ -382,10 +370,6 @@ packages:
     resolution: {integrity: sha512-0/A9rDy9P7cJ+8w1c9WD9V//9Wj15Ce2MPz8Ri6032usz+NfePxx5AcN3bN+r6ZL6jEo066/yNYB3tn4pQEx+A==}
     hasBin: true
 
-  uuid@13.0.0:
-    resolution: {integrity: sha512-XQegIaBTVUjSHliKqcnFqYypAd4S+WCYt5NIeRs6w/UAry7z8Y9j5ZwRRL4kzq9U3sD6v+85er9FvkEaBpji2w==}
-    hasBin: true
-
   web-streams-polyfill@4.0.0-beta.3:
     resolution: {integrity: sha512-QW95TCTaHmsYfHDybGMwO5IJIM93I/6vTRk+daHTWFPhwh+C8Cg7j7XyKrwrj8Ib6vYXe0ocYNrmzY4xAAN6ug==}
     engines: {node: '>= 14'}
@@ -475,12 +459,6 @@ snapshots:
 
   '@esbuild/win32-x64@0.27.3':
     optional: true
-
-  '@mentiora/sdk@file:../../../typescript(openai@4.104.0)':
-    dependencies:
-      uuid: 13.0.0
-    optionalDependencies:
-      openai: 4.104.0
 
   '@types/node-fetch@2.6.13':
     dependencies:
@@ -674,8 +652,6 @@ snapshots:
   undici-types@6.21.0: {}
 
   uuid@11.1.0: {}
-
-  uuid@13.0.0: {}
 
   web-streams-polyfill@4.0.0-beta.3: {}
 
