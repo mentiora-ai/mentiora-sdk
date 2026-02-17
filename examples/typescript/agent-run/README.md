@@ -1,6 +1,6 @@
 # Agent Run — TypeScript
 
-A copy-paste-ready example demonstrating how to run custom agents via the [Mentiora SDK](https://github.com/periscoop/mentiora-sdk).
+A copy-paste-ready example demonstrating how to run custom agents via the [Mentiora SDK](https://github.com/mentiora-ai/mentiora-sdk).
 
 ## What this example demonstrates
 
@@ -104,30 +104,30 @@ Done! Check the Mentiora dashboard to view agent traces.
 
 You can identify which agent to run in two ways:
 
-| Parameter | Description |
-|---|---|
-| `tag` | A mutable label (e.g. `production`, `staging`). The platform resolves it to the latest agent revision with that tag. |
-| `agentId` | An immutable reference to a specific agent revision. Use this for pinned, reproducible calls. |
+| Parameter | Description                                                                                                          |
+| --------- | -------------------------------------------------------------------------------------------------------------------- |
+| `tag`     | A mutable label (e.g. `production`, `staging`). The platform resolves it to the latest agent revision with that tag. |
+| `agentId` | An immutable reference to a specific agent revision. Use this for pinned, reproducible calls.                        |
 
 You must provide either `tag` or `agentId`, but not both. Providing both will throw a `ValidationError`.
 
 ### Complete response vs Streaming
 
-| Method | Use case |
-|---|---|
-| `client.agents.run()` | Returns the full `AgentRunResult` once the agent finishes. Simple and easy to use. |
+| Method                   | Use case                                                                                                                     |
+| ------------------------ | ---------------------------------------------------------------------------------------------------------------------------- |
+| `client.agents.run()`    | Returns the full `AgentRunResult` once the agent finishes. Simple and easy to use.                                           |
 | `client.agents.stream()` | Returns an `AsyncIterable<AgentStreamEvent>`. Events arrive in real-time as the agent generates output — ideal for chat UIs. |
 
 ### Streaming events
 
-| Event type | Description |
-|---|---|
-| `agent_resolved` | Emitted once at the start. Contains `agentId`, `agentRevision`, and `threadId`. |
-| `output_text_delta` | A chunk of output text. Concatenate all deltas for the full response. |
-| `tool_call_delta` | A chunk of tool-call arguments (streaming in as JSON). |
-| `tool_call_result` | Emitted when a tool call completes. Contains `name` and `result`. |
-| `chat_completed` | Emitted once when the agent finishes. Contains final `status`. |
-| `error` | Emitted if the agent encounters an error. Contains `code` and `message`. |
+| Event type          | Description                                                                     |
+| ------------------- | ------------------------------------------------------------------------------- |
+| `agent_resolved`    | Emitted once at the start. Contains `agentId`, `agentRevision`, and `threadId`. |
+| `output_text_delta` | A chunk of output text. Concatenate all deltas for the full response.           |
+| `tool_call_delta`   | A chunk of tool-call arguments (streaming in as JSON).                          |
+| `tool_call_result`  | Emitted when a tool call completes. Contains `name` and `result`.               |
+| `chat_completed`    | Emitted once when the agent finishes. Contains final `status`.                  |
+| `error`             | Emitted if the agent encounters an error. Contains `code` and `message`.        |
 
 ### Multi-turn conversations
 
@@ -146,10 +146,10 @@ const turn2 = await client.agents.run({
 
 Agent calls throw exceptions (unlike `sendTrace` which returns result objects):
 
-| Error class | When it's thrown |
-|---|---|
-| `ValidationError` | Invalid input (empty message, missing tag/agentId) |
-| `NetworkError` | HTTP failure (invalid API key, server error, timeout). Has a `statusCode` property. |
+| Error class       | When it's thrown                                                                    |
+| ----------------- | ----------------------------------------------------------------------------------- |
+| `ValidationError` | Invalid input (empty message, missing tag/agentId)                                  |
+| `NetworkError`    | HTTP failure (invalid API key, server error, timeout). Has a `statusCode` property. |
 
 Always wrap agent calls in `try/catch`.
 
@@ -158,4 +158,4 @@ Always wrap agent calls in `try/catch`.
 - Try the **basic-tracing** example for manual trace instrumentation
 - Explore the **OpenAI plugin** (`trackOpenAI`) for automatic tracing of OpenAI API calls
 - Check the **LangChain plugin** (`MentioraTracingLangChain`) for callback-based tracing
-- Read the full [SDK documentation](https://github.com/periscoop/mentiora-sdk)
+- Read the full [SDK documentation](https://github.com/mentiora-ai/mentiora-sdk)
