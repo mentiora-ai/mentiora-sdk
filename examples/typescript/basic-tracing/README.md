@@ -1,6 +1,6 @@
 # Basic Tracing — TypeScript
 
-A copy-paste-ready example demonstrating manual trace instrumentation with the [Mentiora SDK](https://github.com/periscoop/mentiora-sdk).
+A copy-paste-ready example demonstrating manual trace instrumentation with the [Mentiora SDK](https://github.com/mentiora-ai/mentiora-sdk).
 
 ## What this example demonstrates
 
@@ -102,4 +102,4 @@ Set `parentSpanId` on a child span to the `spanId` of its parent. The Mentiora U
 
 - Explore the **OpenAI plugin** (`trackOpenAI`) for automatic tracing of OpenAI API calls
 - Check the **LangChain plugin** (`MentioraTracingLangChain`) for callback-based tracing
-- Read the full [SDK documentation](https://github.com/periscoop/mentiora-sdk)
+- Read the full [SDK documentation](https://github.com/mentiora-ai/mentiora-sdk)

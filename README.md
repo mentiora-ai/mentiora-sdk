@@ -8,7 +8,7 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-SDK-3178C6?logo=typescript&logoColor=white)](./typescript/)
 [![Python](https://img.shields.io/badge/Python-SDK-3776AB?logo=python&logoColor=white)](./python/)
 
-[Documentation](https://docs.mentiora.ai) • [Website](https://mentiora.ai) • [Issues](https://github.com/periscoop/mentiora-sdk/issues)
+[Documentation](https://docs.mentiora.ai) • [Website](https://mentiora.ai) • [Issues](https://github.com/mentiora-ai/mentiora-sdk/issues)
 
 </div>
 
@@ -166,11 +166,11 @@ mentiora-sdk/
 
 ## Contributing
 
-We welcome contributions! Please open an issue or pull request on [GitHub](https://github.com/periscoop/mentiora-sdk).
+We welcome contributions! Please open an issue or pull request on [GitHub](https://github.com/mentiora-ai/mentiora-sdk).
 
 ## Support
 
-- **Issues**: [GitHub Issues](https://github.com/periscoop/mentiora-sdk/issues)
+- **Issues**: [GitHub Issues](https://github.com/mentiora-ai/mentiora-sdk/issues)
 - **Documentation**: [docs.mentiora.ai](https://docs.mentiora.ai)
 
 ## License

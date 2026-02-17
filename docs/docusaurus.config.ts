@@ -15,7 +15,7 @@ const config: Config = {
   },
 
   // Set the production url of your site here
-  url: 'https://periscoop.github.io',
+  url: 'https://mentiora-ai.github.io',
   // Set the /<baseUrl>/ pathname under which your site is served
   // This site is served at the root path
   baseUrl: '/',
@@ -23,7 +23,7 @@ const config: Config = {
 
   // GitHub pages deployment config.
   // If you aren't using GitHub pages, you don't need these.
-  organizationName: 'periscoop',
+  organizationName: 'mentiora-ai',
   projectName: 'mentiora-sdk',
 
   onBrokenLinks: 'throw',
@@ -45,7 +45,7 @@ const config: Config = {
           sidebarPath: './sidebars.ts',
           // Please change this to your repo.
           // Remove this to remove the "edit this page" links.
-          // editUrl: 'https://github.com/periscoop/mentiora-sdk/tree/main/docs/',
+          // editUrl: 'https://github.com/mentiora-ai/mentiora-sdk/tree/main/docs/',
         },
         blog: false,
         theme: {
@@ -73,7 +73,7 @@ const config: Config = {
           label: 'Documentation',
         },
         {
-          href: 'https://github.com/periscoop/mentiora-sdk',
+          href: 'https://github.com/mentiora-ai/mentiora-sdk',
           label: 'GitHub',
           position: 'right',
         },
@@ -104,7 +104,7 @@ const config: Config = {
           items: [
             {
               label: 'GitHub',
-              href: 'https://github.com/periscoop/mentiora-sdk',
+              href: 'https://github.com/mentiora-ai/mentiora-sdk',
             },
           ],
         },

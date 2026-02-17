@@ -1,6 +1,6 @@
 # LangChain Integration — TypeScript
 
-A copy-paste-ready example demonstrating automatic tracing of LangChain operations with the [Mentiora SDK](https://github.com/periscoop/mentiora-sdk).
+A copy-paste-ready example demonstrating automatic tracing of LangChain operations with the [Mentiora SDK](https://github.com/mentiora-ai/mentiora-sdk).
 
 ## What this example demonstrates
 
@@ -101,4 +101,4 @@ Open the Mentiora dashboard to view your traces: https://platform.mentiora.ai
 
 - Explore the **basic tracing** example for manual trace instrumentation
 - Check the **OpenAI plugin** (`trackOpenAI`) for automatic tracing of direct OpenAI API calls
-- Read the full [SDK documentation](https://github.com/periscoop/mentiora-sdk)
+- Read the full [SDK documentation](https://github.com/mentiora-ai/mentiora-sdk)

@@ -331,7 +331,7 @@ response = await tracked_client.chat.completions.create(
 )
 ```
 
-> For a complete runnable example, see [`examples/python/openai-integration`](https://github.com/periscoop/mentiora-sdk/tree/main/examples/python/openai-integration).
+> For a complete runnable example, see [`examples/python/openai-integration`](https://github.com/mentiora-ai/mentiora-sdk/tree/main/examples/python/openai-integration).
 
 The OpenAI plugin traces chat completions (via `chat.completions.create`); embeddings and image calls are not currently traced.
 
@@ -455,7 +455,7 @@ result2 = await chain2.ainvoke({'question': result1.content}, {'callbacks': [cal
 # Both operations are grouped together in the platform by thread_id
 ```
 
-> For a complete runnable example, see [`examples/python/langchain-integration`](https://github.com/periscoop/mentiora-sdk/tree/main/examples/python/langchain-integration).
+> For a complete runnable example, see [`examples/python/langchain-integration`](https://github.com/mentiora-ai/mentiora-sdk/tree/main/examples/python/langchain-integration).
 
 The callback handler automatically traces:
 - LLM calls (with token usage)

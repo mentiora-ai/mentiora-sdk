@@ -257,7 +257,7 @@ const response = await trackedClient.chat.completions.create({
 });
 ```
 
-> For a complete runnable example, see [`examples/typescript/openai-integration`](https://github.com/periscoop/mentiora-sdk/tree/main/examples/typescript/openai-integration).
+> For a complete runnable example, see [`examples/typescript/openai-integration`](https://github.com/mentiora-ai/mentiora-sdk/tree/main/examples/typescript/openai-integration).
 
 The OpenAI plugin traces chat completions (via `chat.completions.create`); embeddings and image calls are not currently traced.
 
@@ -376,7 +376,7 @@ const result2 = await chain2.invoke({ question: result1.content }, { callbacks: 
 // Both operations are grouped together in the platform by threadId
 ```
 
-> For a complete runnable example, see [`examples/typescript/langchain-integration`](https://github.com/periscoop/mentiora-sdk/tree/main/examples/typescript/langchain-integration).
+> For a complete runnable example, see [`examples/typescript/langchain-integration`](https://github.com/mentiora-ai/mentiora-sdk/tree/main/examples/typescript/langchain-integration).
 
 The callback handler automatically traces:
 - LLM calls (with token usage)

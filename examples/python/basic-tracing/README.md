@@ -1,6 +1,6 @@
 # Basic Tracing — Python
 
-A copy-paste-ready example demonstrating manual trace instrumentation with the [Mentiora SDK](https://github.com/periscoop/mentiora-sdk).
+A copy-paste-ready example demonstrating manual trace instrumentation with the [Mentiora SDK](https://github.com/mentiora-ai/mentiora-sdk).
 
 ## What this example demonstrates
 
@@ -121,4 +121,4 @@ Both methods return a `SendTraceResult` with the same fields. Choose based on wh
 
 - Explore the **OpenAI plugin** (`track_openai`) for automatic tracing of OpenAI API calls
 - Check the **LangChain plugin** (`MentioraTracingLangChain`) for callback-based tracing
-- Read the full [SDK documentation](https://github.com/periscoop/mentiora-sdk)
+- Read the full [SDK documentation](https://github.com/mentiora-ai/mentiora-sdk)

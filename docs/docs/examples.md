@@ -37,7 +37,7 @@ const result = await client.tracing.sendTrace({
 });
 ```
 
-[Full source: `examples/typescript/basic-tracing`](https://github.com/periscoop/mentiora-sdk/tree/main/examples/typescript/basic-tracing)
+[Full source: `examples/typescript/basic-tracing`](https://github.com/mentiora-ai/mentiora-sdk/tree/main/examples/typescript/basic-tracing)
 
 ### Python
 
@@ -65,7 +65,7 @@ result = client.tracing.send_trace(TraceEvent(
 ))
 ```
 
-[Full source: `examples/python/basic-tracing`](https://github.com/periscoop/mentiora-sdk/tree/main/examples/python/basic-tracing)
+[Full source: `examples/python/basic-tracing`](https://github.com/mentiora-ai/mentiora-sdk/tree/main/examples/python/basic-tracing)
 
 ## OpenAI Integration {#openai-integration}
 
@@ -92,7 +92,7 @@ const response = await trackedClient.chat.completions.create({
 });
 ```
 
-[Full source: `examples/typescript/openai-integration`](https://github.com/periscoop/mentiora-sdk/tree/main/examples/typescript/openai-integration)
+[Full source: `examples/typescript/openai-integration`](https://github.com/mentiora-ai/mentiora-sdk/tree/main/examples/typescript/openai-integration)
 
 ### Python {#openai-integration-python}
 
@@ -115,7 +115,7 @@ response = await tracked_client.chat.completions.create(
 )
 ```
 
-[Full source: `examples/python/openai-integration`](https://github.com/periscoop/mentiora-sdk/tree/main/examples/python/openai-integration)
+[Full source: `examples/python/openai-integration`](https://github.com/mentiora-ai/mentiora-sdk/tree/main/examples/python/openai-integration)
 
 ## LangChain Integration {#langchain-integration}
 
@@ -141,7 +141,7 @@ const chain = prompt.pipe(llm);
 const result = await chain.invoke({ topic: 'AI' }, { callbacks: [callback] });
 ```
 
-[Full source: `examples/typescript/langchain-integration`](https://github.com/periscoop/mentiora-sdk/tree/main/examples/typescript/langchain-integration)
+[Full source: `examples/typescript/langchain-integration`](https://github.com/mentiora-ai/mentiora-sdk/tree/main/examples/typescript/langchain-integration)
 
 ### Python {#langchain-integration-python}
 
@@ -163,7 +163,7 @@ chain = prompt | llm
 result = await chain.ainvoke({'topic': 'AI'}, {'callbacks': [callback]})
 ```
 
-[Full source: `examples/python/langchain-integration`](https://github.com/periscoop/mentiora-sdk/tree/main/examples/python/langchain-integration)
+[Full source: `examples/python/langchain-integration`](https://github.com/mentiora-ai/mentiora-sdk/tree/main/examples/python/langchain-integration)
 
 ## Running an Example
 

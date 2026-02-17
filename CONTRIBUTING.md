@@ -185,7 +185,7 @@ MentioraClient (entry point, config validation)
 
 ## Questions or Need Help?
 
-- Open a [GitHub Issue](https://github.com/periscoop/mentiora-sdk/issues)
+- Open a [GitHub Issue](https://github.com/mentiora-ai/mentiora-sdk/issues)
 - Check existing issues and discussions
 
 ## License

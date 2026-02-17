@@ -3,7 +3,7 @@ requires = ['setuptools>=68.0', 'wheel']
 build-backend = 'setuptools.build_meta'
 
 [project]
-name = 'mentiora-sdk'
+name = 'mentiora-ai-sdk'
 version = '0.1.0'
 description = 'Official SDK for the Mentiora platform - AI observability and tracing'
 readme = 'README.md'
@@ -58,10 +58,10 @@ dev = [
 ]
 
 [project.urls]
-Homepage = 'https://github.com/periscoop/mentiora-sdk'
-Repository = 'https://github.com/periscoop/mentiora-sdk'
+Homepage = 'https://github.com/mentiora-ai/mentiora-sdk'
+Repository = 'https://github.com/mentiora-ai/mentiora-sdk'
 Documentation = 'https://docs.mentiora.ai/python/installation'
-Issues = 'https://github.com/periscoop/mentiora-sdk/issues'
+Issues = 'https://github.com/mentiora-ai/mentiora-sdk/issues'
 
 [tool.setuptools]
 package-dir = {'' = 'src'}

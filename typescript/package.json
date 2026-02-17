@@ -1,5 +1,5 @@
 {
-  "name": "@mentiora/sdk",
+  "name": "@mentiora.ai/sdk",
   "version": "0.1.0",
   "description": "Official SDK for the Mentiora platform - AI observability and tracing",
   "type": "module",
@@ -42,13 +42,13 @@
   "publishConfig": {
     "access": "public"
   },
-  "homepage": "https://github.com/periscoop/mentiora-sdk/tree/main/typescript#readme",
+  "homepage": "https://github.com/mentiora-ai/mentiora-sdk/tree/main/typescript#readme",
   "bugs": {
-    "url": "https://github.com/periscoop/mentiora-sdk/issues"
+    "url": "https://github.com/mentiora-ai/mentiora-sdk/issues"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/periscoop/mentiora-sdk.git",
+    "url": "https://github.com/mentiora-ai/mentiora-sdk.git",
     "directory": "typescript"
   },
   "scripts": {
