@@ -5,12 +5,13 @@ import importlib.metadata
 import logging
 import random
 import time
-from collections.abc import Awaitable, Callable
+from collections.abc import AsyncIterator, Awaitable, Callable, Iterator
 from typing import Any
 
 import httpx
 
 from .errors import NetworkError
+from .sse import SSEEvent, parse_sse_lines, parse_sse_lines_async
 from .types import TraceEvent
 
 logger = logging.getLogger('mentiora.sdk')
@@ -141,13 +142,14 @@ class HttpClient:
 
     def _execute_with_retry(
         self,
-        event: TraceEvent,
         url: str,
         body: dict[str, Any],
         http_call_fn: Callable[[str, dict[str, Any]], httpx.Response],
         sleep_fn: Callable[[float], None],
+        debug_context: dict[str, str] | None = None,
     ) -> HttpResponse:
         """Execute HTTP call with retry logic (sync)."""
+        ctx = debug_context or {}
         last_error: Exception | None = None
         max_attempts = self.retries + 1
 
@@ -164,18 +166,18 @@ class HttpClient:
 
                 if self.debug:
                     logger.debug(
-                        '[Mentiora SDK] Response: status=%s trace_id=%s',
+                        '[Mentiora SDK] Response: status=%s context=%s',
                         response.status_code,
-                        event.trace_id,
+                        ctx,
                     )
 
                 # Retry on 429 rate limiting
                 if response.status_code == 429:
                     if self.debug:
                         logger.warning(
-                            '[Mentiora SDK] Rate limited (429), retrying: attempt=%s trace_id=%s',
+                            '[Mentiora SDK] Rate limited (429), retrying: attempt=%s context=%s',
                             attempt + 1,
-                            event.trace_id,
+                            ctx,
                         )
                     if attempt < max_attempts - 1:
                         retry_after = response.headers.get('retry-after')
@@ -200,10 +202,10 @@ class HttpClient:
                 if self._should_retry(response.status_code):
                     if self.debug:
                         logger.warning(
-                            '[Mentiora SDK] Server error (retryable): status=%s attempt=%s trace_id=%s',
+                            '[Mentiora SDK] Server error (retryable): status=%s attempt=%s context=%s',
                             response.status_code,
                             attempt + 1,
-                            event.trace_id,
+                            ctx,
                         )
                     if attempt < max_attempts - 1:
                         delay = self._calculate_backoff(attempt)
@@ -216,9 +218,8 @@ class HttpClient:
 
                 if self.debug:
                     logger.debug(
-                        '[Mentiora SDK] Trace sent successfully: trace_id=%s span_id=%s',
-                        event.trace_id,
-                        event.span_id,
+                        '[Mentiora SDK] Request successful: context=%s',
+                        ctx,
                     )
 
                 response_body = response.json() if response.content else {}
@@ -230,9 +231,9 @@ class HttpClient:
                 last_error = e
                 if self.debug:
                     logger.debug(
-                        '[Mentiora SDK] Network error: attempt=%s trace_id=%s error=%s',
+                        '[Mentiora SDK] Network error: attempt=%s context=%s error=%s',
                         attempt + 1,
-                        event.trace_id,
+                        ctx,
                         e,
                     )
                 if attempt < max_attempts - 1:
@@ -245,9 +246,9 @@ class HttpClient:
                 last_error = e
                 if self.debug:
                     logger.debug(
-                        '[Mentiora SDK] Transport error: attempt=%s trace_id=%s error=%s',
+                        '[Mentiora SDK] Transport error: attempt=%s context=%s error=%s',
                         attempt + 1,
-                        event.trace_id,
+                        ctx,
                         e,
                     )
                 if attempt < max_attempts - 1:
@@ -263,13 +264,14 @@ class HttpClient:
 
     async def _execute_with_retry_async(
         self,
-        event: TraceEvent,
         url: str,
         body: dict[str, Any],
         http_call_fn: Callable[[str, dict[str, Any]], Awaitable[httpx.Response]],
         sleep_fn: Callable[[float], Awaitable[None]],
+        debug_context: dict[str, str] | None = None,
     ) -> HttpResponse:
         """Execute HTTP call with retry logic (async)."""
+        ctx = debug_context or {}
         last_error: Exception | None = None
         max_attempts = self.retries + 1
 
@@ -286,18 +288,18 @@ class HttpClient:
 
                 if self.debug:
                     logger.debug(
-                        '[Mentiora SDK] Response: status=%s trace_id=%s',
+                        '[Mentiora SDK] Response: status=%s context=%s',
                         response.status_code,
-                        event.trace_id,
+                        ctx,
                     )
 
                 # Retry on 429 rate limiting
                 if response.status_code == 429:
                     if self.debug:
                         logger.warning(
-                            '[Mentiora SDK] Rate limited (429), retrying: attempt=%s trace_id=%s',
+                            '[Mentiora SDK] Rate limited (429), retrying: attempt=%s context=%s',
                             attempt + 1,
-                            event.trace_id,
+                            ctx,
                         )
                     if attempt < max_attempts - 1:
                         retry_after = response.headers.get('retry-after')
@@ -322,10 +324,10 @@ class HttpClient:
                 if self._should_retry(response.status_code):
                     if self.debug:
                         logger.warning(
-                            '[Mentiora SDK] Server error (retryable): status=%s attempt=%s trace_id=%s',
+                            '[Mentiora SDK] Server error (retryable): status=%s attempt=%s context=%s',
                             response.status_code,
                             attempt + 1,
-                            event.trace_id,
+                            ctx,
                         )
                     if attempt < max_attempts - 1:
                         delay = self._calculate_backoff(attempt)
@@ -338,9 +340,8 @@ class HttpClient:
 
                 if self.debug:
                     logger.debug(
-                        '[Mentiora SDK] Trace sent successfully: trace_id=%s span_id=%s',
-                        event.trace_id,
-                        event.span_id,
+                        '[Mentiora SDK] Request successful: context=%s',
+                        ctx,
                     )
 
                 response_body = response.json() if response.content else {}
@@ -352,9 +353,9 @@ class HttpClient:
                 last_error = e
                 if self.debug:
                     logger.debug(
-                        '[Mentiora SDK] Network error: attempt=%s trace_id=%s error=%s',
+                        '[Mentiora SDK] Network error: attempt=%s context=%s error=%s',
                         attempt + 1,
-                        event.trace_id,
+                        ctx,
                         e,
                     )
                 if attempt < max_attempts - 1:
@@ -367,9 +368,9 @@ class HttpClient:
                 last_error = e
                 if self.debug:
                     logger.debug(
-                        '[Mentiora SDK] Transport error: attempt=%s trace_id=%s error=%s',
+                        '[Mentiora SDK] Transport error: attempt=%s context=%s error=%s',
                         attempt + 1,
-                        event.trace_id,
+                        ctx,
                         e,
                     )
                 if attempt < max_attempts - 1:
@@ -411,7 +412,16 @@ class HttpClient:
         def http_call(url: str, body: dict[str, Any]) -> httpx.Response:
             return self._get_client().post(url, json=body)
 
-        return self._execute_with_retry(event, url, body, http_call, time.sleep)
+        return self._execute_with_retry(
+            url,
+            body,
+            http_call,
+            time.sleep,
+            {
+                'trace_id': event.trace_id,
+                'span_id': event.span_id,
+            },
+        )
 
     async def send_trace_async(self, event: TraceEvent) -> HttpResponse:
         """Send trace event to the API with retry logic (async).
@@ -441,4 +451,158 @@ class HttpClient:
         async def http_call(url: str, body: dict[str, Any]) -> httpx.Response:
             return await self._get_async_client().post(url, json=body)
 
-        return await self._execute_with_retry_async(event, url, body, http_call, asyncio.sleep)
+        return await self._execute_with_retry_async(
+            url,
+            body,
+            http_call,
+            asyncio.sleep,
+            {
+                'trace_id': event.trace_id,
+                'span_id': event.span_id,
+            },
+        )
+
+    def post(self, path: str, body: dict[str, Any]) -> HttpResponse:
+        """Send a POST request with retry logic (sync).
+
+        Args:
+            path: API path (e.g. ``'/api/v1/agents/invoke'``).
+            body: JSON-serializable request body.
+
+        Returns:
+            HTTP response with status code and parsed body.
+
+        Raises:
+            NetworkError: On timeout, HTTP 4xx/5xx, or network failure after retries.
+        """
+        if self.debug:
+            logger.debug('[Mentiora SDK] POST %s', path)
+
+        def http_call(url: str, body: dict[str, Any]) -> httpx.Response:
+            return self._get_client().post(url, json=body)
+
+        return self._execute_with_retry(
+            f'{self.base_url}{path}',
+            body,
+            http_call,
+            time.sleep,
+            {'path': path},
+        )
+
+    async def post_async(self, path: str, body: dict[str, Any]) -> HttpResponse:
+        """Send a POST request with retry logic (async).
+
+        Args:
+            path: API path (e.g. ``'/api/v1/agents/invoke'``).
+            body: JSON-serializable request body.
+
+        Returns:
+            HTTP response with status code and parsed body.
+
+        Raises:
+            NetworkError: On timeout, HTTP 4xx/5xx, or network failure after retries.
+        """
+        if self.debug:
+            logger.debug('[Mentiora SDK] POST (async) %s', path)
+
+        async def http_call(url: str, body: dict[str, Any]) -> httpx.Response:
+            return await self._get_async_client().post(url, json=body)
+
+        return await self._execute_with_retry_async(
+            f'{self.base_url}{path}',
+            body,
+            http_call,
+            asyncio.sleep,
+            {'path': path},
+        )
+
+    # ---- Streaming POST (SSE) ----
+
+    _SSE_HEADERS: dict[str, str] = {'Accept': 'text/event-stream'}
+
+    def post_stream(self, path: str, body: dict[str, Any]) -> Iterator[SSEEvent]:
+        """Send a streaming POST request and yield parsed SSE events (sync).
+
+        No retry logic — the stream is opened once. If the server returns an
+        error status code (>= 400) a ``NetworkError`` is raised.
+
+        Args:
+            path: API path.
+            body: JSON-serializable request body.
+
+        Yields:
+            Parsed ``SSEEvent`` objects.
+
+        Raises:
+            NetworkError: On timeout, HTTP errors, or network failure.
+        """
+        url = f'{self.base_url}{path}'
+        if self.debug:
+            logger.debug('[Mentiora SDK] POST stream %s', path)
+
+        try:
+            with self._get_client().stream(
+                'POST',
+                url,
+                json=body,
+                headers=self._SSE_HEADERS,
+                timeout=self.timeout,
+            ) as response:
+                if response.status_code >= 400:
+                    raise NetworkError(
+                        f'Stream error: {response.status_code} {response.reason_phrase}',
+                        response.status_code,
+                    )
+                yield from parse_sse_lines(response.iter_lines())
+        except httpx.TimeoutException as e:
+            raise NetworkError(f'Request timeout after {int(self.timeout * 1000)}ms') from e
+        except httpx.NetworkError as e:
+            raise NetworkError(str(e)) from e
+        except NetworkError:
+            raise
+        except httpx.TransportError as e:
+            raise NetworkError(str(e)) from e
+
+    async def post_stream_async(self, path: str, body: dict[str, Any]) -> AsyncIterator[SSEEvent]:
+        """Send a streaming POST request and yield parsed SSE events (async).
+
+        No retry logic — the stream is opened once. If the server returns an
+        error status code (>= 400) a ``NetworkError`` is raised.
+
+        Args:
+            path: API path.
+            body: JSON-serializable request body.
+
+        Yields:
+            Parsed ``SSEEvent`` objects.
+
+        Raises:
+            NetworkError: On timeout, HTTP errors, or network failure.
+        """
+        url = f'{self.base_url}{path}'
+        if self.debug:
+            logger.debug('[Mentiora SDK] POST stream (async) %s', path)
+
+        try:
+            async with self._get_async_client().stream(
+                'POST',
+                url,
+                json=body,
+                headers=self._SSE_HEADERS,
+                timeout=self.timeout,
+            ) as response:
+                if response.status_code >= 400:
+                    raise NetworkError(
+                        f'Stream error: {response.status_code} {response.reason_phrase}',
+                        response.status_code,
+                    )
+                async for event in parse_sse_lines_async(response.aiter_lines()):
+                    yield event
+        except httpx.TimeoutException as e:
+            raise NetworkError(f'Request timeout after {int(self.timeout * 1000)}ms') from e
+        except httpx.NetworkError as e:
+            raise NetworkError(str(e)) from e
+        except NetworkError:
+            raise
+        except httpx.TransportError as e:
+            raise NetworkError(str(e)) from e

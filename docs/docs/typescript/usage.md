@@ -217,6 +217,138 @@ For configuration or validation errors, the SDK throws:
 - `ValidationError` - Invalid trace event data
 - `NetworkError` - Network/HTTP errors (with status code)
 
+## Agents
+
+Run AI agents hosted on the Mentiora platform. The agents API supports both complete (non-streaming) and streaming modes.
+
+**Note:** Unlike tracing methods (which return `SendTraceResult` and never throw), agent methods **throw exceptions** on errors (`ValidationError`, `NetworkError`).
+
+### Quick Start
+
+```typescript
+import { MentioraClient } from '@mentiora/sdk';
+
+const client = new MentioraClient({ apiKey: process.env.MENTIORA_API_KEY });
+
+const result = await client.agents.run({
+  tag: 'production',
+  message: 'What is the weather today?',
+});
+console.log(result.output);
+```
+
+### Streaming
+
+Stream agent responses in real time using Server-Sent Events:
+
+```typescript
+for await (const event of client.agents.stream({
+  tag: 'production',
+  message: 'Write a poem about TypeScript.',
+})) {
+  switch (event.type) {
+    case 'output_text_delta':
+      process.stdout.write(event.delta);
+      break;
+    case 'chat_completed':
+      console.log(`\nDone: ${event.status}`);
+      break;
+    case 'error':
+      console.error(`\nError: ${event.message}`);
+      break;
+  }
+}
+```
+
+### Multi-turn Conversations
+
+Use `threadId` to continue conversations across multiple agent calls:
+
+```typescript
+// First turn
+const result1 = await client.agents.run({
+  tag: 'production',
+  message: 'What is TypeScript?',
+});
+const threadId = result1.threadId; // Save the thread ID
+
+// Continue the conversation
+const result2 = await client.agents.run({
+  tag: 'production',
+  message: 'What are its main benefits?',
+  threadId, // Same thread continues the conversation
+});
+```
+
+### Agent Resolution
+
+Identify which agent to run using either a **tag** or **agentId** (but not both):
+
+```typescript
+// By tag (recommended for production)
+const result = await client.agents.run({
+  tag: 'production',
+  message: 'Hello',
+});
+
+// By agent ID with specific revision
+const result2 = await client.agents.run({
+  agentId: 'agent-abc-123',
+  revision: 5,
+  message: 'Hello',
+});
+```
+
+### End-User Tracking
+
+Pass `endUserId` to associate agent calls with specific end-users:
+
+```typescript
+const result = await client.agents.run({
+  tag: 'production',
+  message: 'Hello',
+  endUserId: 'user-123',
+});
+```
+
+### Retry Behavior
+
+- **Non-streaming** (`run()`): Retries up to 3 times on 5xx errors and rate limits (429), with exponential backoff and jitter.
+- **Streaming** (`stream()`): **No retry** — the stream is opened once. If the connection fails mid-stream, a `NetworkError` is raised. Implement your own retry logic around the stream call if needed.
+
+### Error Handling
+
+Agent methods throw exceptions instead of returning error results:
+
+```typescript
+import { ValidationError, NetworkError } from '@mentiora/sdk';
+
+try {
+  const result = await client.agents.run({
+    tag: 'production',
+    message: 'Hello',
+  });
+  console.log(result.output);
+} catch (error) {
+  if (error instanceof ValidationError) {
+    console.error(`Invalid parameters: ${error.message}`);
+  } else if (error instanceof NetworkError) {
+    console.error(`Network error (status ${error.statusCode}): ${error.message}`);
+  }
+}
+```
+
+For streaming, an `AgentErrorEvent` is yielded when the server reports an error, and the stream stops automatically:
+
+```typescript
+for await (const event of client.agents.stream(params)) {
+  if (event.type === 'error') {
+    console.error(`Agent error [${event.code}]: ${event.message}`);
+    break;
+  }
+}
+```
+
 ## Plugins
 
 The SDK provides plugins for automatic tracing of popular frameworks.

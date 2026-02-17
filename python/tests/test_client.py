@@ -4,7 +4,8 @@ import warnings
 
 import pytest
 
-from mentiora import MentioraClient
+from mentiora import AgentRunParams, MentioraClient
+from mentiora.agents.client import AgentsClient
 from mentiora.errors import ConfigurationError
 from mentiora.types import MentioraConfig
 
@@ -101,3 +102,16 @@ def test_client_config_options():
     assert client._http_client.retries == 1
     assert client._http_client.timeout == 5.0  # 5000ms → 5.0s (httpx uses seconds)
     client.close()
+
+
+def test_client_has_agents_property(mentiora_config: MentioraConfig):
+    """Test that client.agents is an AgentsClient instance."""
+    client = MentioraClient(mentiora_config)
+    assert isinstance(client.agents, AgentsClient)
+    client.close()
+
+
+def test_top_level_agent_imports():
+    """Test that agent types are importable from the top-level mentiora package."""
+    # This verifies __init__.py exports are correct
+    assert AgentRunParams is not None

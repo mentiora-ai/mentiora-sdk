@@ -5,6 +5,7 @@
  * through namespaced properties (e.g., client.tracing).
  */
 
+import { AgentsClient } from './agents';
 import { ConfigurationError } from './errors';
 import { HttpClient } from './http';
 import { TracingClient } from './tracing/client';
@@ -20,6 +21,7 @@ const DEFAULT_BASE_URL = 'https://platform.mentiora.ai';
  */
 export class MentioraClient {
   public readonly tracing: TracingClient;
+  public readonly agents: AgentsClient;
   public readonly debug: boolean;
 
   private readonly httpClient: HttpClient;
@@ -48,6 +50,7 @@ export class MentioraClient {
 
     // Initialize feature clients
     this.tracing = new TracingClient(this.httpClient);
+    this.agents = new AgentsClient(this.httpClient);
   }
 
   /**

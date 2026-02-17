@@ -36,6 +36,14 @@ Access to tracing functionality.
 client.tracing: TracingClient
 ```
 
+#### `agents`
+
+Access to agent execution functionality.
+
+```python
+client.agents: AgentsClient
+```
+
 ### Methods
 
 #### `close() -> None`
@@ -227,6 +235,251 @@ class MentioraError(Exception):
     message: str
     code: str
     name: str
+```
+
+## AgentsClient
+
+Client for running agents via the Mentiora API.
+
+**Note:** Unlike tracing methods (which return `SendTraceResult` and never throw), agent methods **throw exceptions** on errors (`ValidationError`, `NetworkError`).
+
+### Methods
+
+#### `run(params: AgentRunParams) -> AgentRunResult`
+
+Run an agent synchronously and return the complete result.
+
+**Parameters:**
+
+- `params: AgentRunParams` - Agent run parameters
+
+**Returns:** `AgentRunResult`
+
+**Raises:** `ValidationError`, `NetworkError`
+
+**Example:**
+
+```python
+from mentiora import AgentRunParams
+
+result = client.agents.run(AgentRunParams(
+    tag='production',
+    message='What is the weather today?',
+))
+print(result.output)
+```
+
+#### `run_async(params: AgentRunParams) -> AgentRunResult`
+
+Run an agent asynchronously and return the complete result.
+
+**Parameters:**
+
+- `params: AgentRunParams` - Agent run parameters
+
+**Returns:** `AgentRunResult`
+
+**Raises:** `ValidationError`, `NetworkError`
+
+**Example:**
+
+```python
+result = await client.agents.run_async(AgentRunParams(
+    tag='production',
+    message='What is the weather today?',
+))
+print(result.output)
+```
+
+#### `stream(params: AgentRunParams) -> Iterator[AgentStreamEvent]`
+
+Run an agent with streaming (synchronous). Yields typed events as they arrive.
+
+**Parameters:**
+
+- `params: AgentRunParams` - Agent run parameters
+
+**Yields:** `AgentStreamEvent` objects
+
+**Raises:** `ValidationError`, `NetworkError`
+
+**Example:**
+
+```python
+for event in client.agents.stream(AgentRunParams(
+    tag='production',
+    message='Write a poem about Python.',
+)):
+    if event.type == 'output_text_delta':
+        print(event.delta, end='', flush=True)
+    elif event.type == 'error':
+        print(f'Error: {event.message}')
+```
+
+#### `stream_async(params: AgentRunParams) -> AsyncIterator[AgentStreamEvent]`
+
+Run an agent with streaming (asynchronous). Yields typed events as they arrive.
+
+**Parameters:**
+
+- `params: AgentRunParams` - Agent run parameters
+
+**Yields:** `AgentStreamEvent` objects
+
+**Raises:** `ValidationError`, `NetworkError`
+
+**Example:**
+
+```python
+async for event in client.agents.stream_async(AgentRunParams(
+    tag='production',
+    message='Write a poem about Python.',
+)):
+    if event.type == 'output_text_delta':
+        print(event.delta, end='', flush=True)
+    elif event.type == 'error':
+        print(f'Error: {event.message}')
+```
+
+## Agent Types
+
+### AgentRunParams
+
+```python
+class AgentRunParams:
+    tag: str | None             # Tag name to resolve agent (e.g. 'production')
+    agent_id: str | None        # Explicit agent ID (alternative to tag)
+    revision: int | None        # Explicit revision number (used with agent_id)
+    message: str                # User message to send (required)
+    thread_id: str | None       # Thread ID for multi-turn conversations
+    model_id: str | None        # Override the agent's default model
+    model_params: ModelParams | None  # Override model parameters
+    end_user_id: str | None     # End-user identifier for tracking
+    metadata: dict[str, Any] | None   # Arbitrary metadata
+```
+
+**Validation rules:**
+- `message` is required and cannot be empty
+- Either `tag` or `agent_id` must be provided, but not both
+
+### ModelParams
+
+```python
+class ModelParams:
+    temperature: float | None
+    max_tokens: int | None
+    seed: int | None
+```
+
+### AgentRunResult
+
+```python
+class AgentRunResult:
+    thread_id: str              # Thread ID for the conversation
+    trace_id: str | None        # Trace ID for observability
+    agent_id: str               # Resolved agent ID
+    agent_revision: int         # Resolved agent revision
+    agent_tag: str | None       # Resolved agent tag (if applicable)
+    output: str                 # Agent output text
+    tool_calls: list[AgentToolCall]  # Tool calls made during execution
+    status: 'completed' | 'failed'   # Execution status
+    usage: dict[str, int] | None     # Token usage stats
+```
+
+### AgentToolCall
+
+```python
+class AgentToolCall:
+    tool_call_id: str
+    name: str
+    arguments: Any
+    result: Any | None
+```
+
+### AgentStreamEvent
+
+Union type of all possible streaming events:
+
+```python
+AgentStreamEvent = (
+    AgentResolvedEvent
+    | OutputTextDeltaEvent
+    | ToolCallDeltaEvent
+    | ToolCallResultEvent
+    | ChatCompletedEvent
+    | AgentErrorEvent
+)
+```
+
+### AgentResolvedEvent
+
+Emitted once at stream start with resolved agent metadata.
+
+```python
+class AgentResolvedEvent:
+    type: 'agent_resolved'
+    agent_id: str
+    agent_revision: int
+    agent_tag: str | None
+    thread_id: str
+```
+
+### OutputTextDeltaEvent
+
+Streaming text chunk from the agent.
+
+```python
+class OutputTextDeltaEvent:
+    type: 'output_text_delta'
+    delta: str
+```
+
+### ToolCallDeltaEvent
+
+Streaming tool call argument chunk.
+
+```python
+class ToolCallDeltaEvent:
+    type: 'tool_call_delta'
+    tool_call_id: str
+    name: str
+    arguments_delta: str
+```
+
+### ToolCallResultEvent
+
+Completed tool call with result.
+
+```python
+class ToolCallResultEvent:
+    type: 'tool_call_result'
+    tool_call_id: str
+    name: str
+    arguments: Any
+    result: Any
+```
+
+### ChatCompletedEvent
+
+Emitted when agent execution completes.
+
+```python
+class ChatCompletedEvent:
+    type: 'chat_completed'
+    thread_id: str
+    status: 'completed' | 'failed'
+    output: str
+```
+
+### AgentErrorEvent
+
+Error event from the agent backend. Streaming stops after this event.
+
+```python
+class AgentErrorEvent:
+    type: 'error'
+    code: str
+    message: str
 ```
 
 ## Plugins

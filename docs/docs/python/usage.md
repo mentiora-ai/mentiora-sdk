@@ -289,6 +289,146 @@ For configuration or validation errors, the SDK raises:
 - `ValidationError` - Invalid trace event data
 - `NetworkError` - Network/HTTP errors (with status code)
 
+## Agents
+
+Run AI agents hosted on the Mentiora platform. The agents API supports both synchronous (complete response) and streaming modes.
+
+**Note:** Unlike tracing methods (which return `SendTraceResult` and never throw), agent methods **throw exceptions** on errors (`ValidationError`, `NetworkError`).
+
+### Quick Start
+
+```python
+from mentiora import MentioraClient, MentioraConfig, AgentRunParams
+
+client = MentioraClient(MentioraConfig(api_key=os.getenv('MENTIORA_API_KEY')))
+
+result = await client.agents.run_async(AgentRunParams(
+    tag='production',
+    message='What is the weather today?',
+))
+print(result.output)
+```
+
+### Streaming
+
+Stream agent responses in real time using Server-Sent Events:
+
+**Async (recommended):**
+
+```python
+from mentiora import AgentRunParams
+
+async for event in client.agents.stream_async(AgentRunParams(
+    tag='production',
+    message='Write a poem about Python.',
+)):
+    if event.type == 'output_text_delta':
+        print(event.delta, end='', flush=True)
+    elif event.type == 'chat_completed':
+        print(f'\nDone: {event.status}')
+    elif event.type == 'error':
+        print(f'\nError: {event.message}')
+```
+
+**Sync:**
+
+```python
+for event in client.agents.stream(AgentRunParams(
+    tag='production',
+    message='Write a poem about Python.',
+)):
+    if event.type == 'output_text_delta':
+        print(event.delta, end='', flush=True)
+    elif event.type == 'chat_completed':
+        print(f'\nDone: {event.status}')
+    elif event.type == 'error':
+        print(f'\nError: {event.message}')
+```
+
+### Multi-turn Conversations
+
+Use `thread_id` to continue conversations across multiple agent calls:
+
+```python
+# First turn
+result1 = await client.agents.run_async(AgentRunParams(
+    tag='production',
+    message='What is Python?',
+))
+thread_id = result1.thread_id  # Save the thread ID
+
+# Continue the conversation
+result2 = await client.agents.run_async(AgentRunParams(
+    tag='production',
+    message='What are its main use cases?',
+    thread_id=thread_id,  # Same thread continues the conversation
+))
+```
+
+### Agent Resolution
+
+Identify which agent to run using either a **tag** or **agent_id** (but not both):
+
+```python
+# By tag (recommended for production)
+result = await client.agents.run_async(AgentRunParams(
+    tag='production',
+    message='Hello',
+))
+
+# By agent ID with specific revision
+result = await client.agents.run_async(AgentRunParams(
+    agent_id='agent-abc-123',
+    revision=5,
+    message='Hello',
+))
+```
+
+### End-User Tracking
+
+Pass `end_user_id` to associate agent calls with specific end-users:
+
+```python
+result = await client.agents.run_async(AgentRunParams(
+    tag='production',
+    message='Hello',
+    end_user_id='user-123',
+))
+```
+
+### Retry Behavior
+
+- **Non-streaming** (`run()` / `run_async()`): Retries up to 3 times on 5xx errors and rate limits (429), with exponential backoff and jitter.
+- **Streaming** (`stream()` / `stream_async()`): **No retry** — the stream is opened once. If the connection fails mid-stream, a `NetworkError` is raised. Implement your own retry logic around the stream call if needed.
+
+### Error Handling
+
+Agent methods throw exceptions instead of returning error results:
+
+```python
+from mentiora.errors import ValidationError, NetworkError
+
+try:
+    result = await client.agents.run_async(AgentRunParams(
+        tag='production',
+        message='Hello',
+    ))
+    print(result.output)
+except ValidationError as e:
+    print(f'Invalid parameters: {e}')
+except NetworkError as e:
+    print(f'Network error (status {e.status_code}): {e}')
+```
+
+For streaming, an `AgentErrorEvent` is yielded when the server reports an error, and the stream stops automatically:
+
+```python
+async for event in client.agents.stream_async(params):
+    if event.type == 'error':
+        print(f'Agent error [{event.code}]: {event.message}')
+        break
+```
+
 ## Plugins
 
 The SDK provides plugins for automatic tracing of popular frameworks.

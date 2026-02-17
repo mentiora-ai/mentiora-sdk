@@ -3,6 +3,7 @@
  */
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { AgentsClient } from '../agents';
 import { MentioraClient } from '../client';
 import { ConfigurationError } from '../errors';
 import { TracingClient } from '../tracing/client';
@@ -29,6 +30,11 @@ describe('MentioraClient', () => {
     it('exposes tracing property as TracingClient', () => {
       const client = new MentioraClient(validConfig);
       expect(client.tracing).toBeInstanceOf(TracingClient);
+    });
+
+    it('exposes agents property as AgentsClient', () => {
+      const client = new MentioraClient(validConfig);
+      expect(client.agents).toBeInstanceOf(AgentsClient);
     });
 
     it('defaults debug to false', () => {

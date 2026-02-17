@@ -499,4 +499,162 @@ describe('HttpClient', () => {
       expect(result.body).toEqual({});
     });
   });
+
+  describe('post()', () => {
+    it('sends POST to the given path', async () => {
+      mockFetch.mockResolvedValue(mockSuccessResponse());
+      const client = createHttpClient();
+      await client.post('/api/v1/agents', { name: 'test' });
+
+      expect(mockFetch).toHaveBeenCalledOnce();
+      const [url, options] = mockFetch.mock.calls[0];
+      expect(url).toBe('https://test.example.com/api/v1/agents');
+      expect(options.method).toBe('POST');
+    });
+
+    it('sends JSON body as-is (no trace normalization)', async () => {
+      mockFetch.mockResolvedValue(mockSuccessResponse());
+      const client = createHttpClient();
+      const payload = { agentId: 'abc', config: { model: 'gpt-4' } };
+      await client.post('/api/v1/agents', payload);
+
+      const [, options] = mockFetch.mock.calls[0];
+      const body = JSON.parse(options.body);
+      expect(body).toEqual(payload);
+    });
+
+    it('includes auth and content-type headers', async () => {
+      mockFetch.mockResolvedValue(mockSuccessResponse());
+      const client = createHttpClient({ apiKey: 'post-key' });
+      await client.post('/api/v1/agents', {});
+
+      const [, options] = mockFetch.mock.calls[0];
+      expect(options.headers.Authorization).toBe('Bearer post-key');
+      expect(options.headers['Content-Type']).toBe('application/json');
+      expect(options.headers['User-Agent']).toMatch(/^mentiora-sdk-ts\//);
+    });
+
+    it('retries on 5xx errors like sendTrace', async () => {
+      Math.random = () => 0.5;
+      mockFetch
+        .mockResolvedValueOnce({
+          status: 500,
+          statusText: 'Internal Server Error',
+          json: vi.fn().mockResolvedValue({}),
+        })
+        .mockResolvedValueOnce(mockSuccessResponse());
+
+      const client = createHttpClient({ retries: 1 });
+      const result = await client.post('/api/v1/agents', {});
+      expect(result.status).toBe(200);
+      expect(mockFetch).toHaveBeenCalledTimes(2);
+    });
+
+    it('throws NetworkError on 4xx', async () => {
+      mockFetch.mockResolvedValue({
+        status: 422,
+        statusText: 'Unprocessable Entity',
+        json: vi.fn().mockResolvedValue({}),
+      });
+      const client = createHttpClient();
+      await expect(client.post('/api/v1/agents', {})).rejects.toThrow(NetworkError);
+    });
+  });
+
+  describe('postStream()', () => {
+    it('sends POST to the given path with SSE accept header', async () => {
+      const mockBody = new ReadableStream();
+      mockFetch.mockResolvedValue({
+        ok: true,
+        status: 200,
+        statusText: 'OK',
+        body: mockBody,
+      });
+      const client = createHttpClient();
+      await client.postStream('/api/v1/agents/stream', { prompt: 'hi' });
+
+      expect(mockFetch).toHaveBeenCalledOnce();
+      const [url, options] = mockFetch.mock.calls[0];
+      expect(url).toBe('https://test.example.com/api/v1/agents/stream');
+      expect(options.method).toBe('POST');
+      expect(options.headers.Accept).toBe('text/event-stream');
+      expect(options.headers['Content-Type']).toBe('application/json');
+      expect(options.headers.Authorization).toBe('Bearer test-api-key');
+    });
+
+    it('returns the ReadableStream from the response', async () => {
+      const mockBody = new ReadableStream();
+      mockFetch.mockResolvedValue({
+        ok: true,
+        status: 200,
+        statusText: 'OK',
+        body: mockBody,
+      });
+      const client = createHttpClient();
+      const stream = await client.postStream('/api/v1/agents/stream', {});
+      expect(stream).toBe(mockBody);
+    });
+
+    it('throws NetworkError on non-2xx response', async () => {
+      mockFetch.mockResolvedValue({
+        ok: false,
+        status: 500,
+        statusText: 'Internal Server Error',
+        body: new ReadableStream(),
+      });
+      const client = createHttpClient();
+      await expect(client.postStream('/api/v1/agents/stream', {})).rejects.toThrow(NetworkError);
+    });
+
+    it('throws NetworkError when response has no body', async () => {
+      mockFetch.mockResolvedValue({
+        ok: true,
+        status: 200,
+        statusText: 'OK',
+        body: null,
+      });
+      const client = createHttpClient();
+      await expect(client.postStream('/api/v1/agents/stream', {})).rejects.toThrow(
+        'Stream response has no body'
+      );
+    });
+
+    it('throws NetworkError on timeout', async () => {
+      mockFetch.mockImplementation(() => {
+        const error = new Error('The operation was aborted');
+        error.name = 'AbortError';
+        throw error;
+      });
+      const client = createHttpClient({ timeout: 100 });
+      await expect(client.postStream('/api/v1/agents/stream', {})).rejects.toThrow(/timeout/i);
+    });
+
+    it('does not retry on failure (single attempt)', async () => {
+      mockFetch.mockResolvedValue({
+        ok: false,
+        status: 502,
+        statusText: 'Bad Gateway',
+        body: new ReadableStream(),
+      });
+      const client = createHttpClient({ retries: 3 });
+      await expect(client.postStream('/api/v1/agents/stream', {})).rejects.toThrow(NetworkError);
+      expect(mockFetch).toHaveBeenCalledOnce();
+    });
+
+    it('includes status code in NetworkError for non-2xx', async () => {
+      mockFetch.mockResolvedValue({
+        ok: false,
+        status: 403,
+        statusText: 'Forbidden',
+        body: new ReadableStream(),
+      });
+      const client = createHttpClient();
+      try {
+        await client.postStream('/api/v1/agents/stream', {});
+      } catch (err) {
+        expect(err).toBeInstanceOf(NetworkError);
+        expect((err as NetworkError).statusCode).toBe(403);
+      }
+    });
+  });
 });

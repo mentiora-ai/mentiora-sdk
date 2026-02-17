@@ -6,6 +6,20 @@ Provides AI observability and tracing.
 
 from importlib.metadata import version as _get_version
 
+from .agents import (
+    AgentErrorEvent,
+    AgentResolvedEvent,
+    AgentRunParams,
+    AgentRunResult,
+    AgentsClient,
+    AgentStreamEvent,
+    AgentToolCall,
+    ChatCompletedEvent,
+    ModelParams,
+    OutputTextDeltaEvent,
+    ToolCallDeltaEvent,
+    ToolCallResultEvent,
+)
 from .client import MentioraClient
 from .errors import (
     ConfigurationError,
@@ -40,6 +54,18 @@ except ImportError:
 
 __all__ = [
     '__version__',
+    'AgentErrorEvent',
+    'AgentResolvedEvent',
+    'AgentRunParams',
+    'AgentRunResult',
+    'AgentsClient',
+    'AgentStreamEvent',
+    'AgentToolCall',
+    'ChatCompletedEvent',
+    'ModelParams',
+    'OutputTextDeltaEvent',
+    'ToolCallDeltaEvent',
+    'ToolCallResultEvent',
     'MentioraClient',
     'MentioraError',
     'NetworkError',

@@ -16,6 +16,7 @@ Production-ready example applications demonstrating how to use the Mentiora SDK 
 | **Basic Tracing** | [`typescript/basic-tracing`](./typescript/basic-tracing/) | [`python/basic-tracing`](./python/basic-tracing/) | Manual trace instrumentation with full control over trace events |
 | **OpenAI Integration** | [`typescript/openai-integration`](./typescript/openai-integration/) | [`python/openai-integration`](./python/openai-integration/) | Automatic tracing of OpenAI API calls via `trackOpenAI`/`track_openai` |
 | **LangChain Integration** | [`typescript/langchain-integration`](./typescript/langchain-integration/) | [`python/langchain-integration`](./python/langchain-integration/) | Automatic tracing of LangChain operations via callback handler |
+| **Agent Run** | [`typescript/agent-run`](./typescript/agent-run/) | [`python/agent-run`](./python/agent-run/) | Run custom agents synchronously and with real-time streaming |
 
 ## Environment Setup
 

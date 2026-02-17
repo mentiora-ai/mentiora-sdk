@@ -6,6 +6,8 @@ from unittest.mock import AsyncMock, MagicMock
 import pytest
 
 from mentiora import MentioraClient, MentioraConfig
+from mentiora.agents.client import AgentsClient
+from mentiora.http import HttpResponse
 from mentiora.types import TraceEvent
 
 
@@ -48,6 +50,45 @@ def mock_http_client():
     mock.send_trace = MagicMock()
     mock.send_trace_async = AsyncMock()
     return mock
+
+
+@pytest.fixture
+def mock_agents_http_client():
+    """Create a mock HTTP client for agent tests."""
+    mock = MagicMock()
+    mock.post = MagicMock(
+        return_value=HttpResponse(
+            200,
+            {
+                'thread_id': 'thread-1',
+                'agent_id': 'agent-1',
+                'agent_revision': 1,
+                'output': 'Hello!',
+                'tool_calls': [],
+                'status': 'completed',
+            },
+        )
+    )
+    mock.post_async = AsyncMock(
+        return_value=HttpResponse(
+            200,
+            {
+                'thread_id': 'thread-1',
+                'agent_id': 'agent-1',
+                'agent_revision': 1,
+                'output': 'Hello!',
+                'tool_calls': [],
+                'status': 'completed',
+            },
+        )
+    )
+    return mock
+
+
+@pytest.fixture
+def agents_client(mock_agents_http_client):
+    """Create an AgentsClient with a mock HTTP client."""
+    return AgentsClient(mock_agents_http_client)
 
 
 @pytest.fixture
