@@ -36,29 +36,29 @@ yarn add @mentiora/sdk
 
 ### Python
 
-Install the SDK using uv:
+Install the SDK using pip:
 
 ```bash
-uv pip install mentiora-sdk
+pip install "git+https://github.com/mentiora-ai/mentiora-sdk.git#subdirectory=python"
 ```
 
-Or with pip:
+Or with uv:
 
 ```bash
-pip install mentiora-sdk
+uv pip install "git+https://github.com/mentiora-ai/mentiora-sdk.git#subdirectory=python"
 ```
 
 For optional plugin support:
 
 ```bash
 # With OpenAI plugin support
-uv pip install mentiora-sdk[openai]
+pip install "mentiora-ai-sdk[openai] @ git+https://github.com/mentiora-ai/mentiora-sdk.git#subdirectory=python"
 
 # With LangChain plugin support
-uv pip install mentiora-sdk[langchain]
+pip install "mentiora-ai-sdk[langchain] @ git+https://github.com/mentiora-ai/mentiora-sdk.git#subdirectory=python"
 
 # With both
-uv pip install mentiora-sdk[openai,langchain]
+pip install "mentiora-ai-sdk[openai,langchain] @ git+https://github.com/mentiora-ai/mentiora-sdk.git#subdirectory=python"
 ```
 
 ## Basic Setup

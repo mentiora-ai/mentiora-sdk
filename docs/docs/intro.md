@@ -37,7 +37,7 @@ const client = new MentioraClient({
 ### Python
 
 ```bash
-uv pip install mentiora-sdk
+pip install "git+https://github.com/mentiora-ai/mentiora-sdk.git#subdirectory=python"
 ```
 
 ```python
