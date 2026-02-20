@@ -156,6 +156,23 @@ class AgentsClient:
         """Parse API JSON response into AgentRunResult."""
         return AgentRunResult.model_validate(body)
 
+    def _extract_assistant_output(self, raw_output: object) -> str:
+        """Extract assistant text from the API output field.
+
+        The API may return output as a plain string or as an array of message
+        objects: ``[{"type": "message", "content": [{"text": "..."}]}]``.
+        """
+        if isinstance(raw_output, list):
+            assistant_msg = next(
+                (o for o in raw_output if isinstance(o, dict) and o.get('type') == 'message'),
+                None,
+            )
+            content = (assistant_msg or {}).get('content', [])
+            if content and isinstance(content[0], dict):
+                return str(content[0].get('text', ''))
+            return ''
+        return raw_output if isinstance(raw_output, str) else str(raw_output)
+
     def _parse_stream_event(self, sse: SSEEvent) -> AgentStreamEvent | None:
         """Parse an SSE event into a typed AgentStreamEvent."""
         # Backend sends `data: [DONE]` as a stream termination signal — skip it
@@ -178,26 +195,10 @@ class AgentsClient:
                 return ToolCallResultEvent.model_validate(data)
             case 'chat.completed':
                 chat = data.get('chat', data)
-                raw_output = chat.get('output', '')
-                # Backend sends output as a list of message objects — extract assistant text
-                if isinstance(raw_output, list):
-                    assistant_msg = next(
-                        (
-                            o
-                            for o in raw_output
-                            if isinstance(o, dict) and o.get('type') == 'message'
-                        ),
-                        None,
-                    )
-                    content = (assistant_msg or {}).get('content', [])
-                    if content and isinstance(content[0], dict):
-                        raw_output = content[0].get('text', '')
-                    else:
-                        raw_output = ''
                 return ChatCompletedEvent(
                     thread_id=chat.get('thread_id', ''),
                     status=chat.get('status', 'completed'),
-                    output=raw_output if isinstance(raw_output, str) else str(raw_output),
+                    output=self._extract_assistant_output(chat.get('output', '')),
                 )
             case 'error':
                 return AgentErrorEvent(

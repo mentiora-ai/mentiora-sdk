@@ -19,19 +19,19 @@ Get up and running with the Mentiora SDK in just a few steps.
 Install the SDK using pnpm:
 
 ```bash
-pnpm add @mentiora/sdk
+pnpm add @mentiora.ai/sdk
 ```
 
 Or with npm:
 
 ```bash
-npm install @mentiora/sdk
+npm install @mentiora.ai/sdk
 ```
 
 Or with yarn:
 
 ```bash
-yarn add @mentiora/sdk
+yarn add @mentiora.ai/sdk
 ```
 
 ### Python
@@ -68,7 +68,7 @@ pip install "mentiora-ai-sdk[openai,langchain] @ git+https://github.com/mentiora
 Create a client instance with your API key:
 
 ```typescript
-import { MentioraClient } from '@mentiora/sdk';
+import { MentioraClient } from '@mentiora.ai/sdk';
 
 const client = new MentioraClient({
   apiKey: process.env.MENTIORA_API_KEY,

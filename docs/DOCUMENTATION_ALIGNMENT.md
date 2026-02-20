@@ -23,7 +23,7 @@ Both SDKs are properly organized in sidebars:
 ### Installation Pages
 
 **TypeScript:**
-- Package name: `@mentiora/sdk`
+- Package name: `@mentiora.ai/sdk`
 - Installers: npm, yarn, pnpm
 - Requirements: Node.js >= 20.0.0
 - Configuration: Direct object (camelCase)

@@ -11,6 +11,7 @@ from mentiora.agents.types import (
     AgentResolvedEvent,
     AgentRunParams,
     AgentRunResult,
+    AgentStreamEvent,
     ChatCompletedEvent,
     ModelParams,
     OutputTextDeltaEvent,
@@ -513,3 +514,277 @@ async def test_agents_stream_async_stops_on_error(mock_agents_http_client):
     assert len(events) == 2
     assert isinstance(events[1], AgentErrorEvent)
     assert events[1].code == 'TIMEOUT'
+
+
+# ===========================================================================
+# Parameterized run vs run_async parity tests
+# ===========================================================================
+
+
+@pytest.mark.parametrize('method', ['run', 'run_async'])
+async def test_run_parity_basic_tag_resolution(method, mock_agents_http_client):
+    """Both run() and run_async() return the same result for tag-based resolution."""
+    client = AgentsClient(mock_agents_http_client)
+    params = AgentRunParams(tag='production', message='Hello')
+
+    if method == 'run':
+        result = client.run(params)
+    else:
+        result = await client.run_async(params)
+
+    assert isinstance(result, AgentRunResult)
+    assert result.output == 'Hello!'
+    assert result.status == 'completed'
+    assert result.agent_id == 'agent-1'
+
+
+@pytest.mark.parametrize('method', ['run', 'run_async'])
+async def test_run_parity_forwards_all_optional_params(method, mock_agents_http_client):
+    """Both run() and run_async() forward optional params identically."""
+    client = AgentsClient(mock_agents_http_client)
+    params = AgentRunParams(
+        tag='staging',
+        message='Tell me a joke',
+        thread_id='thread-abc',
+        model_id='gpt-4o',
+        model_params=ModelParams(temperature=0.7, max_tokens=512),
+        end_user_id='user-xyz',
+        metadata={'key': 'value'},
+    )
+
+    if method == 'run':
+        client.run(params)
+        body = mock_agents_http_client.post.call_args[0][1]
+    else:
+        await client.run_async(params)
+        body = mock_agents_http_client.post_async.call_args[0][1]
+
+    assert body['thread_id'] == 'thread-abc'
+    assert body['model_id'] == 'gpt-4o'
+    assert body['model_params'] == {'temperature': 0.7, 'max_tokens': 512}
+    assert body['end_user_id'] == 'user-xyz'
+    assert body['metadata'] == {'key': 'value'}
+    assert body['stream'] is False
+
+
+@pytest.mark.parametrize('method', ['run', 'run_async'])
+async def test_run_parity_validation_errors(method, mock_agents_http_client):
+    """Both run() and run_async() raise the same validation errors."""
+    client = AgentsClient(mock_agents_http_client)
+
+    with pytest.raises(ValidationError, match='message is required'):
+        if method == 'run':
+            client.run(AgentRunParams(tag='prod', message=''))
+        else:
+            await client.run_async(AgentRunParams(tag='prod', message=''))
+
+    with pytest.raises(ValidationError, match='Either tag or agent_id'):
+        if method == 'run':
+            client.run(AgentRunParams(message='Hello'))
+        else:
+            await client.run_async(AgentRunParams(message='Hello'))
+
+    with pytest.raises(ValidationError, match='Provide either tag or agent_id'):
+        if method == 'run':
+            client.run(AgentRunParams(tag='p', agent_id='a', message='Hello'))
+        else:
+            await client.run_async(AgentRunParams(tag='p', agent_id='a', message='Hello'))
+
+
+@pytest.mark.parametrize('method', ['run', 'run_async'])
+async def test_run_parity_network_error(method, mock_agents_http_client):
+    """Both run() and run_async() propagate NetworkError identically."""
+    mock_agents_http_client.post.side_effect = NetworkError('Server error: 500', 500)
+    mock_agents_http_client.post_async = AsyncMock(
+        side_effect=NetworkError('Server error: 500', 500)
+    )
+    client = AgentsClient(mock_agents_http_client)
+
+    with pytest.raises(NetworkError, match='Server error: 500'):
+        if method == 'run':
+            client.run(AgentRunParams(tag='prod', message='Hello'))
+        else:
+            await client.run_async(AgentRunParams(tag='prod', message='Hello'))
+
+
+# ===========================================================================
+# Parameterized stream vs stream_async parity tests
+# ===========================================================================
+
+
+def _stream_events_sync(client: AgentsClient, params: AgentRunParams) -> list[AgentStreamEvent]:
+    """Collect all events from sync stream()."""
+    return list(client.stream(params))
+
+
+async def _stream_events_async(
+    client: AgentsClient, params: AgentRunParams
+) -> list[AgentStreamEvent]:
+    """Collect all events from async stream_async()."""
+    return [e async for e in client.stream_async(params)]
+
+
+def _setup_sync_stream(mock_http, sse_events: list[SSEEvent]) -> None:
+    """Configure mock HTTP client for sync stream."""
+    mock_http.post_stream = MagicMock(return_value=iter(sse_events))
+
+
+def _setup_async_stream(mock_http, sse_events: list[SSEEvent]) -> None:
+    """Configure mock HTTP client for async stream."""
+
+    async def _mock_post_stream_async(*args, **kwargs):
+        for sse in sse_events:
+            yield sse
+
+    mock_http.post_stream_async = _mock_post_stream_async
+
+
+@pytest.mark.parametrize('variant', ['sync', 'async'])
+async def test_stream_parity_full_event_sequence(variant, mock_agents_http_client):
+    """Both stream() and stream_async() yield the same event types in order."""
+    sse_events = [
+        _make_sse(
+            'agent.resolved',
+            {'agent_id': 'agent-1', 'agent_revision': 2, 'thread_id': 'thread-1'},
+        ),
+        _make_sse('chat.output_text.delta', {'delta': 'Hello'}),
+        _make_sse('chat.output_text.delta', {'delta': ' world'}),
+        _make_sse(
+            'chat.completed',
+            {'thread_id': 'thread-1', 'status': 'completed', 'output': 'Hello world'},
+        ),
+    ]
+
+    if variant == 'sync':
+        _setup_sync_stream(mock_agents_http_client, sse_events)
+        client = AgentsClient(mock_agents_http_client)
+        events = _stream_events_sync(client, AgentRunParams(tag='prod', message='Hi'))
+    else:
+        _setup_async_stream(mock_agents_http_client, sse_events)
+        client = AgentsClient(mock_agents_http_client)
+        events = await _stream_events_async(client, AgentRunParams(tag='prod', message='Hi'))
+
+    assert len(events) == 4
+    assert isinstance(events[0], AgentResolvedEvent)
+    assert isinstance(events[1], OutputTextDeltaEvent)
+    assert events[1].delta == 'Hello'
+    assert isinstance(events[2], OutputTextDeltaEvent)
+    assert events[2].delta == ' world'
+    assert isinstance(events[3], ChatCompletedEvent)
+    assert events[3].output == 'Hello world'
+
+
+@pytest.mark.parametrize('variant', ['sync', 'async'])
+async def test_stream_parity_stops_on_error(variant, mock_agents_http_client):
+    """Both stream variants stop on error event."""
+    sse_events = [
+        _make_sse('chat.output_text.delta', {'delta': 'Partial'}),
+        _make_sse('error', {'code': 'AGENT_ERROR', 'message': 'Failed'}),
+        _make_sse('chat.output_text.delta', {'delta': 'Never'}),
+    ]
+
+    if variant == 'sync':
+        _setup_sync_stream(mock_agents_http_client, sse_events)
+        client = AgentsClient(mock_agents_http_client)
+        events = _stream_events_sync(client, AgentRunParams(tag='prod', message='Hi'))
+    else:
+        _setup_async_stream(mock_agents_http_client, sse_events)
+        client = AgentsClient(mock_agents_http_client)
+        events = await _stream_events_async(client, AgentRunParams(tag='prod', message='Hi'))
+
+    assert len(events) == 2
+    assert isinstance(events[1], AgentErrorEvent)
+    assert events[1].code == 'AGENT_ERROR'
+
+
+@pytest.mark.parametrize('variant', ['sync', 'async'])
+async def test_stream_parity_tool_call_events(variant, mock_agents_http_client):
+    """Both stream variants yield tool_call_delta and tool_call_result correctly."""
+    sse_events = [
+        _make_sse(
+            'chat.tool_call.delta',
+            {'tool_call_id': 'tc-1', 'name': 'search', 'arguments_delta': '{"q":'},
+        ),
+        _make_sse(
+            'chat.tool_call.result',
+            {
+                'tool_call_id': 'tc-1',
+                'name': 'search',
+                'arguments': {'q': 'test'},
+                'result': {'hits': 5},
+            },
+        ),
+    ]
+
+    if variant == 'sync':
+        _setup_sync_stream(mock_agents_http_client, sse_events)
+        client = AgentsClient(mock_agents_http_client)
+        events = _stream_events_sync(client, AgentRunParams(tag='prod', message='Search'))
+    else:
+        _setup_async_stream(mock_agents_http_client, sse_events)
+        client = AgentsClient(mock_agents_http_client)
+        events = await _stream_events_async(client, AgentRunParams(tag='prod', message='Search'))
+
+    assert len(events) == 2
+    assert isinstance(events[0], ToolCallDeltaEvent)
+    assert events[0].tool_call_id == 'tc-1'
+    assert events[0].arguments_delta == '{"q":'
+    assert isinstance(events[1], ToolCallResultEvent)
+    assert events[1].result == {'hits': 5}
+
+
+# ===========================================================================
+# chat.completed array output extraction edge cases
+# ===========================================================================
+
+
+def test_agents_stream_chat_completed_empty_array_output(mock_agents_http_client):
+    """chat.completed with empty array output returns output=''."""
+    mock_agents_http_client.post_stream = MagicMock(
+        return_value=iter(
+            [
+                _make_sse(
+                    'chat.completed',
+                    {
+                        'chat': {
+                            'thread_id': 'thread-1',
+                            'status': 'completed',
+                            'output': [],
+                        }
+                    },
+                ),
+            ]
+        )
+    )
+    client = AgentsClient(mock_agents_http_client)
+    events = list(client.stream(AgentRunParams(tag='prod', message='Hi')))
+    assert len(events) == 1
+    assert isinstance(events[0], ChatCompletedEvent)
+    assert events[0].output == ''
+
+
+def test_agents_stream_chat_completed_missing_content_in_message(mock_agents_http_client):
+    """chat.completed with message object but no content key returns output=''."""
+    mock_agents_http_client.post_stream = MagicMock(
+        return_value=iter(
+            [
+                _make_sse(
+                    'chat.completed',
+                    {
+                        'chat': {
+                            'thread_id': 'thread-1',
+                            'status': 'completed',
+                            'output': [
+                                {'type': 'message'},  # no 'content' key
+                            ],
+                        }
+                    },
+                ),
+            ]
+        )
+    )
+    client = AgentsClient(mock_agents_http_client)
+    events = list(client.stream(AgentRunParams(tag='prod', message='Hi')))
+    assert len(events) == 1
+    assert isinstance(events[0], ChatCompletedEvent)
+    assert events[0].output == ''

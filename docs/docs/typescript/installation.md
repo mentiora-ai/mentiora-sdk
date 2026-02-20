@@ -11,19 +11,19 @@ Install and configure the TypeScript/JavaScript SDK for the Mentiora platform.
 Install the package using pnpm:
 
 ```bash
-pnpm add @mentiora/sdk
+pnpm add @mentiora.ai/sdk
 ```
 
 Or with npm:
 
 ```bash
-npm install @mentiora/sdk
+npm install @mentiora.ai/sdk
 ```
 
 Or with yarn:
 
 ```bash
-yarn add @mentiora/sdk
+yarn add @mentiora.ai/sdk
 ```
 
 ## Requirements
@@ -36,19 +36,19 @@ yarn add @mentiora/sdk
 ### ES Modules
 
 ```typescript
-import { MentioraClient } from '@mentiora/sdk';
+import { MentioraClient } from '@mentiora.ai/sdk';
 ```
 
 ### CommonJS
 
 ```javascript
-const { MentioraClient } = require('@mentiora/sdk');
+const { MentioraClient } = require('@mentiora.ai/sdk');
 ```
 
 ## Create a Client
 
 ```typescript
-import { MentioraClient } from '@mentiora/sdk';
+import { MentioraClient } from '@mentiora.ai/sdk';
 
 const client = new MentioraClient({
   apiKey: process.env.MENTIORA_API_KEY,

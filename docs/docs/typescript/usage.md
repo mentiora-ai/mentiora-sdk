@@ -9,7 +9,7 @@ Learn how to use the Mentiora TypeScript SDK to send traces and interact with th
 ## Basic Setup
 
 ```typescript
-import { MentioraClient } from '@mentiora/sdk';
+import { MentioraClient } from '@mentiora.ai/sdk';
 
 const client = new MentioraClient({
   apiKey: process.env.MENTIORA_API_KEY,
@@ -321,7 +321,7 @@ const result = await client.agents.run({
 Agent methods throw exceptions instead of returning error results:
 
 ```typescript
-import { ValidationError, NetworkError } from '@mentiora/sdk';
+import { ValidationError, NetworkError } from '@mentiora.ai/sdk';
 
 try {
   const result = await client.agents.run({
@@ -414,7 +414,7 @@ pnpm add openai
 ```
 
 ```typescript
-import { trackOpenAI, MentioraClient } from '@mentiora/sdk';
+import { trackOpenAI, MentioraClient } from '@mentiora.ai/sdk';
 import OpenAI from 'openai';
 
 // Initialize Mentiora client
@@ -450,7 +450,7 @@ The OpenAI plugin traces chat completions (via `chat.completions.create`); embed
 To group multiple OpenAI calls into a conversation, provide a `threadId` when wrapping the client:
 
 ```typescript
-import { trackOpenAI, MentioraClient } from '@mentiora/sdk';
+import { trackOpenAI, MentioraClient } from '@mentiora.ai/sdk';
 import { v7 as uuidv7 } from 'uuid';
 
 // One threadId per conversation (see Thread ID section above)
@@ -505,7 +505,7 @@ pnpm add @langchain/core @langchain/openai langchain
 ```
 
 ```typescript
-import { MentioraTracingLangChain, MentioraClient } from '@mentiora/sdk';
+import { MentioraTracingLangChain, MentioraClient } from '@mentiora.ai/sdk';
 import { ChatOpenAI } from '@langchain/openai';
 import { ChatPromptTemplate } from '@langchain/core/prompts';
 

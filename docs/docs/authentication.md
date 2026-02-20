@@ -51,7 +51,7 @@ Add `.env` to your `.gitignore` to avoid committing secrets.
 ### TypeScript/JavaScript
 
 ```typescript
-import { MentioraClient } from '@mentiora/sdk';
+import { MentioraClient } from '@mentiora.ai/sdk';
 
 const client = new MentioraClient({
   apiKey: process.env.MENTIORA_API_KEY,

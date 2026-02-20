@@ -403,6 +403,54 @@ interface AgentErrorEvent {
 }
 ```
 
+## Streaming Helpers
+
+### `createStreamResponse(events, options?): Response`
+
+Create a web-standard `Response` that streams SSE events from an `AsyncIterable<AgentStreamEvent>`. Uses `TransformStream` so back-pressure is handled automatically and the response can be returned immediately. Works with any framework that supports the Fetch API `Response` type (Next.js, Remix, Hono, etc.).
+
+**Parameters:**
+
+- `events: AsyncIterable<AgentStreamEvent>` - The async iterable from `client.agents.stream()`
+- `options?: CreateStreamResponseOptions` - Optional configuration
+
+**Returns:** `Response` - A streaming SSE response
+
+**CreateStreamResponseOptions:**
+
+| Option | Type | Description |
+|--------|------|-------------|
+| `transform` | `(event: AgentStreamEvent) => object \| null` | Custom transform function. Return an object to emit it as an SSE event, or `null` to skip. |
+| `headers` | `Record<string, string>` | Additional headers merged with default SSE headers. |
+
+The default transform maps `output_text_delta`, `chat_completed`, and `error` events to simplified SSE payloads. All other event types are skipped.
+
+**Example:**
+
+```typescript
+import { createStreamResponse } from '@mentiora.ai/sdk';
+
+// In a Next.js Route Handler or similar
+export async function POST(req: Request) {
+  const { message } = await req.json();
+  const events = client.agents.stream({ tag: 'production', message });
+  return createStreamResponse(events);
+}
+```
+
+### `SSE_HEADERS`
+
+Standard SSE headers for streaming responses. Used internally by `createStreamResponse` and exported for custom implementations.
+
+```typescript
+const SSE_HEADERS: Record<string, string> = {
+  'Content-Type': 'text/event-stream',
+  'Cache-Control': 'no-cache, no-transform',
+  'Connection': 'keep-alive',
+  'X-Accel-Buffering': 'no',
+};
+```
+
 ## Plugins
 
 ### trackOpenAI
@@ -436,7 +484,7 @@ function trackOpenAI(
 **Example:**
 
 ```typescript
-import { trackOpenAI } from '@mentiora/sdk';
+import { trackOpenAI } from '@mentiora.ai/sdk';
 import OpenAI from 'openai';
 
 const trackedClient = trackOpenAI(openaiClient, {
@@ -477,7 +525,7 @@ class MentioraTracingLangChain extends BaseCallbackHandler {
 **Example:**
 
 ```typescript
-import { MentioraTracingLangChain } from '@mentiora/sdk';
+import { MentioraTracingLangChain } from '@mentiora.ai/sdk';
 
 const callback = new MentioraTracingLangChain({
   mentioraClient,

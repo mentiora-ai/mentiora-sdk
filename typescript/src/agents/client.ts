@@ -160,6 +160,21 @@ export class AgentsClient {
     };
   }
 
+  /**
+   * Extract assistant text from the API output field.
+   * The API may return output as a plain string or as an array of message
+   * objects: `[{ type: "message", content: [{ text: "..." }] }]`.
+   */
+  private extractAssistantOutput(output: unknown): string {
+    if (Array.isArray(output)) {
+      const assistantMsg = output.find(
+        (o: Record<string, unknown>) => o && typeof o === 'object' && o.type === 'message'
+      ) as { content?: Array<{ text?: string }> } | undefined;
+      return assistantMsg?.content?.[0]?.text ?? '';
+    }
+    return typeof output === 'string' ? output : String(output);
+  }
+
   private parseStreamEvent(sse: { event: string; data: string }): AgentStreamEvent | null {
     // Backend sends `data: [DONE]` as a stream termination signal — skip it
     if (sse.data === '[DONE]') {
@@ -222,19 +237,11 @@ export class AgentsClient {
       }
       case 'chat.completed': {
         const chat = (data.chat as Record<string, unknown>) ?? data;
-        let output = chat.output ?? data.output ?? '';
-        // Backend sends output as a list of message objects — extract assistant text
-        if (Array.isArray(output)) {
-          const assistantMsg = output.find(
-            (o: Record<string, unknown>) => o && typeof o === 'object' && o.type === 'message'
-          ) as { content?: Array<{ text?: string }> } | undefined;
-          output = assistantMsg?.content?.[0]?.text ?? '';
-        }
         return {
           type: 'chat_completed',
           threadId: String(chat.thread_id ?? data.thread_id ?? ''),
           status: ((chat.status ?? data.status) as 'completed' | 'failed') || 'completed',
-          output: typeof output === 'string' ? output : String(output),
+          output: this.extractAssistantOutput(chat.output ?? data.output ?? ''),
         };
       }
       case 'error':

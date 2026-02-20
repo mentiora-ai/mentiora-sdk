@@ -440,14 +440,14 @@ The simplest way to stream agent responses to a frontend:
 ```python
 from fastapi import FastAPI
 from fastapi.responses import StreamingResponse
-from mentiora import MentioraClient, MentioraConfig, SSE_HEADERS, stream_events
+from mentiora import MentioraClient, MentioraConfig, AgentRunParams, SSE_HEADERS, stream_events
 
 app = FastAPI()
 client = MentioraClient(MentioraConfig(api_key='...'))
 
 @app.post('/chat/stream')
 async def chat_stream(message: str):
-    events = client.agents.stream_async(tag='production', message=message)
+    events = client.agents.stream_async(AgentRunParams(tag='production', message=message))
     return StreamingResponse(
         stream_events(events),
         media_type=SSE_HEADERS['Content-Type'],
@@ -480,10 +480,10 @@ stream_events(events, transform=my_transform)
 For full control over the event loop, use the lower-level helpers:
 
 ```python
-from mentiora import SSE_HEADERS, format_sse_event
+from mentiora import AgentRunParams, SSE_HEADERS, format_sse_event
 
 async def event_generator():
-    async for event in client.agents.stream_async(tag='production', message='Hi'):
+    async for event in client.agents.stream_async(AgentRunParams(tag='production', message='Hi')):
         if event.type == 'output_text_delta':
             yield format_sse_event({'type': 'delta', 'delta': event.delta})
 

@@ -383,7 +383,17 @@ class AgentRunResult:
     output: str                 # Agent output text
     tool_calls: list[AgentToolCall]  # Tool calls made during execution
     status: 'completed' | 'failed'   # Execution status
-    usage: dict[str, int] | None     # Token usage stats
+    usage: UsageInfo | None          # Token usage stats
+```
+
+### UsageInfo
+
+Token usage information for agent runs.
+
+```python
+class UsageInfo:
+    prompt_tokens: int | None
+    completion_tokens: int | None
 ```
 
 ### AgentToolCall
@@ -480,6 +490,65 @@ class AgentErrorEvent:
     type: 'error'
     code: str
     message: str
+```
+
+## Streaming Helpers
+
+### `stream_events(events, transform=None) -> AsyncIterator[str]`
+
+Async generator that converts agent stream events into SSE-formatted strings. Designed for use with async web frameworks like FastAPI, Starlette, or Quart.
+
+**Parameters:**
+
+- `events: AsyncIterator[AgentStreamEvent]` - An async iterator of events, typically from `client.agents.stream_async()`
+- `transform: Callable[[AgentStreamEvent], dict[str, object] | None] | None` - Optional callable that maps each event to a dict (serialized as SSE) or `None` to skip the event
+
+**Yields:** SSE-formatted strings (`data: {...}\n\n`)
+
+The default transform maps `output_text_delta`, `chat_completed`, and `error` events to simplified SSE payloads. All other event types are skipped. Exceptions are caught and emitted as error events.
+
+**Example:**
+
+```python
+from fastapi import FastAPI
+from fastapi.responses import StreamingResponse
+from mentiora import stream_events, SSE_HEADERS, AgentRunParams
+
+app = FastAPI()
+
+@app.post('/chat')
+async def chat(message: str):
+    events = client.agents.stream_async(AgentRunParams(
+        tag='production',
+        message=message,
+    ))
+    return StreamingResponse(
+        stream_events(events),
+        headers=SSE_HEADERS,
+    )
+```
+
+### `format_sse_event(data: dict[str, object]) -> str`
+
+Format a dictionary as a Server-Sent Event data line.
+
+**Parameters:**
+
+- `data: dict[str, object]` - The data to serialize
+
+**Returns:** SSE-formatted string (`data: {...}\n\n`)
+
+### `SSE_HEADERS`
+
+Standard SSE headers for streaming responses. Use with `StreamingResponse` or similar.
+
+```python
+SSE_HEADERS: dict[str, str] = {
+    'Content-Type': 'text/event-stream',
+    'Cache-Control': 'no-cache, no-transform',
+    'Connection': 'keep-alive',
+    'X-Accel-Buffering': 'no',
+}
 ```
 
 ## Plugins

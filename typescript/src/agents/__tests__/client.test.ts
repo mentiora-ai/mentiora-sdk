@@ -546,6 +546,110 @@ describe('AgentsClient', () => {
       await expect(gen.next()).rejects.toThrow(/Failed to parse SSE event data/);
     });
 
+    it('throws NetworkError on malformed output_text_delta event (missing delta)', async () => {
+      const stream = createMockSSEStream([
+        { event: 'chat.output_text.delta', data: JSON.stringify({ wrong: 'field' }) },
+      ]);
+      const httpClient = createMockHttpClient({
+        postStream: vi.fn().mockResolvedValue(stream),
+      });
+      const client = new AgentsClient(httpClient);
+
+      const gen = client.stream({ tag: 'prod', message: 'Hi' });
+      await expect(gen.next()).rejects.toThrow(/Malformed chat\.output_text\.delta event/);
+    });
+
+    it('throws NetworkError on malformed tool_call_delta event (missing fields)', async () => {
+      const stream = createMockSSEStream([
+        {
+          event: 'chat.tool_call.delta',
+          data: JSON.stringify({ tool_call_id: 'tc-1' }), // missing name, arguments_delta
+        },
+      ]);
+      const httpClient = createMockHttpClient({
+        postStream: vi.fn().mockResolvedValue(stream),
+      });
+      const client = new AgentsClient(httpClient);
+
+      const gen = client.stream({ tag: 'prod', message: 'Hi' });
+      await expect(gen.next()).rejects.toThrow(/Malformed chat\.tool_call\.delta event/);
+    });
+
+    it('throws NetworkError on malformed tool_call_result event (missing fields)', async () => {
+      const stream = createMockSSEStream([
+        {
+          event: 'chat.tool_call.result',
+          data: JSON.stringify({ name: 'search' }), // missing tool_call_id
+        },
+      ]);
+      const httpClient = createMockHttpClient({
+        postStream: vi.fn().mockResolvedValue(stream),
+      });
+      const client = new AgentsClient(httpClient);
+
+      const gen = client.stream({ tag: 'prod', message: 'Hi' });
+      await expect(gen.next()).rejects.toThrow(/Malformed chat\.tool_call\.result event/);
+    });
+
+    it('handles stream.cancel() rejection gracefully', async () => {
+      const cancelMock = vi.fn().mockRejectedValue(new Error('stream already closed'));
+      const encoder = new TextEncoder();
+      const lines = `event: chat.completed\ndata: ${JSON.stringify({ thread_id: 't', status: 'completed', output: 'done' })}\n\n`;
+      const stream = new ReadableStream({
+        start(controller) {
+          controller.enqueue(encoder.encode(lines));
+          controller.close();
+        },
+        cancel: cancelMock,
+      });
+      const httpClient = createMockHttpClient({
+        postStream: vi.fn().mockResolvedValue(stream),
+      });
+      const client = new AgentsClient(httpClient);
+
+      const events = [];
+      for await (const event of client.stream({ tag: 'prod', message: 'Hi' })) {
+        events.push(event);
+      }
+
+      // Should not throw even though cancel() rejects
+      expect(events).toHaveLength(1);
+      expect(events[0].type).toBe('chat_completed');
+    });
+
+    it('passes revision and metadata through to API body', async () => {
+      const postStreamMock = vi.fn().mockResolvedValue(
+        createMockSSEStream([
+          {
+            event: 'chat.completed',
+            data: JSON.stringify({ thread_id: 't', status: 'completed', output: 'ok' }),
+          },
+        ])
+      );
+      const httpClient = createMockHttpClient({ postStream: postStreamMock });
+      const client = new AgentsClient(httpClient);
+
+      const events = [];
+      for await (const event of client.stream({
+        agentId: 'agent-42',
+        revision: 7,
+        message: 'Hello',
+        metadata: { session: 'abc', env: 'test' },
+      })) {
+        events.push(event);
+      }
+
+      expect(postStreamMock).toHaveBeenCalledOnce();
+      const [, body] = postStreamMock.mock.calls[0];
+      expect(body).toEqual({
+        agent_id: 'agent-42',
+        revision: 7,
+        message: 'Hello',
+        stream: true,
+        metadata: { session: 'abc', env: 'test' },
+      });
+    });
+
     it('handles array-format chat.completed output', async () => {
       const stream = createMockSSEStream([
         {

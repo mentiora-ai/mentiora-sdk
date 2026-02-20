@@ -45,31 +45,12 @@ class AgentRunParams(BaseModel):
 
     def to_api_body(self, *, stream: bool = False) -> dict[str, Any]:
         """Serialize to API wire format (snake_case keys)."""
-        body: dict[str, Any] = {'message': self.message, 'stream': stream}
-        if self.tag is not None:
-            body['tag'] = self.tag
-        if self.agent_id is not None:
-            body['agent_id'] = self.agent_id
-        if self.revision is not None:
-            body['revision'] = self.revision
-        if self.thread_id is not None:
-            body['thread_id'] = self.thread_id
-        if self.model_id is not None:
-            body['model_id'] = self.model_id
+        body = self.model_dump(exclude_none=True, exclude={'model_params'})
+        body['stream'] = stream
         if self.model_params is not None:
-            mp: dict[str, Any] = {}
-            if self.model_params.temperature is not None:
-                mp['temperature'] = self.model_params.temperature
-            if self.model_params.max_tokens is not None:
-                mp['max_tokens'] = self.model_params.max_tokens
-            if self.model_params.seed is not None:
-                mp['seed'] = self.model_params.seed
+            mp = self.model_params.model_dump(exclude_none=True)
             if mp:
                 body['model_params'] = mp
-        if self.end_user_id is not None:
-            body['end_user_id'] = self.end_user_id
-        if self.metadata is not None:
-            body['metadata'] = self.metadata
         return body
 
 

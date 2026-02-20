@@ -13,7 +13,7 @@ Manual trace instrumentation with full control over trace events, parent-child s
 ### TypeScript
 
 ```typescript
-import { MentioraClient } from '@mentiora/sdk';
+import { MentioraClient } from '@mentiora.ai/sdk';
 import { v7 as uuidv7 } from 'uuid';
 
 const client = new MentioraClient({
@@ -74,7 +74,7 @@ Automatic tracing of OpenAI API calls with zero code changes to your existing Op
 ### TypeScript {#openai-integration-typescript}
 
 ```typescript
-import { MentioraClient, trackOpenAI } from '@mentiora/sdk';
+import { MentioraClient, trackOpenAI } from '@mentiora.ai/sdk';
 import OpenAI from 'openai';
 
 const mentioraClient = new MentioraClient({ apiKey: process.env.MENTIORA_API_KEY });
@@ -124,7 +124,7 @@ Automatic tracing of LangChain operations using a callback handler.
 ### TypeScript {#langchain-integration-typescript}
 
 ```typescript
-import { MentioraClient, MentioraTracingLangChain } from '@mentiora/sdk';
+import { MentioraClient, MentioraTracingLangChain } from '@mentiora.ai/sdk';
 import { ChatOpenAI } from '@langchain/openai';
 import { ChatPromptTemplate } from '@langchain/core/prompts';
 

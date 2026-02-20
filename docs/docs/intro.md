@@ -23,11 +23,11 @@ Mentiora is a platform for building, deploying, and observing AI agents. The SDK
 ### TypeScript/JavaScript
 
 ```bash
-pnpm add @mentiora/sdk
+pnpm add @mentiora.ai/sdk
 ```
 
 ```typescript
-import { MentioraClient } from '@mentiora/sdk';
+import { MentioraClient } from '@mentiora.ai/sdk';
 
 const client = new MentioraClient({
   apiKey: process.env.MENTIORA_API_KEY,
