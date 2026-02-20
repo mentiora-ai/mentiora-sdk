@@ -226,7 +226,7 @@ Run AI agents hosted on the Mentiora platform. The agents API supports both comp
 ### Quick Start
 
 ```typescript
-import { MentioraClient } from '@mentiora/sdk';
+import { MentioraClient } from '@mentiora.ai/sdk';
 
 const client = new MentioraClient({ apiKey: process.env.MENTIORA_API_KEY });
 
@@ -348,6 +348,58 @@ for await (const event of client.agents.stream(params)) {
   }
 }
 ```
+
+## Streaming Responses
+
+The SDK provides helpers to convert agent streams into Server-Sent Events (SSE) responses, ready for Next.js route handlers, Express, or any framework that accepts a web-standard `Response`.
+
+### Quick Start (Next.js)
+
+```typescript
+import { createStreamResponse } from '@mentiora.ai/sdk';
+import { client } from '@/lib/mentiora';
+
+export const runtime = 'nodejs';
+
+export async function POST(req: Request) {
+  const { message } = await req.json();
+  return createStreamResponse(
+    client.agents.stream({ tag: 'production', message }),
+  );
+}
+```
+
+`createStreamResponse` maps agent events to simplified SSE payloads by default:
+
+| Agent event          | SSE payload                                        |
+| -------------------- | -------------------------------------------------- |
+| `output_text_delta`  | `{ type: "delta", delta }`                         |
+| `chat_completed`     | `{ type: "done", threadId, output, status }`       |
+| `error`              | `{ type: "error", message }`                       |
+
+All other event types are skipped. Pass a custom `transform` to change this behavior:
+
+```typescript
+createStreamResponse(stream, {
+  transform: (event) => {
+    if (event.type === 'output_text_delta') return { text: event.delta };
+    return null; // returning null skips the event
+  },
+});
+```
+
+### SSE_HEADERS
+
+For custom setups where you manage the response yourself, `SSE_HEADERS` provides the standard headers:
+
+```typescript
+import { SSE_HEADERS } from '@mentiora.ai/sdk';
+
+// Express / Node.js http
+res.writeHead(200, SSE_HEADERS);
+```
+
+> **Next.js note:** Add `export const runtime = 'nodejs'` to your route file to ensure the handler runs in the Node.js runtime rather than the Edge runtime.
 
 ## Plugins
 

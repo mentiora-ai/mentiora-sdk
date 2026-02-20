@@ -20,6 +20,8 @@ export type {
   ToolCallResultEvent,
 } from './agents';
 export { MentioraClient } from './client';
+export { createStreamResponse, SSE_HEADERS } from './streaming';
+export type { CreateStreamResponseOptions } from './streaming';
 export { ConfigurationError, MentioraError, NetworkError, ValidationError } from './errors';
 export { MentioraTracingLangChain, trackOpenAI } from './plugins';
 export type { MentioraTracingLangChainOptions, TrackOpenAIOptions } from './plugins/types';

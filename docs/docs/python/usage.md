@@ -429,6 +429,67 @@ async for event in client.agents.stream_async(params):
         break
 ```
 
+## Streaming Responses
+
+The SDK provides helpers to forward agent stream events as Server-Sent Events (SSE) in web applications. These are framework-agnostic and work with FastAPI, Starlette, or any ASGI framework.
+
+### Using `stream_events()` with FastAPI
+
+The simplest way to stream agent responses to a frontend:
+
+```python
+from fastapi import FastAPI
+from fastapi.responses import StreamingResponse
+from mentiora import MentioraClient, MentioraConfig, SSE_HEADERS, stream_events
+
+app = FastAPI()
+client = MentioraClient(MentioraConfig(api_key='...'))
+
+@app.post('/chat/stream')
+async def chat_stream(message: str):
+    events = client.agents.stream_async(tag='production', message=message)
+    return StreamingResponse(
+        stream_events(events),
+        media_type=SSE_HEADERS['Content-Type'],
+        headers=SSE_HEADERS,
+    )
+```
+
+`stream_events()` converts SDK events into SSE-formatted strings:
+- `output_text_delta` → `{"type":"delta","delta":"<text>"}`
+- `chat_completed` → `{"type":"done","threadId":"...","output":"...","status":"..."}`
+- `error` → `{"type":"error","message":"..."}`
+
+Other event types (e.g. `tool_call_delta`) are skipped by default. Exceptions raised during streaming are caught and yielded as error events.
+
+You can supply a custom `transform` function to change the mapping:
+
+```python
+from mentiora.agents.types import AgentStreamEvent
+
+def my_transform(event: AgentStreamEvent) -> dict[str, object] | None:
+    if event.type == 'output_text_delta':
+        return {'text': event.delta}
+    return None  # skip all other events
+
+stream_events(events, transform=my_transform)
+```
+
+### Using `SSE_HEADERS` and `format_sse_event()` directly
+
+For full control over the event loop, use the lower-level helpers:
+
+```python
+from mentiora import SSE_HEADERS, format_sse_event
+
+async def event_generator():
+    async for event in client.agents.stream_async(tag='production', message='Hi'):
+        if event.type == 'output_text_delta':
+            yield format_sse_event({'type': 'delta', 'delta': event.delta})
+
+return StreamingResponse(event_generator(), headers=SSE_HEADERS)
+```
+
 ## Plugins
 
 The SDK provides plugins for automatic tracing of popular frameworks.

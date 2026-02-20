@@ -31,6 +31,7 @@ from .plugins.types import (
     MentioraTracingLangChainOptions,
     TrackOpenAIOptions,
 )
+from .streaming import SSE_HEADERS, format_sse_event, stream_events
 from .types import (
     MentioraConfig,
     SendTraceResult,
@@ -67,6 +68,9 @@ __all__ = [
     'ToolCallDeltaEvent',
     'ToolCallResultEvent',
     'MentioraClient',
+    'SSE_HEADERS',
+    'format_sse_event',
+    'stream_events',
     'MentioraError',
     'NetworkError',
     'ValidationError',
