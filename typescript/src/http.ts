@@ -126,6 +126,10 @@ export class HttpClient {
    */
   constructor(private readonly config: HttpClientConfig) {}
 
+  get isDebugEnabled(): boolean {
+    return this.config.debug;
+  }
+
   /**
    * Returns common HTTP headers for all requests.
    */

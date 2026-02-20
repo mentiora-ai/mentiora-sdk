@@ -13,7 +13,7 @@ export class AgentsClient {
   constructor(private readonly httpClient: HttpClient) {}
 
   private get debug(): boolean {
-    return (this.httpClient as unknown as { config?: { debug?: boolean } }).config?.debug ?? false;
+    return this.httpClient.isDebugEnabled;
   }
 
   /**
@@ -122,15 +122,25 @@ export class AgentsClient {
     if (data.status !== 'completed' && data.status !== 'failed') {
       throw new NetworkError('Invalid agent response: invalid status');
     }
+    if (typeof data.agent_revision !== 'number') {
+      throw new NetworkError('Invalid agent response: missing agent_revision');
+    }
+    if (
+      data.tool_calls !== undefined &&
+      data.tool_calls !== null &&
+      !Array.isArray(data.tool_calls)
+    ) {
+      throw new NetworkError('Invalid agent response: tool_calls must be an array');
+    }
 
     return {
       threadId: data.thread_id,
       traceId: data.trace_id as string | undefined,
       agentId: data.agent_id,
-      agentRevision: data.agent_revision as number,
+      agentRevision: data.agent_revision,
       agentTag: data.agent_tag as string | undefined,
       output: data.output,
-      toolCalls: ((data.tool_calls as Array<Record<string, unknown>>) || []).map((tc) => ({
+      toolCalls: ((data.tool_calls as Array<Record<string, unknown>>) ?? []).map((tc) => ({
         toolCallId: tc.tool_call_id as string,
         name: tc.name as string,
         arguments: tc.arguments,
@@ -183,21 +193,33 @@ export class AgentsClient {
         }
         return { type: 'output_text_delta', delta: data.delta };
       }
-      case 'chat.tool_call.delta':
+      case 'chat.tool_call.delta': {
+        if (
+          typeof data.tool_call_id !== 'string' ||
+          typeof data.name !== 'string' ||
+          typeof data.arguments_delta !== 'string'
+        ) {
+          throw new NetworkError(`Malformed chat.tool_call.delta event: ${sse.data}`);
+        }
         return {
           type: 'tool_call_delta',
-          toolCallId: data.tool_call_id as string,
-          name: data.name as string,
-          argumentsDelta: data.arguments_delta as string,
+          toolCallId: data.tool_call_id,
+          name: data.name,
+          argumentsDelta: data.arguments_delta,
         };
-      case 'chat.tool_call.result':
+      }
+      case 'chat.tool_call.result': {
+        if (typeof data.tool_call_id !== 'string' || typeof data.name !== 'string') {
+          throw new NetworkError(`Malformed chat.tool_call.result event: ${sse.data}`);
+        }
         return {
           type: 'tool_call_result',
-          toolCallId: data.tool_call_id as string,
-          name: data.name as string,
+          toolCallId: data.tool_call_id,
+          name: data.name,
           arguments: data.arguments,
           result: data.result,
         };
+      }
       case 'chat.completed': {
         const chat = (data.chat as Record<string, unknown>) ?? data;
         let output = chat.output ?? data.output ?? '';
@@ -216,7 +238,11 @@ export class AgentsClient {
         };
       }
       case 'error':
-        return { type: 'error', code: data.code as string, message: data.message as string };
+        return {
+          type: 'error',
+          code: typeof data.code === 'string' ? data.code : 'UNKNOWN',
+          message: typeof data.message === 'string' ? data.message : 'Unknown error',
+        };
       default:
         // Unknown events are silently skipped (forward compatibility)
         return null;
