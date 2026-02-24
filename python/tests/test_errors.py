@@ -75,3 +75,29 @@ def test_error_can_be_caught_as_base():
         raise ValidationError('test')
     with pytest.raises(MentioraError):
         raise ConfigurationError('test')
+
+
+def test_network_error_backward_compat():
+    """Existing callsites still work."""
+    e1 = NetworkError('timeout')
+    assert e1.status_code is None
+    assert e1.server_code is None
+    assert e1.server_message is None
+
+    e2 = NetworkError('not found', 404)
+    assert e2.status_code == 404
+    assert e2.server_code is None
+
+
+def test_network_error_server_fields():
+    """New server_code/server_message fields work."""
+    e = NetworkError(
+        'Client error: 404 Not Found: [agent_not_found] Tag "x" not found',
+        status_code=404,
+        server_code='agent_not_found',
+        server_message='Tag "x" not found',
+    )
+    assert e.status_code == 404
+    assert e.server_code == 'agent_not_found'
+    assert e.server_message == 'Tag "x" not found'
+    assert 'agent_not_found' in str(e)

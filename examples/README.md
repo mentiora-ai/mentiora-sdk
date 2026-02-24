@@ -9,6 +9,8 @@ Production-ready example applications demonstrating how to use the Mentiora SDK 
 - A **Mentiora account** with an API key — see the [Authentication guide](https://docs.mentiora.ai/authentication)
 - An **OpenAI API key** (for OpenAI and LangChain integration examples)
 
+> **Note:** The Chatbot UI examples only require `MENTIORA_API_KEY` — no additional API keys needed.
+
 ## Examples
 
 | Pattern | TypeScript | Python | Description |
@@ -16,6 +18,8 @@ Production-ready example applications demonstrating how to use the Mentiora SDK 
 | **Basic Tracing** | [`typescript/basic-tracing`](./typescript/basic-tracing/) | [`python/basic-tracing`](./python/basic-tracing/) | Manual trace instrumentation with full control over trace events |
 | **OpenAI Integration** | [`typescript/openai-integration`](./typescript/openai-integration/) | [`python/openai-integration`](./python/openai-integration/) | Automatic tracing of OpenAI API calls via `trackOpenAI`/`track_openai` |
 | **LangChain Integration** | [`typescript/langchain-integration`](./typescript/langchain-integration/) | [`python/langchain-integration`](./python/langchain-integration/) | Automatic tracing of LangChain operations via callback handler |
+| **Agent Run** | [`typescript/agent-run`](./typescript/agent-run/) | [`python/agent-run`](./python/agent-run/) | Run custom agents synchronously and with real-time streaming |
+| **Chatbot UI** | [`typescript/chatbot-ui`](./typescript/chatbot-ui/) | [`python/chatbot-ui`](./python/chatbot-ui/) | React chat app (Next.js / FastAPI+Vite) with streaming toggle and multi-turn conversations |
 
 ## Environment Setup
 

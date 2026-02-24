@@ -6,6 +6,20 @@ Provides AI observability and tracing.
 
 from importlib.metadata import version as _get_version
 
+from .agents import (
+    AgentErrorEvent,
+    AgentResolvedEvent,
+    AgentRunParams,
+    AgentRunResult,
+    AgentsClient,
+    AgentStreamEvent,
+    AgentToolCall,
+    ChatCompletedEvent,
+    ModelParams,
+    OutputTextDeltaEvent,
+    ToolCallDeltaEvent,
+    ToolCallResultEvent,
+)
 from .client import MentioraClient
 from .errors import (
     ConfigurationError,
@@ -17,6 +31,7 @@ from .plugins.types import (
     MentioraTracingLangChainOptions,
     TrackOpenAIOptions,
 )
+from .streaming import SSE_HEADERS, format_sse_event, stream_events
 from .types import (
     MentioraConfig,
     SendTraceResult,
@@ -40,7 +55,22 @@ except ImportError:
 
 __all__ = [
     '__version__',
+    'AgentErrorEvent',
+    'AgentResolvedEvent',
+    'AgentRunParams',
+    'AgentRunResult',
+    'AgentsClient',
+    'AgentStreamEvent',
+    'AgentToolCall',
+    'ChatCompletedEvent',
+    'ModelParams',
+    'OutputTextDeltaEvent',
+    'ToolCallDeltaEvent',
+    'ToolCallResultEvent',
     'MentioraClient',
+    'SSE_HEADERS',
+    'format_sse_event',
+    'stream_events',
     'MentioraError',
     'NetworkError',
     'ValidationError',

@@ -8,7 +8,7 @@
     "dev": "tsx watch src/index.ts"
   },
   "dependencies": {
-    "@mentiora/sdk": "latest",
+    "@mentiora.ai/sdk": "../../../typescript",
     "@langchain/core": "^0.3.0",
     "@langchain/openai": "^0.3.0",
     "langchain": "^0.3.0",

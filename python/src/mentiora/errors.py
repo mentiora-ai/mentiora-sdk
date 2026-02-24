@@ -26,12 +26,23 @@ class NetworkError(MentioraError):
     Args:
         message: Human-readable error description.
         status_code: HTTP status code, if available.
+        server_code: Machine-readable error code from the server response
+            (e.g. ``'agent_not_found'``, ``'invalid_request'``).
+        server_message: Detailed error message from the server response.
     """
 
-    def __init__(self, message: str, status_code: int | None = None) -> None:
+    def __init__(
+        self,
+        message: str,
+        status_code: int | None = None,
+        server_code: str | None = None,
+        server_message: str | None = None,
+    ) -> None:
         """Initialize network error."""
         super().__init__(message, 'NETWORK_ERROR')
         self.status_code = status_code
+        self.server_code = server_code
+        self.server_message = server_message
 
 
 class ValidationError(MentioraError):

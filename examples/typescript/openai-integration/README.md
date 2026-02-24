@@ -19,19 +19,19 @@ Automatic tracing of OpenAI API calls using the Mentiora SDK.
 
 - **Node.js** >= 20.0.0
 - A **Mentiora account** with an API key — see the [Authentication guide](https://docs.mentiora.ai/authentication)
-- An **OpenAI API key** with access to `gpt-4o-mini` and `text-embedding-3-small`
+- An **OpenAI API key** with access to `gpt-5-mini` and `text-embedding-3-small`
 
 ## Setup
 
-1. Install dependencies:
+1.  Install dependencies:
 
         pnpm install
 
-2. Copy and fill in your API keys:
+2.  Copy and fill in your API keys:
 
         cp .env.example .env
 
-3. Edit `.env` with your real keys:
+3.  Edit `.env` with your real keys:
 
         MENTIORA_API_KEY=mk_...
         MENTIORA_BASE_URL=https://platform.mentiora.ai
@@ -48,7 +48,7 @@ Each OpenAI API call generates a trace event containing:
 - **Input messages** -- the full prompt sent to the model
 - **Output response** -- the assistant's reply (or tool calls)
 - **Token usage** -- prompt, completion, and total tokens
-- **Model** -- the model used (e.g. `gpt-4o-mini`)
+- **Model** -- the model used (e.g. `gpt-5-mini`)
 - **Latency** -- start time, end time, and duration in milliseconds
 - **Errors** -- full error details if the API call fails
 - **Timestamps** -- ISO 8601 start/end times for each call

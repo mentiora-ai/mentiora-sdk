@@ -543,3 +543,351 @@ def test_send_trace_timeout_message_format(mock_client_class):
     with pytest.raises(NetworkError, match='Request timeout after 30000ms'):
         client.send_trace(event)
     client.close()
+
+
+# ===========================================================================
+# Generic POST with retry tests
+# ===========================================================================
+
+
+@patch('mentiora.http.httpx.Client')
+def test_post_success(mock_client_class):
+    """Test successful generic POST."""
+    mock_response = MagicMock()
+    mock_response.status_code = 200
+    mock_response.json.return_value = {'result': 'ok'}
+    mock_response.content = b'{"result": "ok"}'
+
+    mock_client = MagicMock()
+    mock_client.post.return_value = mock_response
+    mock_client_class.return_value = mock_client
+
+    client = HttpClient('https://test.mentiora.ai', 'test-key')
+    result = client.post('/api/v1/agents/invoke', {'input': 'hello'})
+    assert isinstance(result, HttpResponse)
+    assert result.status == 200
+    assert result.body == {'result': 'ok'}
+
+    mock_client.post.assert_called_once_with(
+        'https://test.mentiora.ai/api/v1/agents/invoke',
+        json={'input': 'hello'},
+    )
+    client.close()
+
+
+@patch('mentiora.http.httpx.Client')
+def test_post_client_error(mock_client_class):
+    """Test generic POST with 4xx error."""
+    mock_response = MagicMock()
+    mock_response.status_code = 400
+    mock_response.reason_phrase = 'Bad Request'
+
+    mock_client = MagicMock()
+    mock_client.post.return_value = mock_response
+    mock_client_class.return_value = mock_client
+
+    client = HttpClient('https://test.mentiora.ai', 'test-key')
+    with pytest.raises(NetworkError, match='Client error: 400'):
+        client.post('/api/v1/test', {'data': 1})
+    client.close()
+
+
+@patch('mentiora.http.httpx.Client')
+def test_post_timeout(mock_client_class):
+    """Test generic POST timeout."""
+    mock_client = MagicMock()
+    mock_client.post.side_effect = httpx.TimeoutException('timeout')
+    mock_client_class.return_value = mock_client
+
+    client = HttpClient('https://test.mentiora.ai', 'test-key', timeout=5000)
+    with pytest.raises(NetworkError, match='Request timeout after 5000ms'):
+        client.post('/api/v1/test', {})
+    client.close()
+
+
+@patch('mentiora.http.httpx.Client')
+@patch('time.sleep')
+def test_post_retries_on_500(mock_sleep, mock_client_class):
+    """Test generic POST retries on server errors."""
+    mock_500 = MagicMock()
+    mock_500.status_code = 500
+    mock_500.reason_phrase = 'Internal Server Error'
+
+    mock_success = MagicMock()
+    mock_success.status_code = 200
+    mock_success.content = b'{"ok": true}'
+    mock_success.json.return_value = {'ok': True}
+
+    mock_client = MagicMock()
+    mock_client.post.side_effect = [mock_500, mock_success]
+    mock_client_class.return_value = mock_client
+
+    client = HttpClient('https://test.mentiora.ai', 'test-key', retries=2)
+    result = client.post('/api/v1/test', {'data': 1})
+    assert result.status == 200
+    assert mock_client.post.call_count == 2
+    assert mock_sleep.call_count == 1
+    client.close()
+
+
+@patch('mentiora.http.httpx.Client')
+@patch('time.sleep')
+def test_post_retries_on_429(mock_sleep, mock_client_class):
+    """Test generic POST retries on 429 with retry-after."""
+    mock_429 = MagicMock()
+    mock_429.status_code = 429
+    mock_429.headers = {'retry-after': '0'}
+
+    mock_success = MagicMock()
+    mock_success.status_code = 200
+    mock_success.content = b'{}'
+    mock_success.json.return_value = {}
+
+    mock_client = MagicMock()
+    mock_client.post.side_effect = [mock_429, mock_success]
+    mock_client_class.return_value = mock_client
+
+    client = HttpClient('https://test.mentiora.ai', 'test-key', retries=2)
+    result = client.post('/api/v1/test', {})
+    assert result.status == 200
+    mock_sleep.assert_called_once_with(0.0)
+    client.close()
+
+
+async def test_post_async_success():
+    """Test successful async generic POST."""
+    with patch('mentiora.http.httpx.AsyncClient') as mock_async_client_class:
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.content = b'{"result": "async-ok"}'
+        mock_response.json.return_value = {'result': 'async-ok'}
+
+        mock_async_client = AsyncMock()
+        mock_async_client.post = AsyncMock(return_value=mock_response)
+        mock_async_client_class.return_value = mock_async_client
+
+        client = HttpClient('https://test.mentiora.ai', 'test-key')
+        result = await client.post_async('/api/v1/agents/invoke', {'input': 'hi'})
+        assert result.status == 200
+        assert result.body == {'result': 'async-ok'}
+        await client.aclose()
+
+
+async def test_post_async_client_error():
+    """Test async POST raises on 4xx."""
+    with patch('mentiora.http.httpx.AsyncClient') as mock_async_client_class:
+        mock_response = MagicMock()
+        mock_response.status_code = 404
+        mock_response.reason_phrase = 'Not Found'
+
+        mock_async_client = AsyncMock()
+        mock_async_client.post = AsyncMock(return_value=mock_response)
+        mock_async_client_class.return_value = mock_async_client
+
+        client = HttpClient('https://test.mentiora.ai', 'test-key')
+        with pytest.raises(NetworkError, match='Client error: 404'):
+            await client.post_async('/api/v1/test', {})
+        await client.aclose()
+
+
+# ===========================================================================
+# Streaming POST (SSE) tests
+# ===========================================================================
+
+
+@patch('mentiora.http.httpx.Client')
+def test_post_stream_success(mock_client_class):
+    """Test streaming POST yields parsed SSE events."""
+    mock_response = MagicMock()
+    mock_response.status_code = 200
+    mock_response.reason_phrase = 'OK'
+    mock_response.iter_lines.return_value = iter(
+        [
+            'event: token',
+            'data: hello',
+            '',
+            'event: token',
+            'data: world',
+            '',
+        ]
+    )
+    mock_response.__enter__ = MagicMock(return_value=mock_response)
+    mock_response.__exit__ = MagicMock(return_value=False)
+
+    mock_client = MagicMock()
+    mock_client.stream.return_value = mock_response
+    mock_client_class.return_value = mock_client
+
+    client = HttpClient('https://test.mentiora.ai', 'test-key')
+    events = list(client.post_stream('/api/v1/agents/stream', {'input': 'hi'}))
+    assert len(events) == 2
+    assert events[0].event == 'token'
+    assert events[0].data == 'hello'
+    assert events[1].event == 'token'
+    assert events[1].data == 'world'
+    client.close()
+
+
+@patch('mentiora.http.httpx.Client')
+def test_post_stream_server_error(mock_client_class):
+    """Test streaming POST raises on HTTP error status."""
+    mock_response = MagicMock()
+    mock_response.status_code = 500
+    mock_response.reason_phrase = 'Internal Server Error'
+    mock_response.__enter__ = MagicMock(return_value=mock_response)
+    mock_response.__exit__ = MagicMock(return_value=False)
+
+    mock_client = MagicMock()
+    mock_client.stream.return_value = mock_response
+    mock_client_class.return_value = mock_client
+
+    client = HttpClient('https://test.mentiora.ai', 'test-key')
+    with pytest.raises(NetworkError, match='Stream error: 500'):
+        list(client.post_stream('/api/v1/agents/stream', {}))
+    client.close()
+
+
+@patch('mentiora.http.httpx.Client')
+def test_post_stream_timeout(mock_client_class):
+    """Test streaming POST handles timeout."""
+    mock_client = MagicMock()
+    mock_client.stream.side_effect = httpx.TimeoutException('timeout')
+    mock_client_class.return_value = mock_client
+
+    client = HttpClient('https://test.mentiora.ai', 'test-key', timeout=10000)
+    with pytest.raises(NetworkError, match='Request timeout after 10000ms'):
+        list(client.post_stream('/api/v1/agents/stream', {}))
+    client.close()
+
+
+@patch('mentiora.http.httpx.Client')
+def test_post_stream_network_error(mock_client_class):
+    """Test streaming POST handles network error."""
+    mock_client = MagicMock()
+    mock_client.stream.side_effect = httpx.NetworkError('Connection reset')
+    mock_client_class.return_value = mock_client
+
+    client = HttpClient('https://test.mentiora.ai', 'test-key')
+    with pytest.raises(NetworkError, match='Connection reset'):
+        list(client.post_stream('/api/v1/agents/stream', {}))
+    client.close()
+
+
+async def test_post_stream_async_success():
+    """Test async streaming POST yields parsed SSE events."""
+    with patch('mentiora.http.httpx.AsyncClient') as mock_async_client_class:
+
+        async def _aiter_lines():
+            for line in [
+                'event: chunk',
+                'data: part1',
+                '',
+                'event: done',
+                'data: part2',
+                '',
+            ]:
+                yield line
+
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.reason_phrase = 'OK'
+        mock_response.aiter_lines = _aiter_lines
+
+        # Build an async context manager that returns mock_response
+        stream_cm = MagicMock()
+        stream_cm.__aenter__ = AsyncMock(return_value=mock_response)
+        stream_cm.__aexit__ = AsyncMock(return_value=False)
+
+        mock_async_client = MagicMock()
+        mock_async_client.stream.return_value = stream_cm
+        mock_async_client.aclose = AsyncMock()
+        mock_async_client_class.return_value = mock_async_client
+
+        client = HttpClient('https://test.mentiora.ai', 'test-key')
+        events = [
+            e async for e in client.post_stream_async('/api/v1/agents/stream', {'input': 'x'})
+        ]
+        assert len(events) == 2
+        assert events[0].event == 'chunk'
+        assert events[0].data == 'part1'
+        assert events[1].event == 'done'
+        assert events[1].data == 'part2'
+        await client.aclose()
+
+
+async def test_post_stream_async_server_error():
+    """Test async streaming POST raises on HTTP error."""
+    with patch('mentiora.http.httpx.AsyncClient') as mock_async_client_class:
+        mock_response = MagicMock()
+        mock_response.status_code = 503
+        mock_response.reason_phrase = 'Service Unavailable'
+        mock_response.aread = AsyncMock(return_value=b'')
+
+        stream_cm = MagicMock()
+        stream_cm.__aenter__ = AsyncMock(return_value=mock_response)
+        stream_cm.__aexit__ = AsyncMock(return_value=False)
+
+        mock_async_client = MagicMock()
+        mock_async_client.stream.return_value = stream_cm
+        mock_async_client.aclose = AsyncMock()
+        mock_async_client_class.return_value = mock_async_client
+
+        client = HttpClient('https://test.mentiora.ai', 'test-key')
+        with pytest.raises(NetworkError, match='Stream error: 503'):
+            async for _ in client.post_stream_async('/api/v1/agents/stream', {}):
+                pass
+        await client.aclose()
+
+
+# ===========================================================================
+# Error body propagation tests
+# ===========================================================================
+
+
+@patch('mentiora.http.httpx.Client')
+def test_post_4xx_propagates_server_error_body(mock_client_class):
+    """4xx errors include server code and message from JSON body."""
+    mock_response = MagicMock()
+    mock_response.status_code = 404
+    mock_response.reason_phrase = 'Not Found'
+    mock_response.json.return_value = {
+        'error': {'code': 'agent_not_found', 'message': 'Tag "prod" not found'}
+    }
+
+    mock_client = MagicMock()
+    mock_client.post.return_value = mock_response
+    mock_client_class.return_value = mock_client
+
+    client = HttpClient('https://test.mentiora.ai', 'test-key')
+    with pytest.raises(NetworkError) as exc_info:
+        client.post('/api/v1/agents/run', {'tag': 'prod'})
+
+    err = exc_info.value
+    assert err.status_code == 404
+    assert err.server_code == 'agent_not_found'
+    assert err.server_message == 'Tag "prod" not found'
+    assert 'agent_not_found' in str(err)
+    assert 'Tag "prod" not found' in str(err)
+    client.close()
+
+
+@patch('mentiora.http.httpx.Client')
+def test_post_4xx_fallback_when_no_json_body(mock_client_class):
+    """4xx errors degrade gracefully if body isn't JSON."""
+    mock_response = MagicMock()
+    mock_response.status_code = 400
+    mock_response.reason_phrase = 'Bad Request'
+    mock_response.json.side_effect = Exception('not json')
+
+    mock_client = MagicMock()
+    mock_client.post.return_value = mock_response
+    mock_client_class.return_value = mock_client
+
+    client = HttpClient('https://test.mentiora.ai', 'test-key')
+    with pytest.raises(NetworkError, match='Client error: 400 Bad Request') as exc_info:
+        client.post('/api/v1/agents/run', {})
+
+    err = exc_info.value
+    assert err.server_code is None
+    assert err.server_message is None
+    client.close()

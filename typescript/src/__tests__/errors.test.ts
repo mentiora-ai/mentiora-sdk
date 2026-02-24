@@ -55,6 +55,22 @@ describe('NetworkError', () => {
     const err = new NetworkError('timeout');
     expect(err.statusCode).toBeUndefined();
   });
+
+  it('preserves backward compat', () => {
+    const e1 = new NetworkError('timeout');
+    expect(e1.statusCode).toBeUndefined();
+    expect(e1.serverCode).toBeUndefined();
+
+    const e2 = new NetworkError('not found', 404);
+    expect(e2.statusCode).toBe(404);
+    expect(e2.serverCode).toBeUndefined();
+  });
+
+  it('exposes server error fields', () => {
+    const e = new NetworkError('msg', 404, 'agent_not_found', 'Tag "x" not found');
+    expect(e.serverCode).toBe('agent_not_found');
+    expect(e.serverMessage).toBe('Tag "x" not found');
+  });
 });
 
 describe('ValidationError', () => {

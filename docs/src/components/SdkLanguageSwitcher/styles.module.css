@@ -1,0 +1,81 @@
+.dropdown {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.trigger {
+  display: flex;
+  align-items: center;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-weight: 500;
+  padding: 0.25rem 0.5rem;
+  /* Override Docusaurus .navbar__item.dropdown .navbar__link:not([href]) { pointer-events: none } */
+  pointer-events: auto;
+}
+
+.arrow {
+  margin-left: 0.25rem;
+  font-size: 0.65rem;
+}
+
+.menu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  min-width: 140px;
+  margin-top: 0.25rem;
+  padding: 0.25rem 0;
+  list-style: none;
+  border: 1px solid var(--ifm-color-emphasis-200);
+  border-radius: var(--ifm-global-radius);
+  background: var(--ifm-dropdown-background-color);
+  box-shadow: var(--ifm-global-shadow-lw);
+  z-index: var(--ifm-z-index-dropdown);
+  /* Override Docusaurus .dropdown__menu { opacity: 0; pointer-events: none; visibility: hidden } */
+  opacity: 0;
+  pointer-events: none;
+  visibility: hidden;
+  transform: translateY(4px);
+  transition:
+    opacity 0.15s ease,
+    transform 0.15s ease,
+    visibility 0.15s;
+}
+
+.menuVisible {
+  opacity: 1;
+  pointer-events: auto;
+  visibility: visible;
+  transform: translateY(-1px);
+}
+
+.menuItem {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 0.375rem 0.75rem;
+  border: none;
+  background: none;
+  color: var(--ifm-dropdown-link-color);
+  font-size: 0.875rem;
+  font-weight: 400;
+  cursor: pointer;
+  text-align: left;
+}
+
+.menuItem:hover {
+  background: var(--ifm-dropdown-hover-background-color);
+}
+
+.menuItemActive {
+  font-weight: 600;
+  color: var(--ifm-color-primary);
+}
+
+.check {
+  margin-left: auto;
+  font-size: 0.75rem;
+}

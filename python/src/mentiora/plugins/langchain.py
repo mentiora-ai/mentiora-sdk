@@ -11,11 +11,10 @@ from uuid import UUID
 
 from langchain_core.callbacks import AsyncCallbackHandler
 from langchain_core.outputs import LLMResult
-from uuid_utils import uuid7
 
 from ..errors import ConfigurationError
 from ..types import TraceError, TraceEvent, TraceType, UsageInfo
-from ..utils import format_exception_stack
+from ..utils import format_exception_stack, uuid7
 from .types import MentioraTracingLangChainOptions
 
 logger = logging.getLogger(__name__)

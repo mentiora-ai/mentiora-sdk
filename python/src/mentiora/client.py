@@ -7,6 +7,7 @@ through namespaced properties (e.g., client.tracing).
 from typing import Any
 
 from . import http
+from .agents.client import AgentsClient
 from .errors import ConfigurationError
 from .tracing import TracingClient
 from .types import MentioraConfig
@@ -49,6 +50,7 @@ class MentioraClient:
 
         # Initialize feature clients
         self.tracing = TracingClient(self._http_client)
+        self.agents = AgentsClient(self._http_client)
 
     def _validate_config(self, config: MentioraConfig) -> None:
         """Validate configuration.

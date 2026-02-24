@@ -20,7 +20,7 @@ Automatic tracing of LangChain operations using the Mentiora SDK callback handle
 
 - **Python** >= 3.11
 - A **Mentiora account** with an API key — see the [Authentication guide](https://docs.mentiora.ai/authentication)
-- An **OpenAI API key** with access to `gpt-4o-mini`
+- An **OpenAI API key** with access to `gpt-5-mini`
 
 ## Setup
 
@@ -59,7 +59,7 @@ Each LangChain operation generates a trace event containing:
 - **Input** — the prompt template variables and rendered messages
 - **Output** — the model's response content
 - **Token usage** — prompt, completion, and total tokens
-- **Model** — the model used (e.g. `gpt-4o-mini`)
+- **Model** — the model used (e.g. `gpt-5-mini`)
 - **Latency** — start time, end time, and duration in milliseconds
 - **Errors** — full error details if any step fails
 - **Parent-child spans** — LCEL chains automatically create nested spans (chain → LLM)

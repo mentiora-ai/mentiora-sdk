@@ -1,3 +1,2 @@
-mentiora-sdk[openai]
+-e ../../../python
 python-dotenv
-uuid-utils

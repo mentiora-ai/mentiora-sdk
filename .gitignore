@@ -55,6 +55,9 @@ coverage/
 .husky/_/
 
 
+# Local runner
+.local/
+
 # Claude
 .claude/
 code_specs/

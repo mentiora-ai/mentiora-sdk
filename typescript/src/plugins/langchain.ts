@@ -189,7 +189,7 @@ interface ActiveRunData {
  *
  * @example
  * ```typescript
- * import { MentioraTracingLangChain, MentioraClient } from '@mentiora/sdk';
+ * import { MentioraTracingLangChain, MentioraClient } from '@mentiora.ai/sdk';
  *
  * const mentioraClient = new MentioraClient({ ... });
  * const callback = new MentioraTracingLangChain({ mentioraClient });

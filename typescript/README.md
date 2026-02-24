@@ -1,11 +1,11 @@
-# @mentiora/sdk
+# @mentiora.ai/sdk
 
 TypeScript/JavaScript SDK for the Mentiora platform. Provides AI observability and tracing.
 
 ## Installation
 
 ```bash
-npm install @mentiora/sdk
+npm install @mentiora.ai/sdk
 ```
 
 ## Usage
@@ -13,7 +13,7 @@ npm install @mentiora/sdk
 ### Basic Setup
 
 ```typescript
-import { MentioraClient } from '@mentiora/sdk';
+import { MentioraClient } from '@mentiora.ai/sdk';
 
 const client = new MentioraClient({
   apiKey: process.env.MENTIORA_API_KEY,
@@ -101,7 +101,7 @@ const result = await client.tracing.sendTrace({
     completion_tokens: 25,
     total_tokens: 35,
   },
-  model: 'gpt-4o-mini',
+  model: 'gpt-5-mini',
   provider: 'openai',
   metadata: {
     environment: 'prod',
@@ -128,9 +128,9 @@ npm install openai
 ```
 
 ```typescript
-import { trackOpenAI } from '@mentiora/sdk';
+import { trackOpenAI } from '@mentiora.ai/sdk';
 import OpenAI from 'openai';
-import { MentioraClient } from '@mentiora/sdk';
+import { MentioraClient } from '@mentiora.ai/sdk';
 
 // Initialize Mentiora client
 const mentioraClient = new MentioraClient({
@@ -151,7 +151,7 @@ const trackedClient = trackOpenAI(openaiClient, {
 
 // Use trackedClient instead of openaiClient - chat completions are automatically traced
 const response = await trackedClient.chat.completions.create({
-  model: 'gpt-4o-mini',
+  model: 'gpt-5-mini',
   messages: [{ role: 'user', content: 'Hello!' }],
 });
 ```
@@ -181,7 +181,7 @@ npm install @langchain/core
 ```
 
 ```typescript
-import { MentioraTracingLangChain, MentioraClient } from '@mentiora/sdk';
+import { MentioraTracingLangChain, MentioraClient } from '@mentiora.ai/sdk';
 import { ChatOpenAI } from '@langchain/openai';
 import { ChatPromptTemplate } from '@langchain/core/prompts';
 
@@ -198,7 +198,7 @@ const callback = new MentioraTracingLangChain({
 });
 
 // Use with LangChain LCEL chains
-const llm = new ChatOpenAI({ model: 'gpt-4o-mini' });
+const llm = new ChatOpenAI({ model: 'gpt-5-mini' });
 const prompt = ChatPromptTemplate.fromTemplate('Say hello to {name}');
 const chain = prompt.pipe(llm);
 

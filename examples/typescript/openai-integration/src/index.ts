@@ -12,7 +12,7 @@
  *   npm start
  */
 
-import { MentioraClient, trackOpenAI } from '@mentiora/sdk';
+import { MentioraClient, trackOpenAI } from '@mentiora.ai/sdk';
 import * as dotenv from 'dotenv';
 import OpenAI from 'openai';
 import { v7 as uuidv7 } from 'uuid';
@@ -24,16 +24,21 @@ dotenv.config();
 // ---------------------------------------------------------------------------
 
 const MENTIORA_API_KEY = process.env.MENTIORA_API_KEY;
-const MENTIORA_BASE_URL = process.env.MENTIORA_BASE_URL || 'https://platform.mentiora.ai';
+const MENTIORA_BASE_URL =
+  process.env.MENTIORA_BASE_URL || 'https://platform.mentiora.ai';
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 
 if (!MENTIORA_API_KEY || MENTIORA_API_KEY === 'your-api-key-here') {
-  console.error('Missing MENTIORA_API_KEY. Copy .env.example to .env and add your key.');
+  console.error(
+    'Missing MENTIORA_API_KEY. Copy .env.example to .env and add your key.',
+  );
   process.exit(1);
 }
 
 if (!OPENAI_API_KEY || OPENAI_API_KEY === 'your-openai-api-key-here') {
-  console.error('Missing OPENAI_API_KEY. Copy .env.example to .env and add your key.');
+  console.error(
+    'Missing OPENAI_API_KEY. Copy .env.example to .env and add your key.',
+  );
   process.exit(1);
 }
 
@@ -70,10 +75,16 @@ async function chatCompletion() {
   });
 
   const response = await trackedClient.chat.completions.create({
-    model: 'gpt-4o-mini',
+    model: 'gpt-5-mini',
     messages: [
-      { role: 'system', content: 'You are a helpful assistant. Keep answers concise.' },
-      { role: 'user', content: 'What are three benefits of observability in AI applications?' },
+      {
+        role: 'system',
+        content: 'You are a helpful assistant. Keep answers concise.',
+      },
+      {
+        role: 'user',
+        content: 'What are three benefits of observability in AI applications?',
+      },
     ],
   });
 
@@ -109,7 +120,7 @@ async function multiTurnConversation() {
   ];
 
   const turn1 = await trackedClient.chat.completions.create({
-    model: 'gpt-4o-mini',
+    model: 'gpt-5-mini',
     messages,
   });
 
@@ -119,23 +130,31 @@ async function multiTurnConversation() {
 
   // Turn 2 — build on the conversation context
   messages.push({ role: 'assistant', content: reply1 });
-  messages.push({ role: 'user', content: 'How does it apply to LLM-powered applications?' });
+  messages.push({
+    role: 'user',
+    content: 'How does it apply to LLM-powered applications?',
+  });
 
   const turn2 = await trackedClient.chat.completions.create({
-    model: 'gpt-4o-mini',
+    model: 'gpt-5-mini',
     messages,
   });
 
   const reply2 = turn2.choices[0]?.message?.content ?? '';
-  console.log('\nTurn 2 — User:     How does it apply to LLM-powered applications?');
+  console.log(
+    '\nTurn 2 — User:     How does it apply to LLM-powered applications?',
+  );
   console.log(`Turn 2 — Assistant: ${reply2.slice(0, 120)}...`);
 
   // Turn 3 — follow-up question
   messages.push({ role: 'assistant', content: reply2 });
-  messages.push({ role: 'user', content: 'Can you summarize in one sentence?' });
+  messages.push({
+    role: 'user',
+    content: 'Can you summarize in one sentence?',
+  });
 
   const turn3 = await trackedClient.chat.completions.create({
-    model: 'gpt-4o-mini',
+    model: 'gpt-5-mini',
     messages,
   });
 
@@ -160,10 +179,13 @@ async function embeddings() {
   // Single embedding
   const single = await trackedClient.embeddings.create({
     model: 'text-embedding-3-small',
-    input: 'Observability helps teams understand AI system behavior in production.',
+    input:
+      'Observability helps teams understand AI system behavior in production.',
   });
 
-  console.log(`Single embedding: ${single.data[0].embedding.length} dimensions`);
+  console.log(
+    `Single embedding: ${single.data[0].embedding.length} dimensions`,
+  );
   console.log(`Tokens used: ${single.usage?.total_tokens ?? 'N/A'}`);
 
   // Batch embeddings — multiple inputs in one call
@@ -176,7 +198,9 @@ async function embeddings() {
     ],
   });
 
-  console.log(`\nBatch embeddings: ${batch.data.length} vectors, ${batch.data[0].embedding.length} dimensions each`);
+  console.log(
+    `\nBatch embeddings: ${batch.data.length} vectors, ${batch.data[0].embedding.length} dimensions each`,
+  );
   console.log(`Tokens used: ${batch.usage?.total_tokens ?? 'N/A'}`);
 }
 
@@ -200,7 +224,9 @@ async function main() {
     console.log('Done! Check the Mentiora dashboard to view your traces.');
   } catch (error) {
     console.error('\nError running example:', (error as Error).message);
-    console.error('Make sure your API keys are valid and you have sufficient quota.');
+    console.error(
+      'Make sure your API keys are valid and you have sufficient quota.',
+    );
     process.exit(1);
   }
 }

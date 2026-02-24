@@ -31,11 +31,11 @@ Mentiora SDK is the official multi-language SDK for the Mentiora observability p
 ### TypeScript/JavaScript
 
 ```bash
-npm install @mentiora/sdk
+npm install @mentiora.ai/sdk
 ```
 
 ```typescript
-import { MentioraClient, trackOpenAI } from '@mentiora/sdk';
+import { MentioraClient, trackOpenAI } from '@mentiora.ai/sdk';
 import OpenAI from 'openai';
 
 // Initialize Mentiora client (defaults to https://platform.mentiora.ai)
@@ -48,7 +48,7 @@ const openai = trackOpenAI(new OpenAI(), { mentioraClient: mentiora });
 
 // Use OpenAI normally - traces are sent automatically
 const response = await openai.chat.completions.create({
-  model: 'gpt-4o-mini',
+  model: 'gpt-5-mini',
   messages: [{ role: 'user', content: 'Explain quantum computing' }],
 });
 ```
@@ -79,7 +79,7 @@ openai = track_openai(
 
 # Use OpenAI normally - traces are sent automatically
 response = await openai.chat.completions.create(
-    model='gpt-4o-mini',
+    model='gpt-5-mini',
     messages=[{'role': 'user', 'content': 'Explain quantum computing'}],
 )
 ```
@@ -142,7 +142,7 @@ This is a monorepo containing parallel implementations with consistent APIs:
 
 ```
 mentiora-sdk/
-├── typescript/          # TypeScript/JavaScript SDK (@mentiora/sdk)
+├── typescript/          # TypeScript/JavaScript SDK (@mentiora.ai/sdk)
 │   ├── src/
 │   ├── package.json
 │   └── README.md

@@ -1,10 +1,9 @@
 """Tracing client for sending trace events to the Mentiora platform."""
 
-import uuid_utils
-
 from .. import http
 from ..errors import NetworkError, ValidationError
 from ..types import SendTraceResult, TraceEvent
+from ..utils import uuid7
 
 
 class TracingClient:
@@ -23,7 +22,7 @@ class TracingClient:
         thread_id = event.thread_id
         if isinstance(thread_id, str) and thread_id.strip():
             return event
-        return event.model_copy(update={'thread_id': str(uuid_utils.uuid7())})
+        return event.model_copy(update={'thread_id': str(uuid7())})
 
     def _validate_trace_event(self, event: TraceEvent) -> None:
         """Validate trace event."""

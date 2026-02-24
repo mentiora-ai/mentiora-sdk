@@ -118,6 +118,38 @@ function getBackoffDelay(attempt: number): number {
 }
 
 /**
+ * Extract structured error details from a JSON response body.
+ * Expects shape `{ error: { code?: string, message?: string } }`.
+ */
+function extractErrorDetail(responseBody: unknown): {
+  serverCode?: string;
+  serverMessage?: string;
+  detail: string;
+} {
+  try {
+    const body = responseBody as Record<string, unknown> | undefined;
+    const errObj = body?.error as Record<string, unknown> | undefined;
+    if (errObj) {
+      const serverCode = typeof errObj.code === 'string' ? errObj.code : undefined;
+      const serverMessage = typeof errObj.message === 'string' ? errObj.message : undefined;
+      if (serverCode && serverMessage) {
+        return {
+          serverCode,
+          serverMessage,
+          detail: `: [${serverCode}] ${serverMessage}`,
+        };
+      }
+      if (serverMessage) {
+        return { serverCode, serverMessage, detail: `: ${serverMessage}` };
+      }
+    }
+  } catch {
+    // Non-JSON or unexpected shape — fall through
+  }
+  return { detail: '' };
+}
+
+/**
  * HTTP client with retry logic and exponential backoff.
  */
 export class HttpClient {
@@ -126,30 +158,41 @@ export class HttpClient {
    */
   constructor(private readonly config: HttpClientConfig) {}
 
+  get isDebugEnabled(): boolean {
+    return this.config.debug;
+  }
+
   /**
-   * Send trace event to the API with retry logic.
-   *
-   * @param event - The trace event to send.
-   * @returns The HTTP response with status and parsed body.
-   * @throws {@link NetworkError} on timeout, HTTP 4xx/5xx, or network failure after retries.
+   * Returns common HTTP headers for all requests.
    */
-  async sendTrace(event: TraceEvent): Promise<HttpResponse> {
-    const url = `${this.config.baseUrl}/api/v1/traces`;
-    const body = normalizeTraceEvent(event);
-    const headers: Record<string, string> = {
+  private getHeaders(): Record<string, string> {
+    return {
       'Content-Type': 'application/json',
       Authorization: `Bearer ${this.config.apiKey}`,
       'User-Agent': `mentiora-sdk-ts/${SDK_VERSION}`,
     };
+  }
+
+  /**
+   * Send a POST request with retry logic and exponential backoff.
+   *
+   * @param path - API path (e.g. '/api/v1/traces').
+   * @param body - JSON-serializable request body.
+   * @param debugContext - Optional context object logged in debug mode.
+   * @returns The HTTP response with status and parsed body.
+   * @throws {@link NetworkError} on timeout, HTTP 4xx/5xx, or network failure after retries.
+   */
+  private async request(
+    path: string,
+    body: unknown,
+    debugContext?: Record<string, unknown>
+  ): Promise<HttpResponse> {
+    const url = `${this.config.baseUrl}${path}`;
+    const headers = this.getHeaders();
+    const debugLabel = debugContext ?? { path };
 
     if (this.config.debug) {
-      console.log('[Mentiora SDK] Sending trace:', {
-        url,
-        traceId: event.traceId,
-        spanId: event.spanId,
-        type: event.type,
-        name: event.name,
-      });
+      console.log('[Mentiora SDK] Sending request:', { url, ...debugLabel });
     }
 
     let lastError: Error | undefined;
@@ -179,7 +222,7 @@ export class HttpClient {
           console.log('[Mentiora SDK] Response:', {
             status: response.status,
             statusText: response.statusText,
-            traceId: event.traceId,
+            ...debugLabel,
           });
         }
 
@@ -188,12 +231,14 @@ export class HttpClient {
           if (this.config.debug) {
             console.warn('[Mentiora SDK] Rate limited (429), retrying:', {
               attempt: attempt + 1,
-              traceId: event.traceId,
+              ...debugLabel,
             });
           }
           if (attempt < maxAttempts - 1) {
             const retryAfter = response.headers.get('retry-after');
-            const delay = retryAfter ? parseFloat(retryAfter) * 1000 : getBackoffDelay(attempt);
+            const parsed = retryAfter ? parseFloat(retryAfter) : NaN;
+            const delay =
+              Number.isFinite(parsed) && parsed > 0 ? parsed * 1000 : getBackoffDelay(attempt);
             await sleep(delay);
             continue;
           }
@@ -202,7 +247,13 @@ export class HttpClient {
 
         // Don't retry on 4xx errors (client error)
         if (response.status >= 400 && response.status < 500) {
-          throw new NetworkError(`Client error: ${response.statusText}`, response.status);
+          const { serverCode, serverMessage, detail } = extractErrorDetail(responseBody);
+          throw new NetworkError(
+            `Client error: ${response.statusText}${detail}`,
+            response.status,
+            serverCode,
+            serverMessage
+          );
         }
 
         // Retry on 5xx errors
@@ -212,7 +263,7 @@ export class HttpClient {
               status: response.status,
               statusText: response.statusText,
               attempt: attempt + 1,
-              traceId: event.traceId,
+              ...debugLabel,
             });
           }
           if (attempt < maxAttempts - 1) {
@@ -220,14 +271,17 @@ export class HttpClient {
             await sleep(delay);
             continue;
           }
-          throw new NetworkError(`Server error: ${response.statusText}`, response.status);
+          const { serverCode, serverMessage, detail } = extractErrorDetail(responseBody);
+          throw new NetworkError(
+            `Server error: ${response.statusText}${detail}`,
+            response.status,
+            serverCode,
+            serverMessage
+          );
         }
 
         if (this.config.debug) {
-          console.log('[Mentiora SDK] Trace sent successfully:', {
-            traceId: event.traceId,
-            spanId: event.spanId,
-          });
+          console.log('[Mentiora SDK] Request successful:', debugLabel);
         }
 
         return {
@@ -241,16 +295,29 @@ export class HttpClient {
 
         // Handle abort (timeout) or network errors
         if (error instanceof Error) {
+          lastError = error;
+
           if (error.name === 'AbortError') {
+            // Retry timeouts like other network errors (except on last attempt)
+            if (attempt < maxAttempts - 1) {
+              if (this.config.debug) {
+                console.warn('[Mentiora SDK] Request timed out, retrying:', {
+                  timeout: this.config.timeout,
+                  attempt: attempt + 1,
+                  ...debugLabel,
+                });
+              }
+              const delay = getBackoffDelay(attempt);
+              await sleep(delay);
+              continue;
+            }
             throw new NetworkError(`Request timeout after ${this.config.timeout}ms`);
           }
-
-          lastError = error;
           if (this.config.debug) {
             console.error('[Mentiora SDK] Network error:', {
               error: error.message,
               attempt: attempt + 1,
-              traceId: event.traceId,
+              ...debugLabel,
             });
           }
 
@@ -269,5 +336,99 @@ export class HttpClient {
     throw new NetworkError(
       `Failed after ${maxAttempts} attempts: ${lastError?.message ?? 'Unknown error'}`
     );
+  }
+
+  /**
+   * Send trace event to the API with retry logic.
+   *
+   * @param event - The trace event to send.
+   * @returns The HTTP response with status and parsed body.
+   * @throws {@link NetworkError} on timeout, HTTP 4xx/5xx, or network failure after retries.
+   */
+  async sendTrace(event: TraceEvent): Promise<HttpResponse> {
+    const body = normalizeTraceEvent(event);
+    return this.request('/api/v1/traces', body, {
+      traceId: event.traceId,
+      spanId: event.spanId,
+      type: event.type,
+      name: event.name,
+    });
+  }
+
+  /**
+   * Send a POST request to the given API path with retry logic.
+   *
+   * @param path - API path (e.g. '/api/v1/agents').
+   * @param body - JSON-serializable request body.
+   * @returns The HTTP response with status and parsed body.
+   * @throws {@link NetworkError} on timeout, HTTP 4xx/5xx, or network failure after retries.
+   */
+  async post(path: string, body: unknown): Promise<HttpResponse> {
+    return this.request(path, body);
+  }
+
+  /**
+   * Send a POST request for streaming (SSE) responses. No retry logic — streaming is stateful.
+   *
+   * @param path - API path (e.g. '/api/v1/agents/stream').
+   * @param body - JSON-serializable request body.
+   * @returns A ReadableStream of raw bytes from the response.
+   * @throws {@link NetworkError} on timeout, non-2xx status, missing body, or network failure.
+   */
+  async postStream(path: string, body: unknown): Promise<ReadableStream<Uint8Array>> {
+    const url = `${this.config.baseUrl}${path}`;
+    const headers = {
+      ...this.getHeaders(),
+      Accept: 'text/event-stream',
+    };
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), this.config.timeout);
+
+    try {
+      const response = await fetch(url, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(body),
+        signal: controller.signal,
+      });
+
+      if (!response.ok) {
+        const errorBody = await response.json().catch(() => ({}));
+        const { serverCode, serverMessage, detail } = extractErrorDetail(errorBody);
+        throw new NetworkError(
+          `Stream request failed: ${response.statusText}${detail}`,
+          response.status,
+          serverCode,
+          serverMessage
+        );
+      }
+
+      const contentType = response.headers.get('content-type') ?? '';
+      if (!contentType.includes('text/event-stream')) {
+        throw new NetworkError(
+          `Expected text/event-stream but received: ${contentType || '(none)'}`,
+          response.status
+        );
+      }
+
+      if (!response.body) {
+        throw new NetworkError('Stream response has no body');
+      }
+
+      return response.body;
+    } catch (error) {
+      if (error instanceof NetworkError) {
+        throw error;
+      }
+      if (error instanceof Error && error.name === 'AbortError') {
+        throw new NetworkError(`Request timeout after ${this.config.timeout}ms`);
+      }
+      throw new NetworkError(
+        `Stream request failed: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
+    } finally {
+      clearTimeout(timeoutId);
+    }
   }
 }

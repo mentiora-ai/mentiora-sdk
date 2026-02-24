@@ -18,9 +18,9 @@
  *   - Parent-child span relationships
  */
 
-import { MentioraClient, MentioraTracingLangChain } from '@mentiora/sdk';
-import { ChatOpenAI } from '@langchain/openai';
 import { ChatPromptTemplate } from '@langchain/core/prompts';
+import { ChatOpenAI } from '@langchain/openai';
+import { MentioraClient, MentioraTracingLangChain } from '@mentiora.ai/sdk';
 import * as dotenv from 'dotenv';
 import { v7 as uuidv7 } from 'uuid';
 
@@ -60,8 +60,7 @@ function createModel(): ChatOpenAI {
   }
 
   return new ChatOpenAI({
-    modelName: 'gpt-4o-mini',
-    temperature: 0.7,
+    modelName: 'gpt-5-mini',
     apiKey,
   });
 }
@@ -165,7 +164,10 @@ async function runSequentialChains(client: MentioraClient, llm: ChatOpenAI) {
 // 5. Multi-Turn Conversation — Shared threadId
 // ---------------------------------------------------------------------------
 
-async function runMultiTurnConversation(client: MentioraClient, llm: ChatOpenAI) {
+async function runMultiTurnConversation(
+  client: MentioraClient,
+  llm: ChatOpenAI,
+) {
   console.log('\n--- Multi-Turn Conversation ---');
 
   // Generate a threadId to group all turns of this conversation.
@@ -188,7 +190,10 @@ async function runMultiTurnConversation(client: MentioraClient, llm: ChatOpenAI)
   // Turn 1
   console.log('\n  Turn 1: Asking about Python...');
   const turn1 = await chain.invoke(
-    { message: 'What are the three most popular Python web frameworks? Just list them.' },
+    {
+      message:
+        'What are the three most popular Python web frameworks? Just list them.',
+    },
     { callbacks: [callback] },
   );
   console.log(`  Response: ${turn1.content}`);

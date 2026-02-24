@@ -18,9 +18,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from dotenv import load_dotenv
-from uuid_utils import uuid7
-
 from mentiora import MentioraClient, MentioraConfig, TraceEvent, UsageInfo
+from mentiora.utils import uuid7
 
 # ---------------------------------------------------------------------------
 # Load .env from the same directory as this script
@@ -77,9 +76,7 @@ def send_sync_traces(client: MentioraClient) -> None:
         type="llm",
         input={
             "prompt": "What is the capital of France?",
-            "messages": [
-                {"role": "user", "content": "What is the capital of France?"}
-            ],
+            "messages": [{"role": "user", "content": "What is the capital of France?"}],
             "model": "gpt-4o",
         },
         output={
