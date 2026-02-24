@@ -1,7 +1,7 @@
 """Plugin exports for Mentiora SDK.
 
 Provides integrations for OpenAI, LangChain, and other frameworks.
-Optional: require mentiora-sdk[langchain] and/or mentiora-sdk[openai].
+Optional: require mentiora-ai-sdk[langchain] and/or mentiora-ai-sdk[openai].
 """
 
 from .types import MentioraTracingLangChainOptions, TrackOpenAIOptions

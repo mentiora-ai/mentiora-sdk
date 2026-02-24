@@ -1,4 +1,4 @@
-"""mentiora-sdk
+"""mentiora-ai-sdk
 
 Official SDK for the Mentiora platform.
 Provides AI observability and tracing.
@@ -42,11 +42,11 @@ from .types import (
 )
 
 try:
-    __version__ = _get_version('mentiora-sdk')
+    __version__ = _get_version('mentiora-ai-sdk')
 except Exception:
     __version__ = '0.0.0'
 
-# Optional plugins (require mentiora-sdk[openai] and/or mentiora-sdk[langchain])
+# Optional plugins (require mentiora-ai-sdk[openai] and/or mentiora-ai-sdk[langchain])
 try:
     from .plugins import MentioraTracingLangChain, track_openai
 except ImportError:

@@ -4,15 +4,16 @@
 
 ### ✅ Both SDKs Have Equivalent Sections
 
-| Section | TypeScript | Python | Status |
-|---------|-----------|--------|--------|
-| Installation | ✅ | ✅ | ✅ Aligned |
-| Usage | ✅ | ✅ | ✅ Aligned |
-| API Reference | ✅ | ✅ | ✅ Aligned |
+| Section       | TypeScript | Python | Status     |
+| ------------- | ---------- | ------ | ---------- |
+| Installation  | ✅         | ✅     | ✅ Aligned |
+| Usage         | ✅         | ✅     | ✅ Aligned |
+| API Reference | ✅         | ✅     | ✅ Aligned |
 
 ### ✅ Navigation Structure
 
 Both SDKs are properly organized in sidebars:
+
 - `intro.md` - Overview with links to both SDKs
 - `getting-started.md` - Installation and quick start for both
 - `typescript/` - TypeScript SDK docs
@@ -23,13 +24,15 @@ Both SDKs are properly organized in sidebars:
 ### Installation Pages
 
 **TypeScript:**
+
 - Package name: `@mentiora.ai/sdk`
 - Installers: npm, yarn, pnpm
 - Requirements: Node.js >= 20.0.0
 - Configuration: Direct object (camelCase)
 
 **Python:**
-- Package name: `mentiora-sdk`
+
+- Package name: `mentiora-ai-sdk`
 - Installer: pip (with optional extras)
 - Requirements: Python >= 3.11
 - Configuration: `MentioraConfig` object (snake_case)
@@ -39,6 +42,7 @@ Both SDKs are properly organized in sidebars:
 ### Usage Pages
 
 **Common Sections (Both SDKs):**
+
 - ✅ Basic Setup
 - ✅ Send a Trace
 - ✅ Flush Pending Traces
@@ -49,11 +53,13 @@ Both SDKs are properly organized in sidebars:
 - ✅ LangChain Integration
 
 **Python-Specific:**
+
 - ✅ Shows both sync and async methods
 - ✅ Uses `TraceEvent` Pydantic model
 - ✅ Uses `await` for async operations
 
 **TypeScript-Specific:**
+
 - ✅ Shows async methods only
 - ✅ Uses inline object for `TraceEvent`
 - ✅ Uses `await` for async operations
@@ -63,6 +69,7 @@ Both SDKs are properly organized in sidebars:
 ### API Reference Pages
 
 **MentioraClient:**
+
 - ✅ Both document constructor
 - ✅ Both document configuration options
 - ✅ Both document `tracing` property
@@ -70,12 +77,13 @@ Both SDKs are properly organized in sidebars:
 
 **TracingClient Methods:**
 
-| Method | TypeScript | Python | Status |
-|--------|-----------|--------|--------|
+| Method                     | TypeScript    | Python          | Status     |
+| -------------------------- | ------------- | --------------- | ---------- |
 | `sendTrace` / `send_trace` | ✅ Async only | ✅ Sync + Async | ✅ Aligned |
-| `flush` | ✅ Async only | ✅ Sync + Async | ✅ Aligned |
+| `flush`                    | ✅ Async only | ✅ Sync + Async | ✅ Aligned |
 
 **Types:**
+
 - ✅ `TraceEvent` - Both documented with all fields (including `threadId` / `thread_id` for conversation grouping)
 - ✅ `TraceError` - Both documented (TypeScript has dedicated section; Python had it)
 - ✅ `SendTraceResult` - Both documented (fixed TypeScript to match)
@@ -83,12 +91,14 @@ Both SDKs are properly organized in sidebars:
 - ✅ `UsageInfo` - Exported in both SDKs and documented where used
 
 **Errors:**
+
 - ✅ `ConfigurationError` - Both documented
 - ✅ `ValidationError` - Both documented
 - ✅ `NetworkError` - Both documented
 - ✅ `MentioraError` - Python only (base class)
 
 **Plugins:**
+
 - ✅ `trackOpenAI` / `track_openai` - Both documented
 - ✅ `MentioraTracingLangChain` - Both documented
 - ✅ Plugin options - Both documented (including `threadId` / `thread_id` for grouping traces; TypeScript options aligned with Python)
@@ -112,6 +122,7 @@ Both SDKs are properly organized in sidebars:
 ### Trace Sending Examples
 
 **TypeScript:**
+
 ```typescript
 const result = await client.tracing.sendTrace({
   traceId: 'trace-123',
@@ -121,6 +132,7 @@ const result = await client.tracing.sendTrace({
 ```
 
 **Python:**
+
 ```python
 result = await client.tracing.send_trace_async(TraceEvent(
     trace_id='trace-123',
@@ -134,11 +146,13 @@ result = await client.tracing.send_trace_async(TraceEvent(
 ### OpenAI Integration Examples
 
 **TypeScript:**
+
 - Uses `OpenAI` client
 - Shows `trackOpenAI()` function
 - Shows async usage
 
 **Python:**
+
 - Uses `AsyncOpenAI` client
 - Shows `track_openai()` function
 - Shows async usage
@@ -148,10 +162,12 @@ result = await client.tracing.send_trace_async(TraceEvent(
 ### LangChain Integration Examples
 
 **TypeScript:**
+
 - Uses `MentioraTracingLangChain` class
 - Shows `chain.invoke()` with callbacks
 
 **Python:**
+
 - Uses `MentioraTracingLangChain` class
 - Shows `chain.ainvoke()` with callbacks
 
@@ -161,19 +177,20 @@ result = await client.tracing.send_trace_async(TraceEvent(
 
 Both SDKs document the same configuration options:
 
-| Option | TypeScript | Python | Status |
-|--------|-----------|--------|--------|
-| API Key | `apiKey` | `api_key` | ✅ Aligned |
-| Base URL | `baseUrl` | `base_url` | ✅ Aligned |
-| Timeout | `timeout` | `timeout` | ✅ Aligned |
-| Retries | `retries` | `retries` | ✅ Aligned |
-| Debug | `debug` | `debug` | ✅ Aligned |
+| Option   | TypeScript | Python     | Status     |
+| -------- | ---------- | ---------- | ---------- |
+| API Key  | `apiKey`   | `api_key`  | ✅ Aligned |
+| Base URL | `baseUrl`  | `base_url` | ✅ Aligned |
+| Timeout  | `timeout`  | `timeout`  | ✅ Aligned |
+| Retries  | `retries`  | `retries`  | ✅ Aligned |
+| Debug    | `debug`    | `debug`    | ✅ Aligned |
 
 **Status:** ✅ **Aligned** - All options documented with language-appropriate naming
 
 ## Summary
 
 ✅ **All documentation is fully aligned:**
+
 - Structure matches between both SDKs
 - All features documented in both
 - Examples are equivalent and language-appropriate
@@ -183,6 +200,7 @@ Both SDKs document the same configuration options:
 - Plugins documented with equivalent examples
 
 ✅ **All alignment issues have been fixed:**
+
 - TypeScript API reference type names corrected
 - Python sync/async methods properly documented
 - Intro page shows both SDKs

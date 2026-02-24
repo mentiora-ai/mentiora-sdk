@@ -1,24 +1,30 @@
-# mentiora-sdk
+# mentiora-ai-sdk
 
 Python SDK for the Mentiora platform. Provides AI observability and tracing.
 
 ## Installation
 
 ```bash
-pip install mentiora-sdk
+pip install "git+https://github.com/mentiora-ai/mentiora-sdk.git#subdirectory=python"
+```
+
+Or with uv:
+
+```bash
+uv pip install "git+https://github.com/mentiora-ai/mentiora-sdk.git#subdirectory=python"
 ```
 
 For optional dependencies:
 
 ```bash
 # With OpenAI plugin support
-pip install mentiora-sdk[openai]
+pip install "mentiora-ai-sdk[openai] @ git+https://github.com/mentiora-ai/mentiora-sdk.git#subdirectory=python"
 
 # With LangChain plugin support
-pip install mentiora-sdk[langchain]
+pip install "mentiora-ai-sdk[langchain] @ git+https://github.com/mentiora-ai/mentiora-sdk.git#subdirectory=python"
 
 # With both
-pip install mentiora-sdk[openai,langchain]
+pip install "mentiora-ai-sdk[openai,langchain] @ git+https://github.com/mentiora-ai/mentiora-sdk.git#subdirectory=python"
 ```
 
 ## Usage

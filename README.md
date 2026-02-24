@@ -58,7 +58,7 @@ const response = await openai.chat.completions.create({
 ### Python
 
 ```bash
-pip install mentiora-sdk[openai]
+pip install "mentiora-ai-sdk[openai] @ git+https://github.com/mentiora-ai/mentiora-sdk.git#subdirectory=python"
 ```
 
 ```python
@@ -146,7 +146,7 @@ mentiora-sdk/
 │   ├── src/
 │   ├── package.json
 │   └── README.md
-├── python/              # Python SDK (mentiora-sdk)
+├── python/              # Python SDK (mentiora-ai-sdk)
 │   ├── src/mentiora/
 │   ├── pyproject.toml
 │   └── README.md

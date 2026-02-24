@@ -17,7 +17,7 @@ from .types import TraceEvent
 logger = logging.getLogger('mentiora.sdk')
 
 try:
-    _SDK_VERSION = importlib.metadata.version('mentiora-sdk')
+    _SDK_VERSION = importlib.metadata.version('mentiora-ai-sdk')
 except importlib.metadata.PackageNotFoundError:
     _SDK_VERSION = '0.0.0'
 
