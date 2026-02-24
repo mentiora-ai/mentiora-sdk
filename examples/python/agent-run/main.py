@@ -192,7 +192,7 @@ async def model_overrides(client: MentioraClient) -> None:
         AgentRunParams(
             tag="production-3",
             message="Write a one-sentence summary of our shipping policy.",
-            model_id="gpt-4o-mini",
+            model_id="gpt-5-mini",
             model_params=ModelParams(temperature=0.2, max_tokens=200),
             metadata={"source": "example-app", "feature": "model-overrides"},
         )

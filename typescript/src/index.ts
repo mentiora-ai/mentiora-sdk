@@ -1,5 +1,5 @@
 /**
- * @mentiora/sdk
+ * @mentiora.ai/sdk
  *
  * Official SDK for the Mentiora platform.
  * Provides AI observability and tracing.

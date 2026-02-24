@@ -60,7 +60,7 @@ function createModel(): ChatOpenAI {
   }
 
   return new ChatOpenAI({
-    modelName: 'gpt-4o-mini',
+    modelName: 'gpt-5-mini',
     temperature: 0.7,
     apiKey,
   });

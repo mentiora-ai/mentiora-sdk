@@ -48,7 +48,7 @@ const openai = trackOpenAI(new OpenAI(), { mentioraClient: mentiora });
 
 // Use OpenAI normally - traces are sent automatically
 const response = await openai.chat.completions.create({
-  model: 'gpt-4o-mini',
+  model: 'gpt-5-mini',
   messages: [{ role: 'user', content: 'Explain quantum computing' }],
 });
 ```
@@ -79,7 +79,7 @@ openai = track_openai(
 
 # Use OpenAI normally - traces are sent automatically
 response = await openai.chat.completions.create(
-    model='gpt-4o-mini',
+    model='gpt-5-mini',
     messages=[{'role': 'user', 'content': 'Explain quantum computing'}],
 )
 ```

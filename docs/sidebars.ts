@@ -1,40 +1,37 @@
 import type { SidebarsConfig } from '@docusaurus/plugin-content-docs';
 
-// This runs in Node.js - Don't use client-side code here (browser APIs, JSX...)
-
-/**
- * Creating a sidebar enables you to:
- - create an ordered group of docs
- - render a sidebar for each doc of that group
- - provide next/previous navigation
-
- The sidebars can be generated from the filesystem, or explicitly defined here.
-
- Create as many sidebars as you want.
- */
 const sidebars: SidebarsConfig = {
   tutorialSidebar: [
     'intro',
-    'getting-started',
+    'quick-start',
+    'authentication',
+    {
+      type: 'category',
+      label: 'Usage',
+      collapsed: false,
+      link: { type: 'doc', id: 'usage/index' },
+      items: [
+        'usage/tracing',
+        'usage/agents',
+        'usage/plugins',
+        'usage/streaming-helpers',
+      ],
+    },
+    {
+      type: 'category',
+      label: 'API Reference',
+      collapsed: true,
+      link: { type: 'doc', id: 'api-reference/index' },
+      items: [
+        'api-reference/client',
+        'api-reference/tracing',
+        'api-reference/agents',
+        'api-reference/streaming-helpers',
+        'api-reference/plugins',
+        'api-reference/errors',
+      ],
+    },
     'examples',
-    {
-      type: 'category',
-      label: 'TypeScript SDK',
-      items: [
-        'typescript/installation',
-        'typescript/usage',
-        'typescript/api-reference',
-      ],
-    },
-    {
-      type: 'category',
-      label: 'Python SDK',
-      items: [
-        'python/installation',
-        'python/usage',
-        'python/api-reference',
-      ],
-    },
   ],
 };
 

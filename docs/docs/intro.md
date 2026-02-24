@@ -1,26 +1,29 @@
 ---
 sidebar_position: 1
 slug: /
+description: "Official TypeScript and Python SDK for the Mentiora AI observability platform."
 ---
+
+import SdkTabs from '@site/src/components/SdkTabs';
+import TabItem from '@theme/TabItem';
 
 # Welcome to Mentiora SDK
 
-The **Mentiora SDK** provides official client libraries for integrating with the Mentiora platform.
+The **Mentiora SDK** provides official TypeScript and Python client libraries for integrating with the [Mentiora platform](https://platform.mentiora.ai).
 
 ## What is Mentiora?
 
-Mentiora is a platform for building, deploying, and observing AI agents. The SDK currently supports:
+Mentiora is a platform for building, deploying, and observing AI agents. The SDK lets you:
 
-- **Tracing** — Send agent traces to the Mentiora platform for observability and debugging
-
-## SDKs Available
-
-- **[TypeScript/JavaScript SDK](./typescript/installation)** - For Node.js applications
-- **[Python SDK](./python/installation)** - For Python applications
+- **Run Agents** — Execute AI agents hosted on the platform, with support for streaming and multi-turn conversations
+- **Trace** — Send traces to the Mentiora platform for observability and debugging of your AI workflows
+- **Auto-instrument** — Automatically capture traces from OpenAI and LangChain with drop-in plugins
+- **Stream to UIs** — Use built-in SSE helpers to pipe agent responses to web frontends
 
 ## Quick Start
 
-### TypeScript/JavaScript
+<SdkTabs>
+<TabItem value="typescript">
 
 ```bash
 pnpm add @mentiora.ai/sdk
@@ -34,7 +37,8 @@ const client = new MentioraClient({
 });
 ```
 
-### Python
+</TabItem>
+<TabItem value="python">
 
 ```bash
 pip install "git+https://github.com/mentiora-ai/mentiora-sdk.git#subdirectory=python"
@@ -51,8 +55,20 @@ config = MentioraConfig(
 client = MentioraClient(config)
 ```
 
-Check out our [example applications](./examples) for complete, runnable code.
+</TabItem>
+</SdkTabs>
 
-> **First time?** Start with [Authentication](./authentication) to get your API key, then follow the [Getting Started](./getting-started) guide.
+:::tip[First time?]
+Start with [Authentication](./authentication) to get your API key, then follow the [Quick Start](./quick-start) guide.
+:::
 
-Ready to dive in? Check out the [Getting Started guide](./getting-started) or jump to the [TypeScript SDK documentation](./typescript/installation) or [Python SDK documentation](./python/installation).
+## What's in the SDK?
+
+| Feature | Description |
+|---------|-------------|
+| [Agents](./usage/agents) | Run and stream AI agents hosted on the Mentiora platform |
+| [Tracing](./usage/tracing) | Send traces for observability and debugging |
+| [Plugins](./usage/plugins) | Auto-trace OpenAI and LangChain calls with zero code changes |
+| [Streaming Helpers](./usage/streaming-helpers) | SSE utilities for piping agent responses to web frontends |
+
+Check out our [example applications](./examples) for complete, runnable code, or jump to the [Usage guide](./usage).

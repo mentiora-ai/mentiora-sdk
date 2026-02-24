@@ -11,7 +11,11 @@
  *   6. Error handling (ValidationError, NetworkError, streaming errors)
  */
 
-import { MentioraClient, NetworkError, ValidationError } from '@mentiora.ai/sdk';
+import {
+  MentioraClient,
+  NetworkError,
+  ValidationError,
+} from '@mentiora.ai/sdk';
 import * as dotenv from 'dotenv';
 
 dotenv.config({ override: false });
@@ -173,7 +177,7 @@ async function modelOverrides(client: MentioraClient) {
   const result = await client.agents.run({
     tag: 'production',
     message: 'Write a one-sentence summary of our shipping policy.',
-    modelId: 'gpt-4o-mini',
+    modelId: 'gpt-5-mini',
     modelParams: {
       temperature: 0.2,
       maxTokens: 200,

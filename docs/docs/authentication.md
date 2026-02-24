@@ -1,5 +1,6 @@
 ---
 sidebar_position: 2
+description: "Create and manage API keys for the Mentiora SDK. Security best practices and troubleshooting."
 ---
 
 # Authentication
@@ -111,3 +112,7 @@ The **"Last used"** column shows when each key was last used to send a trace.
 - Ensure you copied the **full key**, not just the 8-character prefix shown in the list
 - Check for trailing whitespace or newlines in your environment variable
 - Verify the environment variable name is exactly `MENTIORA_API_KEY`
+
+## Next Steps
+
+Now that you have your API key, follow the [Quick Start](/quick-start) guide to install the SDK and send your first trace.

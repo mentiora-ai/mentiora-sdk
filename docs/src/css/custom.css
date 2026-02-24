@@ -1,42 +1,314 @@
-@import '@fontsource-variable/mona-sans';
 @import '@fontsource/geist-sans/400.css';
 @import '@fontsource/geist-sans/500.css';
 @import '@fontsource/geist-sans/600.css';
 @import '@fontsource/geist-sans/700.css';
 
-/**
- * Any CSS included here will be global. The classic template
- * bundles Infima by default. Infima is a CSS framework designed to
- * work well for content-centric websites.
- */
+/* ==========================================================================
+ * MENTIORA BRAND TOKENS (from platform design system)
+ * ========================================================================== */
 
-/* You can override the default Infima variables here. */
 :root {
-  --ifm-font-family-base: 'Geist Sans', system-ui, -apple-system, sans-serif;
-  --ifm-heading-font-family: 'Mona Sans', system-ui, -apple-system, sans-serif;
-  --ifm-color-primary: #3869DE;
-  --ifm-color-primary-dark: #2A5AD0;
-  --ifm-color-primary-darker: #2654C5;
-  --ifm-color-primary-darkest: #1F45A2;
-  --ifm-color-primary-light: #527AE4;
-  --ifm-color-primary-lighter: #6489E8;
-  --ifm-color-primary-lightest: #8AA6EF;
-  --ifm-code-font-size: 95%;
-  --docusaurus-highlighted-code-line-bg: rgba(56, 105, 222, 0.1);
+  /* Brand blue ramp */
+  --mntr-brand-00: #edf9ff;
+  --mntr-brand-10: #d6f1ff;
+  --mntr-brand-20: #b5e8ff;
+  --mntr-brand-30: #83dbff;
+  --mntr-brand-40: #48c5ff;
+  --mntr-brand-50: #1ea5ff;
+  --mntr-brand-60: #0687ff;
+  --mntr-brand-70: #0067e5;
+  --mntr-brand-80: #0857c5;
+  --mntr-brand-90: #0d4d9b;
+  --mntr-brand-100: #0e2f5d;
+
+  /* Functional grey ramp (blue-tinted) */
+  --mntr-func-00: #f6f9fc;
+  --mntr-func-10: #edf3f9;
+  --mntr-func-20: #dce6f0;
+  --mntr-func-30: #c4d4e4;
+  --mntr-func-40: #8fa5be;
+  --mntr-func-50: #5e7691;
+  --mntr-func-60: #435873;
+  --mntr-func-70: #304359;
+  --mntr-func-80: #1d2d42;
+  --mntr-func-90: #0f1a2a;
+  --mntr-func-100: #050d18;
 }
 
+/* ==========================================================================
+ * INFIMA OVERRIDES (light mode)
+ * ========================================================================== */
+
+:root {
+  /* Typography -- Geist only (aligned with platform) */
+  --ifm-font-family-base: 'Geist Sans', system-ui, -apple-system, sans-serif;
+  --ifm-heading-font-family: 'Geist Sans', system-ui, -apple-system, sans-serif;
+
+  /* Primary color ramp -- Mentiora brand blue */
+  --ifm-color-primary: #0067e5;          /* --mntr-brand-70 */
+  --ifm-color-primary-dark: #0857c5;     /* --mntr-brand-80 */
+  --ifm-color-primary-darker: #0d4d9b;   /* --mntr-brand-90 */
+  --ifm-color-primary-darkest: #0e2f5d;  /* --mntr-brand-100 */
+  --ifm-color-primary-light: #0687ff;    /* --mntr-brand-60 */
+  --ifm-color-primary-lighter: #1ea5ff;  /* --mntr-brand-50 */
+  --ifm-color-primary-lightest: #48c5ff; /* --mntr-brand-40 */
+
+  /* Code */
+  --ifm-code-font-size: 95%;
+  --docusaurus-highlighted-code-line-bg: rgba(0, 103, 229, 0.1);
+
+  /* Background -- match platform's blue-tinted base */
+  --ifm-background-color: #f4f7fa;
+  --ifm-background-surface-color: #ffffff;
+
+  /* Borders and shadows -- blue-tinted */
+  --ifm-global-shadow-lw: 0 1px 3px rgba(6, 51, 102, 0.06),
+                           0 1px 2px rgba(6, 51, 102, 0.03);
+  --ifm-global-shadow-md: 0 4px 12px rgba(6, 51, 102, 0.1),
+                           0 2px 4px rgba(6, 51, 102, 0.06);
+  --ifm-global-shadow-tl: 0 8px 24px rgba(0, 60, 120, 0.12),
+                           0 4px 8px rgba(0, 60, 120, 0.08);
+
+  /* Radius -- match platform's 0.75rem */
+  --ifm-global-radius: 0.75rem;
+  --ifm-code-border-radius: 0.5rem;
+
+  /* Link colors -- brand blue */
+  --ifm-link-color: var(--mntr-brand-70);
+  --ifm-link-hover-color: var(--mntr-brand-80);
+
+  /* Footer */
+  --ifm-footer-background-color: var(--mntr-func-90);
+  --ifm-footer-color: var(--mntr-func-30);
+  --ifm-footer-link-color: var(--mntr-func-20);
+  --ifm-footer-link-hover-color: #ffffff;
+
+  /* Navbar */
+  --ifm-navbar-shadow: 0 1px 3px rgba(6, 51, 102, 0.06);
+
+  /* Breadcrumb */
+  --ifm-breadcrumb-color-active: var(--mntr-brand-70);
+
+  /* Table of Contents */
+  --ifm-toc-border-color: var(--mntr-func-20);
+  --ifm-toc-link-color: var(--mntr-func-50);
+
+  /* Sidebar */
+  --ifm-menu-color: var(--mntr-func-60);
+  --ifm-menu-color-active: var(--mntr-brand-70);
+  --ifm-menu-color-background-active: var(--mntr-brand-00);
+
+  /* Admonitions */
+  --ifm-color-info: #3d82b8;       /* --mntr-sky-70 */
+  --ifm-color-success: #4a9066;    /* --mntr-sage-70 */
+  --ifm-color-warning: #c29d2d;    /* --mntr-yellow-70 */
+  --ifm-color-danger: #c73e3e;     /* --mntr-red-70 */
+}
+
+/* Navbar title */
 .navbar__title {
   font-family: var(--ifm-heading-font-family);
+  font-weight: 600;
 }
 
-/* For readability concerns, you should choose a lighter palette in dark mode. */
+/* ==========================================================================
+ * DARK MODE
+ * ========================================================================== */
+
 [data-theme='dark'] {
-  --ifm-color-primary: #6489E8;
-  --ifm-color-primary-dark: #527AE4;
-  --ifm-color-primary-darker: #3869DE;
-  --ifm-color-primary-darkest: #2A5AD0;
-  --ifm-color-primary-light: #8AA6EF;
-  --ifm-color-primary-lighter: #A1B6F3;
-  --ifm-color-primary-lightest: #B8C7F6;
-  --docusaurus-highlighted-code-line-bg: rgba(56, 105, 222, 0.3);
+  --ifm-color-primary: #1ea5ff;          /* --mntr-brand-50 */
+  --ifm-color-primary-dark: #0687ff;     /* --mntr-brand-60 */
+  --ifm-color-primary-darker: #0067e5;   /* --mntr-brand-70 */
+  --ifm-color-primary-darkest: #0857c5;  /* --mntr-brand-80 */
+  --ifm-color-primary-light: #48c5ff;    /* --mntr-brand-40 */
+  --ifm-color-primary-lighter: #83dbff;  /* --mntr-brand-30 */
+  --ifm-color-primary-lightest: #b5e8ff; /* --mntr-brand-20 */
+
+  --docusaurus-highlighted-code-line-bg: rgba(6, 135, 255, 0.25);
+
+  --ifm-background-color: #0f1a2a;      /* --mntr-func-90 */
+  --ifm-background-surface-color: #1d2d42; /* --mntr-func-80 */
+
+  --ifm-toc-border-color: var(--mntr-func-70);
+  --ifm-toc-link-color: var(--mntr-func-40);
+
+  --ifm-menu-color: var(--mntr-func-40);
+  --ifm-menu-color-active: var(--mntr-brand-50);
+  --ifm-menu-color-background-active: rgba(6, 135, 255, 0.12);
+
+  --ifm-link-color: var(--mntr-brand-50);
+  --ifm-link-hover-color: var(--mntr-brand-40);
+
+  --ifm-footer-background-color: var(--mntr-func-100);
+}
+
+/* ==========================================================================
+ * PAGE BACKGROUND (platform cohesion)
+ * ========================================================================== */
+
+/* Subtle radial gradient matching platform's background treatment */
+html[data-theme='light'] {
+  background:
+    radial-gradient(ellipse 80% 50% at 0% 0%, rgba(176, 200, 235, 0.25) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 40% at 100% 100%, rgba(170, 195, 232, 0.18) 0%, transparent 50%),
+    #f4f7fa;
+  background-attachment: fixed;
+}
+
+/* ==========================================================================
+ * CODE BLOCK ENHANCEMENTS
+ * ========================================================================== */
+
+/* Glass-inspired code block container */
+.theme-code-block {
+  border: 1px solid var(--mntr-func-20);
+  border-radius: var(--ifm-code-border-radius);
+  box-shadow: 0 1px 3px rgba(6, 51, 102, 0.06);
+  overflow: hidden;
+}
+
+[data-theme='dark'] .theme-code-block {
+  border-color: var(--mntr-func-70);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+/* Code block title bar */
+.theme-code-block .prism-code {
+  border-radius: 0;
+}
+
+/* ==========================================================================
+ * TABLE ENHANCEMENTS
+ * ========================================================================== */
+
+table {
+  border-collapse: separate;
+  border-spacing: 0;
+  border: 1px solid var(--mntr-func-20);
+  border-radius: var(--ifm-code-border-radius);
+  overflow: hidden;
+}
+
+table thead tr {
+  background: var(--mntr-func-00);
+}
+
+[data-theme='dark'] table thead tr {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+table th {
+  border-bottom: 1.5px solid var(--mntr-func-30);
+  font-weight: 600;
+  color: var(--mntr-func-80);
+}
+
+[data-theme='dark'] table th {
+  color: var(--mntr-func-20);
+  border-bottom-color: var(--mntr-func-70);
+}
+
+table td {
+  border-bottom: 1px solid var(--mntr-func-10);
+}
+
+[data-theme='dark'] table td {
+  border-bottom-color: var(--mntr-func-80);
+}
+
+table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+table tbody tr:hover {
+  background: var(--mntr-func-00);
+}
+
+[data-theme='dark'] table tbody tr:hover {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+/* ==========================================================================
+ * SDK LANGUAGE SWITCHER (mobile sidebar)
+ * ========================================================================== */
+
+.navbar-sidebar .navbar__item.dropdown {
+  width: 100%;
+  justify-content: center;
+}
+
+/* ==========================================================================
+ * SCROLLBAR (match platform)
+ * ========================================================================== */
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--mntr-func-30) transparent;
+}
+
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: var(--mntr-func-30);
+  border-radius: 4px;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: var(--mntr-func-40);
+}
+
+/* ==========================================================================
+ * NAVBAR REFINEMENTS
+ * ========================================================================== */
+
+.navbar {
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  background: rgba(255, 255, 255, 0.85);
+}
+
+[data-theme='dark'] .navbar {
+  background: rgba(15, 26, 42, 0.85);
+}
+
+/* ==========================================================================
+ * SIDEBAR ACTIVE ITEM
+ * ========================================================================== */
+
+.menu__link--active:not(.menu__link--sublist) {
+  border-left: 3px solid var(--mntr-brand-70);
+  padding-left: calc(var(--ifm-menu-link-padding-horizontal) - 3px);
+  font-weight: 600;
+}
+
+[data-theme='dark'] .menu__link--active:not(.menu__link--sublist) {
+  border-left-color: var(--mntr-brand-50);
+}
+
+/* ==========================================================================
+ * ADMONITION REFINEMENTS (when using :::note, :::tip, etc.)
+ * ========================================================================== */
+
+.alert {
+  border-radius: var(--ifm-global-radius);
+  border-left-width: 4px;
+}
+
+/* ==========================================================================
+ * REDUCED MOTION
+ * ========================================================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  .navbar {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    background: rgba(255, 255, 255, 0.95);
+  }
 }

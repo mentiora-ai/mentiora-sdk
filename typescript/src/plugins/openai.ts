@@ -592,7 +592,7 @@ function wrapMethod<T extends (...args: unknown[]) => Promise<unknown>>(
  *
  * @example
  * ```typescript
- * import { trackOpenAI, MentioraClient } from '@mentiora/sdk';
+ * import { trackOpenAI, MentioraClient } from '@mentiora.ai/sdk';
  * import OpenAI from 'openai';
  *
  * const mentioraClient = new MentioraClient({ ... });

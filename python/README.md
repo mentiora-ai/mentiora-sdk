@@ -153,7 +153,7 @@ result = await client.tracing.send_trace_async(TraceEvent(
         completion_tokens=25,
         total_tokens=35,
     ),
-    model='gpt-4o-mini',
+    model='gpt-5-mini',
     provider='openai',
     metadata={
         'environment': 'prod',
@@ -203,7 +203,7 @@ tracked_client = track_openai(
 
 # Use tracked_client instead of openai_client - chat completions are automatically traced
 response = await tracked_client.chat.completions.create(
-    model='gpt-4o-mini',
+    model='gpt-5-mini',
     messages=[{'role': 'user', 'content': 'Hello!'}],
 )
 ```
@@ -211,6 +211,7 @@ response = await tracked_client.chat.completions.create(
 Only chat completions (via `chat.completions.create`) are traced by the OpenAI plugin; embeddings and image calls are not traced.
 
 The plugin automatically captures:
+
 - All request parameters (model, messages, temperature, max_tokens, tools, response_format, etc.)
 - Multimodal message support (text + image content arrays)
 - Response content and metadata (id, created, system_fingerprint, service_tier)
@@ -250,7 +251,7 @@ callback = MentioraTracingLangChain(MentioraTracingLangChainOptions(
 ))
 
 # Use with LangChain LCEL chains
-llm = ChatOpenAI(model='gpt-4o-mini')
+llm = ChatOpenAI(model='gpt-5-mini')
 prompt = ChatPromptTemplate.from_template('Say hello to {name}')
 chain = prompt | llm
 
@@ -261,6 +262,7 @@ await chain.ainvoke({'name': 'World'}, {'callbacks': [callback]})
 ```
 
 The callback handler automatically traces:
+
 - LLM calls (with token usage)
 - Chain executions
 - Tool calls
@@ -271,13 +273,13 @@ The callback handler automatically traces:
 
 ## Configuration
 
-| Option | Type | Required | Description |
-|--------|------|----------|-------------|
-| `api_key` | str | Yes | Project API key — see [Authentication](https://docs.mentiora.ai/authentication) |
-| `base_url` | str | No | Base URL (defaults to https://platform.mentiora.ai) |
-| `timeout` | int | No | Request timeout in ms (default: 30000) |
-| `retries` | int | No | Max retry attempts (default: 3) |
-| `debug` | bool | No | Enable verbose SDK logging (default: False) |
+| Option     | Type | Required | Description                                                                     |
+| ---------- | ---- | -------- | ------------------------------------------------------------------------------- |
+| `api_key`  | str  | Yes      | Project API key — see [Authentication](https://docs.mentiora.ai/authentication) |
+| `base_url` | str  | No       | Base URL (defaults to https://platform.mentiora.ai)                             |
+| `timeout`  | int  | No       | Request timeout in ms (default: 30000)                                          |
+| `retries`  | int  | No       | Max retry attempts (default: 3)                                                 |
+| `debug`    | bool | No       | Enable verbose SDK logging (default: False)                                     |
 
 ## Error Handling
 
@@ -292,6 +294,7 @@ if not result.success:
 ```
 
 For configuration or validation errors, the SDK raises:
+
 - `ConfigurationError` - Invalid configuration
 - `ValidationError` - Invalid trace event data
 - `NetworkError` - Network/HTTP errors (with status code)

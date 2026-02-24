@@ -10,11 +10,9 @@ from datetime import UTC, datetime
 from functools import wraps
 from typing import Any
 
-from uuid_utils import uuid7
-
 from ..errors import ConfigurationError
 from ..types import TraceError, TraceEvent, UsageInfo
-from ..utils import format_exception_stack
+from ..utils import format_exception_stack, uuid7
 from .types import TrackOpenAIOptions
 
 logger = logging.getLogger(__name__)

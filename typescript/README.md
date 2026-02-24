@@ -101,7 +101,7 @@ const result = await client.tracing.sendTrace({
     completion_tokens: 25,
     total_tokens: 35,
   },
-  model: 'gpt-4o-mini',
+  model: 'gpt-5-mini',
   provider: 'openai',
   metadata: {
     environment: 'prod',
@@ -151,7 +151,7 @@ const trackedClient = trackOpenAI(openaiClient, {
 
 // Use trackedClient instead of openaiClient - chat completions are automatically traced
 const response = await trackedClient.chat.completions.create({
-  model: 'gpt-4o-mini',
+  model: 'gpt-5-mini',
   messages: [{ role: 'user', content: 'Hello!' }],
 });
 ```
@@ -198,7 +198,7 @@ const callback = new MentioraTracingLangChain({
 });
 
 // Use with LangChain LCEL chains
-const llm = new ChatOpenAI({ model: 'gpt-4o-mini' });
+const llm = new ChatOpenAI({ model: 'gpt-5-mini' });
 const prompt = ChatPromptTemplate.fromTemplate('Say hello to {name}');
 const chain = prompt.pipe(llm);
 

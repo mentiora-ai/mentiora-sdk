@@ -36,6 +36,24 @@ const config: Config = {
     locales: ['en'],
   },
 
+  themes: [
+    ['@easyops-cn/docusaurus-search-local', {
+      hashed: true,
+      language: ['en'],
+      highlightSearchTermsOnTargetPage: true,
+      explicitSearchResultPath: true,
+    }],
+  ],
+
+  plugins: [
+    ['@docusaurus/plugin-client-redirects', {
+      redirects: [
+        { from: '/getting-started', to: '/quick-start' },
+        { from: '/installation', to: '/quick-start' },
+      ],
+    }],
+  ],
+
   presets: [
     [
       'classic',
@@ -43,9 +61,7 @@ const config: Config = {
         docs: {
           routeBasePath: '/',
           sidebarPath: './sidebars.ts',
-          // Please change this to your repo.
-          // Remove this to remove the "edit this page" links.
-          // editUrl: 'https://github.com/mentiora-ai/mentiora-sdk/tree/main/docs/',
+          editUrl: 'https://github.com/mentiora-ai/mentiora-sdk/tree/main/docs/',
         },
         blog: false,
         theme: {
@@ -56,6 +72,11 @@ const config: Config = {
   ],
 
   themeConfig: {
+    metadata: [
+      { name: 'og:type', content: 'website' },
+      { name: 'og:site_name', content: 'Mentiora SDK Documentation' },
+    ],
+    image: 'img/og-image.png',
     colorMode: {
       respectPrefersColorScheme: true,
     },
@@ -73,6 +94,10 @@ const config: Config = {
           label: 'Documentation',
         },
         {
+          type: 'custom-sdkLanguageSwitcher',
+          position: 'right',
+        },
+        {
           href: 'https://github.com/mentiora-ai/mentiora-sdk',
           label: 'GitHub',
           position: 'right',
@@ -86,16 +111,16 @@ const config: Config = {
           title: 'Docs',
           items: [
             {
-              label: 'Getting Started',
-              to: '/getting-started',
+              label: 'Quick Start',
+              to: '/quick-start',
             },
             {
-              label: 'TypeScript SDK',
-              to: '/typescript/installation',
+              label: 'Usage',
+              to: '/usage',
             },
             {
-              label: 'Python SDK',
-              to: '/python/installation',
+              label: 'API Reference',
+              to: '/api-reference',
             },
           ],
         },
