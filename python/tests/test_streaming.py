@@ -41,7 +41,7 @@ def test_sse_headers_has_required_keys():
 
 
 def test_sse_headers_content_type():
-    assert SSE_HEADERS['Content-Type'] == 'text/event-stream'
+    assert SSE_HEADERS['Content-Type'] == 'text/event-stream; charset=utf-8'
 
 
 def test_sse_headers_cache_control():
