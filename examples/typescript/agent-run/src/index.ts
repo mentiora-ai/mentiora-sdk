@@ -4,7 +4,7 @@
  * Demonstrates running custom agents via the Mentiora SDK.
  * This example covers:
  *   1. Client initialization from environment variables
- *   2. Running an agent synchronously (full response)
+ *   2. Running an agent with await (full response)
  *   3. Streaming an agent response (real-time output)
  *   4. Multi-turn conversations (reusing threadId)
  *   5. Model overrides (custom model and parameters)
@@ -38,6 +38,7 @@ function createClient(): MentioraClient {
   return new MentioraClient({
     apiKey,
     baseUrl: process.env.MENTIORA_BASE_URL,
+    timeout: 120000, // Agent runs can take longer than the default 30s
   });
 }
 

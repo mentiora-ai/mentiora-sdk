@@ -37,7 +37,7 @@ async function* fromArray(events: AgentStreamEvent[]): AsyncGenerator<AgentStrea
 describe('SSE_HEADERS', () => {
   it('contains the four required headers', () => {
     expect(SSE_HEADERS).toEqual({
-      'Content-Type': 'text/event-stream',
+      'Content-Type': 'text/event-stream; charset=utf-8',
       'Cache-Control': 'no-cache, no-transform',
       Connection: 'keep-alive',
       'X-Accel-Buffering': 'no',
@@ -50,7 +50,7 @@ describe('createStreamResponse', () => {
     const response = createStreamResponse(fromArray([]));
 
     expect(response).toBeInstanceOf(Response);
-    expect(response.headers.get('Content-Type')).toBe('text/event-stream');
+    expect(response.headers.get('Content-Type')).toBe('text/event-stream; charset=utf-8');
     expect(response.headers.get('Cache-Control')).toBe('no-cache, no-transform');
     expect(response.headers.get('Connection')).toBe('keep-alive');
     expect(response.headers.get('X-Accel-Buffering')).toBe('no');
@@ -168,7 +168,7 @@ describe('createStreamResponse', () => {
       headers: { 'X-Custom': 'value' },
     });
 
-    expect(response.headers.get('Content-Type')).toBe('text/event-stream');
+    expect(response.headers.get('Content-Type')).toBe('text/event-stream; charset=utf-8');
     expect(response.headers.get('X-Custom')).toBe('value');
   });
 

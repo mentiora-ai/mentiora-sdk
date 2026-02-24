@@ -821,6 +821,7 @@ async def test_post_stream_async_server_error():
         mock_response = MagicMock()
         mock_response.status_code = 503
         mock_response.reason_phrase = 'Service Unavailable'
+        mock_response.aread = AsyncMock(return_value=b'')
 
         stream_cm = MagicMock()
         stream_cm.__aenter__ = AsyncMock(return_value=mock_response)
@@ -836,3 +837,57 @@ async def test_post_stream_async_server_error():
             async for _ in client.post_stream_async('/api/v1/agents/stream', {}):
                 pass
         await client.aclose()
+
+
+# ===========================================================================
+# Error body propagation tests
+# ===========================================================================
+
+
+@patch('mentiora.http.httpx.Client')
+def test_post_4xx_propagates_server_error_body(mock_client_class):
+    """4xx errors include server code and message from JSON body."""
+    mock_response = MagicMock()
+    mock_response.status_code = 404
+    mock_response.reason_phrase = 'Not Found'
+    mock_response.json.return_value = {
+        'error': {'code': 'agent_not_found', 'message': 'Tag "prod" not found'}
+    }
+
+    mock_client = MagicMock()
+    mock_client.post.return_value = mock_response
+    mock_client_class.return_value = mock_client
+
+    client = HttpClient('https://test.mentiora.ai', 'test-key')
+    with pytest.raises(NetworkError) as exc_info:
+        client.post('/api/v1/agents/run', {'tag': 'prod'})
+
+    err = exc_info.value
+    assert err.status_code == 404
+    assert err.server_code == 'agent_not_found'
+    assert err.server_message == 'Tag "prod" not found'
+    assert 'agent_not_found' in str(err)
+    assert 'Tag "prod" not found' in str(err)
+    client.close()
+
+
+@patch('mentiora.http.httpx.Client')
+def test_post_4xx_fallback_when_no_json_body(mock_client_class):
+    """4xx errors degrade gracefully if body isn't JSON."""
+    mock_response = MagicMock()
+    mock_response.status_code = 400
+    mock_response.reason_phrase = 'Bad Request'
+    mock_response.json.side_effect = Exception('not json')
+
+    mock_client = MagicMock()
+    mock_client.post.return_value = mock_response
+    mock_client_class.return_value = mock_client
+
+    client = HttpClient('https://test.mentiora.ai', 'test-key')
+    with pytest.raises(NetworkError, match='Client error: 400 Bad Request') as exc_info:
+        client.post('/api/v1/agents/run', {})
+
+    err = exc_info.value
+    assert err.server_code is None
+    assert err.server_message is None
+    client.close()

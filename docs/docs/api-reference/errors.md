@@ -1,6 +1,6 @@
 ---
 title: Errors
-description: "API reference for Mentiora SDK error classes — MentioraError, ConfigurationError, ValidationError, and NetworkError."
+description: 'API reference for Mentiora SDK error classes — MentioraError, ConfigurationError, ValidationError, and NetworkError.'
 ---
 
 import SdkTabs from '@site/src/components/SdkTabs';
@@ -50,13 +50,20 @@ class ValidationError extends MentioraError {
 
 ## NetworkError
 
-Thrown when a network or HTTP error occurs.
+Thrown when a network or HTTP error occurs. On 4xx/5xx responses, the SDK parses the server's JSON error body and exposes `serverCode` and `serverMessage` for programmatic error handling.
 
 ```typescript
 class NetworkError extends MentioraError {
   // code: 'NETWORK_ERROR'
   readonly statusCode?: number;
-  constructor(message: string, statusCode?: number);
+  readonly serverCode?: string; // e.g. 'agent_not_found', 'invalid_request'
+  readonly serverMessage?: string; // Detailed error message from the server
+  constructor(
+    message: string,
+    statusCode?: number,
+    serverCode?: string,
+    serverMessage?: string,
+  );
 }
 ```
 
@@ -95,12 +102,20 @@ class ValidationError(MentioraError):
 
 ## NetworkError
 
-Raised when a network or HTTP error occurs.
+Raised when a network or HTTP error occurs. On 4xx/5xx responses, the SDK parses the server's JSON error body and exposes `server_code` and `server_message` for programmatic error handling.
 
 ```python
 class NetworkError(MentioraError):
-    def __init__(self, message: str, status_code: int | None = None)
+    def __init__(
+        self,
+        message: str,
+        status_code: int | None = None,
+        server_code: str | None = None,
+        server_message: str | None = None,
+    )
     status_code: int | None
+    server_code: str | None     # e.g. 'agent_not_found', 'invalid_request'
+    server_message: str | None  # Detailed error message from the server
 ```
 
 </TabItem>

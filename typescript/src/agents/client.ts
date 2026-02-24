@@ -8,6 +8,7 @@ import { parseSSEStream } from '../sse';
 import type { AgentRunAPIRequest, AgentRunParams, AgentRunResult, AgentStreamEvent } from './types';
 
 const AGENTS_RUN_PATH = '/api/v1/agents/run';
+const TAG_REGEX = /^[a-z0-9][a-z0-9\-_]*$/;
 
 export class AgentsClient {
   constructor(private readonly httpClient: HttpClient) {}
@@ -81,6 +82,22 @@ export class AgentsClient {
     }
     if (params.tag && params.agentId) {
       throw new ValidationError('Provide either tag or agentId, not both');
+    }
+    if (params.tag && !TAG_REGEX.test(params.tag)) {
+      throw new ValidationError(
+        `Invalid tag format: "${params.tag}". Must start with a lowercase letter or digit and contain only [a-z0-9-_].`
+      );
+    }
+    if (params.modelParams) {
+      if (
+        params.modelParams.temperature !== undefined &&
+        (params.modelParams.temperature < 0 || params.modelParams.temperature > 2)
+      ) {
+        throw new ValidationError('temperature must be between 0 and 2');
+      }
+      if (params.modelParams.maxTokens !== undefined && params.modelParams.maxTokens <= 0) {
+        throw new ValidationError('max_tokens must be a positive integer');
+      }
     }
   }
 
@@ -184,8 +201,8 @@ export class AgentsClient {
     let data: Record<string, unknown>;
     try {
       data = JSON.parse(sse.data);
-    } catch {
-      throw new NetworkError(`Failed to parse SSE event data: ${sse.data}`);
+    } catch (err) {
+      throw new ValidationError(`Failed to parse stream event: ${String(err)}`);
     }
 
     // Map wire-format SSE event names (dot-separated) to SDK event types (underscore-separated)
@@ -237,9 +254,13 @@ export class AgentsClient {
       }
       case 'chat.completed': {
         const chat = (data.chat as Record<string, unknown>) ?? data;
+        const threadId = String(chat.thread_id ?? data.thread_id ?? '');
+        if (!threadId) {
+          throw new NetworkError('chat_completed event missing required threadId');
+        }
         return {
           type: 'chat_completed',
-          threadId: String(chat.thread_id ?? data.thread_id ?? ''),
+          threadId,
           status: ((chat.status ?? data.status) as 'completed' | 'failed') || 'completed',
           output: this.extractAssistantOutput(chat.output ?? data.output ?? ''),
         };

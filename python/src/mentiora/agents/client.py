@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import logging
+import re
 from collections.abc import AsyncIterator, Iterator
 
 from ..errors import NetworkError, ValidationError
@@ -20,6 +21,8 @@ from .types import (
     ToolCallDeltaEvent,
     ToolCallResultEvent,
 )
+
+TAG_REGEX = re.compile(r'^[a-z0-9][a-z0-9\-_]*$')
 
 logger = logging.getLogger('mentiora.sdk')
 
@@ -151,6 +154,18 @@ class AgentsClient:
             raise ValidationError('Either tag or agent_id must be provided')
         if params.tag and params.agent_id:
             raise ValidationError('Provide either tag or agent_id, not both')
+        if params.tag and not TAG_REGEX.match(params.tag):
+            raise ValidationError(
+                f'Invalid tag format: "{params.tag}". '
+                'Must start with a lowercase letter or digit and contain only [a-z0-9-_].'
+            )
+        if params.model_params:
+            if params.model_params.temperature is not None and not (
+                0 <= params.model_params.temperature <= 2
+            ):
+                raise ValidationError('temperature must be between 0 and 2')
+            if params.model_params.max_tokens is not None and params.model_params.max_tokens <= 0:
+                raise ValidationError('max_tokens must be a positive integer')
 
     def _parse_run_result(self, body: dict[str, object]) -> AgentRunResult:
         """Parse API JSON response into AgentRunResult."""

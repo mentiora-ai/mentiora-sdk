@@ -8,7 +8,7 @@ from collections.abc import AsyncIterator, Callable
 from .agents.types import AgentStreamEvent
 
 SSE_HEADERS: dict[str, str] = {
-    'Content-Type': 'text/event-stream',
+    'Content-Type': 'text/event-stream; charset=utf-8',
     'Cache-Control': 'no-cache, no-transform',
     'Connection': 'keep-alive',
     'X-Accel-Buffering': 'no',

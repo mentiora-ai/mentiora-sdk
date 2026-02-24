@@ -55,6 +55,10 @@ coverage/
 .husky/_/
 
 
+# Local runner
+.local/
+!.local/.env.example
+
 # Claude
 .claude/
 code_specs/

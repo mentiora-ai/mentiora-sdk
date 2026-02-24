@@ -30,7 +30,9 @@ export class MentioraError extends Error {
 export class NetworkError extends MentioraError {
   constructor(
     message: string,
-    public readonly statusCode?: number
+    public readonly statusCode?: number,
+    public readonly serverCode?: string,
+    public readonly serverMessage?: string
   ) {
     super(message, 'NETWORK_ERROR');
     this.name = 'NetworkError';

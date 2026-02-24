@@ -568,6 +568,7 @@ describe('HttpClient', () => {
         ok: true,
         status: 200,
         statusText: 'OK',
+        headers: new Headers({ 'content-type': 'text/event-stream' }),
         body: mockBody,
       });
       const client = createHttpClient();
@@ -588,6 +589,7 @@ describe('HttpClient', () => {
         ok: true,
         status: 200,
         statusText: 'OK',
+        headers: new Headers({ 'content-type': 'text/event-stream' }),
         body: mockBody,
       });
       const client = createHttpClient();
@@ -600,6 +602,7 @@ describe('HttpClient', () => {
         ok: false,
         status: 500,
         statusText: 'Internal Server Error',
+        json: vi.fn().mockResolvedValue({}),
         body: new ReadableStream(),
       });
       const client = createHttpClient();
@@ -611,6 +614,7 @@ describe('HttpClient', () => {
         ok: true,
         status: 200,
         statusText: 'OK',
+        headers: new Headers({ 'content-type': 'text/event-stream' }),
         body: null,
       });
       const client = createHttpClient();
@@ -634,6 +638,7 @@ describe('HttpClient', () => {
         ok: false,
         status: 502,
         statusText: 'Bad Gateway',
+        json: vi.fn().mockResolvedValue({}),
         body: new ReadableStream(),
       });
       const client = createHttpClient({ retries: 3 });
@@ -646,6 +651,7 @@ describe('HttpClient', () => {
         ok: false,
         status: 403,
         statusText: 'Forbidden',
+        json: vi.fn().mockResolvedValue({}),
         body: new ReadableStream(),
       });
       const client = createHttpClient();
@@ -654,6 +660,123 @@ describe('HttpClient', () => {
       } catch (err) {
         expect(err).toBeInstanceOf(NetworkError);
         expect((err as NetworkError).statusCode).toBe(403);
+      }
+    });
+
+    it('propagates structured error body on non-2xx', async () => {
+      mockFetch.mockResolvedValue({
+        ok: false,
+        status: 404,
+        statusText: 'Not Found',
+        json: vi.fn().mockResolvedValue({
+          error: { code: 'agent_not_found', message: 'Tag "x" not found' },
+        }),
+        body: new ReadableStream(),
+      });
+      const client = createHttpClient();
+      try {
+        await client.postStream('/api/v1/agents/stream', {});
+        expect.fail('should have thrown');
+      } catch (err) {
+        expect(err).toBeInstanceOf(NetworkError);
+        const ne = err as NetworkError;
+        expect(ne.statusCode).toBe(404);
+        expect(ne.serverCode).toBe('agent_not_found');
+        expect(ne.serverMessage).toBe('Tag "x" not found');
+        expect(ne.message).toContain('[agent_not_found]');
+      }
+    });
+
+    it('handles non-JSON error body in stream gracefully', async () => {
+      mockFetch.mockResolvedValue({
+        ok: false,
+        status: 500,
+        statusText: 'Internal Server Error',
+        json: vi.fn().mockRejectedValue(new Error('not JSON')),
+        body: new ReadableStream(),
+      });
+      const client = createHttpClient();
+      try {
+        await client.postStream('/api/v1/agents/stream', {});
+        expect.fail('should have thrown');
+      } catch (err) {
+        expect(err).toBeInstanceOf(NetworkError);
+        const ne = err as NetworkError;
+        expect(ne.statusCode).toBe(500);
+        expect(ne.serverCode).toBeUndefined();
+        expect(ne.message).toContain('Stream request failed');
+      }
+    });
+  });
+
+  describe('error body propagation', () => {
+    it('4xx with structured error body populates serverCode and serverMessage', async () => {
+      mockFetch.mockResolvedValue({
+        status: 404,
+        statusText: 'Not Found',
+        json: vi.fn().mockResolvedValue({
+          error: { code: 'agent_not_found', message: 'Tag "prod" not found' },
+        }),
+      });
+      const client = createHttpClient();
+      try {
+        await client.sendTrace(createTraceEvent());
+        expect.fail('should have thrown');
+      } catch (err) {
+        expect(err).toBeInstanceOf(NetworkError);
+        const ne = err as NetworkError;
+        expect(ne.statusCode).toBe(404);
+        expect(ne.serverCode).toBe('agent_not_found');
+        expect(ne.serverMessage).toBe('Tag "prod" not found');
+        expect(ne.message).toContain('[agent_not_found]');
+        expect(ne.message).toContain('Tag "prod" not found');
+      }
+    });
+
+    it('4xx with non-JSON body has undefined serverCode', async () => {
+      mockFetch.mockResolvedValue({
+        status: 400,
+        statusText: 'Bad Request',
+        json: vi.fn().mockResolvedValue({}),
+      });
+      const client = createHttpClient();
+      try {
+        await client.sendTrace(createTraceEvent());
+        expect.fail('should have thrown');
+      } catch (err) {
+        expect(err).toBeInstanceOf(NetworkError);
+        const ne = err as NetworkError;
+        expect(ne.statusCode).toBe(400);
+        expect(ne.serverCode).toBeUndefined();
+        expect(ne.serverMessage).toBeUndefined();
+        expect(ne.message).toBe('Client error: Bad Request');
+      }
+    });
+
+    it('5xx with structured error body populates serverCode after retries', async () => {
+      Math.random = () => 0.5;
+      const failResponse = {
+        status: 500,
+        statusText: 'Internal Server Error',
+        json: vi.fn().mockResolvedValue({
+          error: { code: 'internal_error', message: 'Something broke' },
+        }),
+      };
+      mockFetch
+        .mockResolvedValueOnce(failResponse)
+        .mockResolvedValueOnce(failResponse)
+        .mockResolvedValueOnce(failResponse);
+
+      const client = createHttpClient({ retries: 2 });
+      try {
+        await client.sendTrace(createTraceEvent());
+        expect.fail('should have thrown');
+      } catch (err) {
+        expect(err).toBeInstanceOf(NetworkError);
+        const ne = err as NetworkError;
+        expect(ne.statusCode).toBe(500);
+        expect(ne.serverCode).toBe('internal_error');
+        expect(ne.serverMessage).toBe('Something broke');
       }
     });
   });

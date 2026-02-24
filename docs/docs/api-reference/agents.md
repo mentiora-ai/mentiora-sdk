@@ -1,6 +1,6 @@
 ---
 title: Agents
-description: "API reference for AgentsClient — run and stream agents, including AgentRunParams, AgentRunResult, AgentToolCall, and all stream event types."
+description: 'API reference for AgentsClient — run and stream agents, including AgentRunParams, AgentRunResult, AgentToolCall, and all stream event types.'
 ---
 
 import SdkTabs from '@site/src/components/SdkTabs';
@@ -181,19 +181,20 @@ async for event in client.agents.stream_async(AgentRunParams(
 
 ```typescript
 interface AgentRunParams {
-  tag?: string;              // Tag name to resolve agent (e.g. 'production')
-  agentId?: string;          // Explicit agent ID (alternative to tag)
-  revision?: number;         // Explicit revision number (used with agentId)
-  message: string;           // User message to send (required)
-  threadId?: string;         // Thread ID for multi-turn conversations
-  modelId?: string;          // Override the agent's default model
-  modelParams?: {            // Override model parameters
+  tag?: string; // Tag name to resolve agent (e.g. 'production')
+  agentId?: string; // Explicit agent ID (alternative to tag)
+  revision?: number; // Explicit revision number (used with agentId)
+  message: string; // User message to send (required)
+  threadId?: string; // Thread ID for multi-turn conversations
+  modelId?: string; // Override the agent's default model
+  modelParams?: {
+    // Override model parameters
     temperature?: number;
     maxTokens?: number;
     seed?: number;
   };
-  endUserId?: string;        // End-user identifier for tracking
-  metadata?: Record<string, unknown>;  // Arbitrary metadata
+  endUserId?: string; // End-user identifier for tracking
+  metadata?: Record<string, unknown>; // Arbitrary metadata
 }
 ```
 
@@ -217,8 +218,10 @@ class AgentRunParams:
 </SdkTabs>
 
 **Validation rules:**
+
 - `message` is required and cannot be empty
 - Either `tag` or `agentId`/`agent_id` must be provided, but not both
+- `tag` must match `^[a-z0-9][a-z0-9\-_]*$` (lowercase alphanumeric, hyphens, underscores; must start with a letter or digit)
 
 ### ModelParams
 
@@ -227,8 +230,8 @@ class AgentRunParams:
 
 ```typescript
 interface ModelParams {
-  temperature?: number;
-  maxTokens?: number;
+  temperature?: number; // 0–2 (inclusive)
+  maxTokens?: number; // Must be > 0
   seed?: number;
 }
 ```
@@ -238,13 +241,18 @@ interface ModelParams {
 
 ```python
 class ModelParams:
-    temperature: float | None
-    max_tokens: int | None
+    temperature: float | None  # 0–2 (inclusive)
+    max_tokens: int | None     # Must be > 0
     seed: int | None
 ```
 
 </TabItem>
 </SdkTabs>
+
+**Validation rules:**
+
+- `temperature` must be between 0 and 2 (inclusive)
+- `maxTokens`/`max_tokens` must be a positive integer
 
 ### AgentRunResult
 
@@ -253,15 +261,16 @@ class ModelParams:
 
 ```typescript
 interface AgentRunResult {
-  threadId: string;           // Thread ID for the conversation
-  traceId?: string;           // Trace ID for observability
-  agentId: string;            // Resolved agent ID
-  agentRevision: number;      // Resolved agent revision
-  agentTag?: string;          // Resolved agent tag (if applicable)
-  output: string;             // Agent output text
+  threadId: string; // Thread ID for the conversation
+  traceId?: string; // Trace ID for observability
+  agentId: string; // Resolved agent ID
+  agentRevision: number; // Resolved agent revision
+  agentTag?: string; // Resolved agent tag (if applicable)
+  output: string; // Agent output text
   toolCalls: AgentToolCall[]; // Tool calls made during execution
-  status: 'completed' | 'failed';  // Execution status
-  usage?: {                   // Token usage stats
+  status: 'completed' | 'failed'; // Execution status
+  usage?: {
+    // Token usage stats
     promptTokens?: number;
     completionTokens?: number;
   };

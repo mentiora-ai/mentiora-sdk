@@ -1,11 +1,11 @@
-# @mentiora/sdk
+# @mentiora.ai/sdk
 
 TypeScript/JavaScript SDK for the Mentiora platform. Provides AI observability and tracing.
 
 ## Installation
 
 ```bash
-npm install @mentiora/sdk
+npm install @mentiora.ai/sdk
 ```
 
 ## Usage
@@ -13,7 +13,7 @@ npm install @mentiora/sdk
 ### Basic Setup
 
 ```typescript
-import { MentioraClient } from '@mentiora/sdk';
+import { MentioraClient } from '@mentiora.ai/sdk';
 
 const client = new MentioraClient({
   apiKey: process.env.MENTIORA_API_KEY,
@@ -128,9 +128,9 @@ npm install openai
 ```
 
 ```typescript
-import { trackOpenAI } from '@mentiora/sdk';
+import { trackOpenAI } from '@mentiora.ai/sdk';
 import OpenAI from 'openai';
-import { MentioraClient } from '@mentiora/sdk';
+import { MentioraClient } from '@mentiora.ai/sdk';
 
 // Initialize Mentiora client
 const mentioraClient = new MentioraClient({
@@ -181,7 +181,7 @@ npm install @langchain/core
 ```
 
 ```typescript
-import { MentioraTracingLangChain, MentioraClient } from '@mentiora/sdk';
+import { MentioraTracingLangChain, MentioraClient } from '@mentiora.ai/sdk';
 import { ChatOpenAI } from '@langchain/openai';
 import { ChatPromptTemplate } from '@langchain/core/prompts';
 

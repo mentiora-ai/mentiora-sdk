@@ -140,6 +140,27 @@ class HttpClient:
         max_delay = min(10.0, float(2**attempt))
         return random.random() * max_delay
 
+    def _extract_error_detail(self, response: httpx.Response) -> tuple[str | None, str | None, str]:
+        """Try to extract structured error info from a JSON error response.
+
+        Returns:
+            Tuple of (server_code, server_message, detail_suffix).
+            detail_suffix is a formatted string like ': [code] message' or ''.
+        """
+        try:
+            body = response.json()
+            if isinstance(body, dict) and 'error' in body:
+                err = body['error']
+                code = err.get('code') if isinstance(err, dict) else None
+                msg = err.get('message') if isinstance(err, dict) else None
+                if code and msg:
+                    return code, msg, f': [{code}] {msg}'
+                if msg:
+                    return code, msg, f': {msg}'
+        except Exception:
+            pass
+        return None, None, ''
+
     def _execute_with_retry(
         self,
         url: str,
@@ -193,9 +214,12 @@ class HttpClient:
 
                 # Don't retry on 4xx errors (client error)
                 if 400 <= response.status_code < 500:
+                    server_code, server_message, detail = self._extract_error_detail(response)
                     raise NetworkError(
-                        f'Client error: {response.status_code} {response.reason_phrase}',
+                        f'Client error: {response.status_code} {response.reason_phrase}{detail}',
                         response.status_code,
+                        server_code=server_code,
+                        server_message=server_message,
                     )
 
                 # Retry on 5xx errors
@@ -211,9 +235,12 @@ class HttpClient:
                         delay = self._calculate_backoff(attempt)
                         sleep_fn(delay)
                         continue
+                    server_code, server_message, detail = self._extract_error_detail(response)
                     raise NetworkError(
-                        f'Server error: {response.status_code} {response.reason_phrase}',
+                        f'Server error: {response.status_code} {response.reason_phrase}{detail}',
                         response.status_code,
+                        server_code=server_code,
+                        server_message=server_message,
                     )
 
                 if self.debug:
@@ -315,9 +342,12 @@ class HttpClient:
 
                 # Don't retry on 4xx errors (client error)
                 if 400 <= response.status_code < 500:
+                    server_code, server_message, detail = self._extract_error_detail(response)
                     raise NetworkError(
-                        f'Client error: {response.status_code} {response.reason_phrase}',
+                        f'Client error: {response.status_code} {response.reason_phrase}{detail}',
                         response.status_code,
+                        server_code=server_code,
+                        server_message=server_message,
                     )
 
                 # Retry on 5xx errors
@@ -333,9 +363,12 @@ class HttpClient:
                         delay = self._calculate_backoff(attempt)
                         await sleep_fn(delay)
                         continue
+                    server_code, server_message, detail = self._extract_error_detail(response)
                     raise NetworkError(
-                        f'Server error: {response.status_code} {response.reason_phrase}',
+                        f'Server error: {response.status_code} {response.reason_phrase}{detail}',
                         response.status_code,
+                        server_code=server_code,
+                        server_message=server_message,
                     )
 
                 if self.debug:
@@ -549,9 +582,29 @@ class HttpClient:
                 timeout=self.timeout,
             ) as response:
                 if response.status_code >= 400:
+                    error_body = response.read()
+                    server_code = None
+                    server_message = None
+                    detail = ''
+                    try:
+                        import json
+
+                        body_parsed = json.loads(error_body)
+                        if isinstance(body_parsed, dict) and 'error' in body_parsed:
+                            err = body_parsed['error']
+                            server_code = err.get('code') if isinstance(err, dict) else None
+                            server_message = err.get('message') if isinstance(err, dict) else None
+                            if server_code and server_message:
+                                detail = f': [{server_code}] {server_message}'
+                            elif server_message:
+                                detail = f': {server_message}'
+                    except Exception:
+                        pass
                     raise NetworkError(
-                        f'Stream error: {response.status_code} {response.reason_phrase}',
+                        f'Stream error: {response.status_code} {response.reason_phrase}{detail}',
                         response.status_code,
+                        server_code=server_code,
+                        server_message=server_message,
                     )
                 yield from parse_sse_lines(response.iter_lines())
         except httpx.TimeoutException as e:
@@ -592,9 +645,29 @@ class HttpClient:
                 timeout=self.timeout,
             ) as response:
                 if response.status_code >= 400:
+                    error_body = await response.aread()
+                    server_code = None
+                    server_message = None
+                    detail = ''
+                    try:
+                        import json
+
+                        body_parsed = json.loads(error_body)
+                        if isinstance(body_parsed, dict) and 'error' in body_parsed:
+                            err = body_parsed['error']
+                            server_code = err.get('code') if isinstance(err, dict) else None
+                            server_message = err.get('message') if isinstance(err, dict) else None
+                            if server_code and server_message:
+                                detail = f': [{server_code}] {server_message}'
+                            elif server_message:
+                                detail = f': {server_message}'
+                    except Exception:
+                        pass
                     raise NetworkError(
-                        f'Stream error: {response.status_code} {response.reason_phrase}',
+                        f'Stream error: {response.status_code} {response.reason_phrase}{detail}',
                         response.status_code,
+                        server_code=server_code,
+                        server_message=server_message,
                     )
                 async for event in parse_sse_lines_async(response.aiter_lines()):
                     yield event

@@ -6,7 +6,7 @@ import type { AgentStreamEvent } from './agents';
 
 /** Standard SSE headers for streaming responses. */
 export const SSE_HEADERS: Record<string, string> = {
-  'Content-Type': 'text/event-stream',
+  'Content-Type': 'text/event-stream; charset=utf-8',
   'Cache-Control': 'no-cache, no-transform',
   Connection: 'keep-alive',
   'X-Accel-Buffering': 'no',
@@ -20,8 +20,19 @@ export interface CreateStreamResponseOptions {
 }
 
 /**
- * Default transform: maps output_text_delta, chat_completed, and error events
- * to simplified SSE payloads. All other event types are skipped.
+ * Default transform: maps a subset of stream events to simplified SSE payloads.
+ *
+ * **Included events:**
+ * - `output_text_delta` → `{ type: 'delta', delta }`
+ * - `chat_completed`    → `{ type: 'done', threadId, output, status }`
+ * - `error`             → `{ type: 'error', message }`
+ *
+ * **Excluded events (silently dropped):**
+ * - `agent_resolved`
+ * - `tool_call_delta`
+ * - `tool_call_result`
+ *
+ * To receive all events, pass a custom `transform` that handles every type.
  */
 function defaultTransform(event: AgentStreamEvent): object | null {
   switch (event.type) {

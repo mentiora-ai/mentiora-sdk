@@ -499,22 +499,17 @@ describe('AgentsClient', () => {
       await expect(gen.next()).rejects.toThrow(NetworkError);
     });
 
-    it('handles malformed chat.completed event defensively', async () => {
+    it('throws NetworkError on chat.completed missing threadId', async () => {
       const stream = createMockSSEStream([
-        { event: 'chat.completed', data: JSON.stringify({ output: 'hi' }) }, // missing thread_id, status
+        { event: 'chat.completed', data: JSON.stringify({ output: 'hi' }) }, // missing thread_id
       ]);
       const httpClient = createMockHttpClient({
         postStream: vi.fn().mockResolvedValue(stream),
       });
       const client = new AgentsClient(httpClient);
 
-      const events = [];
-      for await (const event of client.stream({ tag: 'prod', message: 'Hi' })) {
-        events.push(event);
-      }
-      // chat.completed uses defensive String() fallback instead of throwing
-      expect(events).toHaveLength(1);
-      expect(events[0].type).toBe('chat_completed');
+      const gen = client.stream({ tag: 'prod', message: 'Hi' });
+      await expect(gen.next()).rejects.toThrow('chat_completed event missing required threadId');
     });
 
     it('throws NetworkError on non-2xx response', async () => {
@@ -543,7 +538,7 @@ describe('AgentsClient', () => {
       const client = new AgentsClient(httpClient);
 
       const gen = client.stream({ tag: 'prod', message: 'Hello' });
-      await expect(gen.next()).rejects.toThrow(/Failed to parse SSE event data/);
+      await expect(gen.next()).rejects.toThrow(/Failed to parse stream event/);
     });
 
     it('throws NetworkError on malformed output_text_delta event (missing delta)', async () => {

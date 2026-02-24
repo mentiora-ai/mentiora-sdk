@@ -24,12 +24,14 @@ from mentiora import (
     NetworkError,
     ValidationError,
 )
-from mentiora.agents.types import AgentErrorEvent
 
 # ---------------------------------------------------------------------------
 # Load .env from the same directory as this script
 # ---------------------------------------------------------------------------
 load_dotenv(Path(__file__).resolve().parent / ".env", override=False)
+
+
+AGENT_TAG = os.getenv("MENTIORA_AGENT_TAG", "production")
 
 
 def create_client() -> MentioraClient:
@@ -58,7 +60,7 @@ def basic_run_sync(client: MentioraClient) -> str:
     print("\n--- Basic Agent Run (sync) ---\n")
 
     result = client.agents.run(
-        AgentRunParams(tag="production-3", message="What is our refund policy?")
+        AgentRunParams(tag=AGENT_TAG, message="What is our refund policy?")
     )
 
     print(f"Status:   {result.status}")
@@ -84,7 +86,7 @@ async def basic_run_async(client: MentioraClient) -> None:
     print("\n--- Basic Agent Run (async) ---\n")
 
     result = await client.agents.run_async(
-        AgentRunParams(tag="production-3", message="Summarize our shipping options.")
+        AgentRunParams(tag=AGENT_TAG, message="Summarize our shipping options.")
     )
 
     print(f"Status:   {result.status}")
@@ -100,7 +102,7 @@ def streaming_sync(client: MentioraClient) -> None:
 
     for event in client.agents.stream(
         AgentRunParams(
-            tag="production-3",
+            tag=AGENT_TAG,
             message="Explain our return process step by step.",
         )
     ):
@@ -127,7 +129,7 @@ async def streaming_async(client: MentioraClient) -> None:
     full_output = ""
     async for event in client.agents.stream_async(
         AgentRunParams(
-            tag="production-3",
+            tag=AGENT_TAG,
             message="What are your store hours?",
         )
     ):
@@ -152,7 +154,7 @@ async def multi_turn_conversation(client: MentioraClient) -> None:
     # Turn 1
     turn1 = await client.agents.run_async(
         AgentRunParams(
-            tag="production-3",
+            tag=AGENT_TAG,
             message="Hi, I bought a laptop last week and it has a dead pixel.",
         )
     )
@@ -162,7 +164,7 @@ async def multi_turn_conversation(client: MentioraClient) -> None:
     # Turn 2 — pass thread_id to continue the conversation
     turn2 = await client.agents.run_async(
         AgentRunParams(
-            tag="production-3",
+            tag=AGENT_TAG,
             message="Yes, I would like to proceed with the return.",
             thread_id=turn1.thread_id,
         )
@@ -173,7 +175,7 @@ async def multi_turn_conversation(client: MentioraClient) -> None:
     # Turn 3
     turn3 = await client.agents.run_async(
         AgentRunParams(
-            tag="production-3",
+            tag=AGENT_TAG,
             message="How long will the refund take?",
             thread_id=turn1.thread_id,
         )
@@ -190,7 +192,7 @@ async def model_overrides(client: MentioraClient) -> None:
 
     result = await client.agents.run_async(
         AgentRunParams(
-            tag="production-3",
+            tag=AGENT_TAG,
             message="Write a one-sentence summary of our shipping policy.",
             model_id="gpt-5-mini",
             model_params=ModelParams(temperature=0.2, max_tokens=200),
@@ -213,7 +215,7 @@ def error_handling(client: MentioraClient) -> None:
 
     # ValidationError: empty message
     try:
-        client.agents.run(AgentRunParams(tag="production-3", message=""))
+        client.agents.run(AgentRunParams(tag=AGENT_TAG, message=""))
     except ValidationError as e:
         print(f"ValidationError caught: {e}")
 

@@ -788,3 +788,48 @@ def test_agents_stream_chat_completed_missing_content_in_message(mock_agents_htt
     assert len(events) == 1
     assert isinstance(events[0], ChatCompletedEvent)
     assert events[0].output == ''
+
+
+# ===========================================================================
+# Tag format validation tests
+# ===========================================================================
+
+
+def test_agents_run_invalid_tag_format(agents_client):
+    """run() rejects tags with invalid format."""
+    with pytest.raises(ValidationError, match='Invalid tag format'):
+        agents_client.run(AgentRunParams(tag='Production', message='hi'))
+    with pytest.raises(ValidationError, match='Invalid tag format'):
+        agents_client.run(AgentRunParams(tag='-invalid', message='hi'))
+    with pytest.raises(ValidationError, match='Invalid tag format'):
+        agents_client.run(AgentRunParams(tag='has spaces', message='hi'))
+
+
+def test_agents_run_valid_tag_formats(agents_client, mock_agents_http_client):
+    """run() accepts valid tag formats."""
+    for tag in ['production', 'staging-v2', 'test_env', '0-beta']:
+        agents_client.run(AgentRunParams(tag=tag, message='hi'))
+
+
+def test_agents_run_invalid_temperature(agents_client):
+    """run() rejects out-of-range temperature."""
+    with pytest.raises(ValidationError, match='temperature must be between 0 and 2'):
+        agents_client.run(
+            AgentRunParams(tag='prod', message='hi', model_params=ModelParams(temperature=-1))
+        )
+    with pytest.raises(ValidationError, match='temperature must be between 0 and 2'):
+        agents_client.run(
+            AgentRunParams(tag='prod', message='hi', model_params=ModelParams(temperature=3))
+        )
+
+
+def test_agents_run_invalid_max_tokens(agents_client):
+    """run() rejects non-positive max_tokens."""
+    with pytest.raises(ValidationError, match='max_tokens must be a positive integer'):
+        agents_client.run(
+            AgentRunParams(tag='prod', message='hi', model_params=ModelParams(max_tokens=0))
+        )
+    with pytest.raises(ValidationError, match='max_tokens must be a positive integer'):
+        agents_client.run(
+            AgentRunParams(tag='prod', message='hi', model_params=ModelParams(max_tokens=-5))
+        )

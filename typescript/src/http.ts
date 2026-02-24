@@ -118,6 +118,38 @@ function getBackoffDelay(attempt: number): number {
 }
 
 /**
+ * Extract structured error details from a JSON response body.
+ * Expects shape `{ error: { code?: string, message?: string } }`.
+ */
+function extractErrorDetail(responseBody: unknown): {
+  serverCode?: string;
+  serverMessage?: string;
+  detail: string;
+} {
+  try {
+    const body = responseBody as Record<string, unknown> | undefined;
+    const errObj = body?.error as Record<string, unknown> | undefined;
+    if (errObj) {
+      const serverCode = typeof errObj.code === 'string' ? errObj.code : undefined;
+      const serverMessage = typeof errObj.message === 'string' ? errObj.message : undefined;
+      if (serverCode && serverMessage) {
+        return {
+          serverCode,
+          serverMessage,
+          detail: `: [${serverCode}] ${serverMessage}`,
+        };
+      }
+      if (serverMessage) {
+        return { serverCode, serverMessage, detail: `: ${serverMessage}` };
+      }
+    }
+  } catch {
+    // Non-JSON or unexpected shape — fall through
+  }
+  return { detail: '' };
+}
+
+/**
  * HTTP client with retry logic and exponential backoff.
  */
 export class HttpClient {
@@ -204,7 +236,9 @@ export class HttpClient {
           }
           if (attempt < maxAttempts - 1) {
             const retryAfter = response.headers.get('retry-after');
-            const delay = retryAfter ? parseFloat(retryAfter) * 1000 : getBackoffDelay(attempt);
+            const parsed = retryAfter ? parseFloat(retryAfter) : NaN;
+            const delay =
+              Number.isFinite(parsed) && parsed > 0 ? parsed * 1000 : getBackoffDelay(attempt);
             await sleep(delay);
             continue;
           }
@@ -213,7 +247,13 @@ export class HttpClient {
 
         // Don't retry on 4xx errors (client error)
         if (response.status >= 400 && response.status < 500) {
-          throw new NetworkError(`Client error: ${response.statusText}`, response.status);
+          const { serverCode, serverMessage, detail } = extractErrorDetail(responseBody);
+          throw new NetworkError(
+            `Client error: ${response.statusText}${detail}`,
+            response.status,
+            serverCode,
+            serverMessage
+          );
         }
 
         // Retry on 5xx errors
@@ -231,7 +271,13 @@ export class HttpClient {
             await sleep(delay);
             continue;
           }
-          throw new NetworkError(`Server error: ${response.statusText}`, response.status);
+          const { serverCode, serverMessage, detail } = extractErrorDetail(responseBody);
+          throw new NetworkError(
+            `Server error: ${response.statusText}${detail}`,
+            response.status,
+            serverCode,
+            serverMessage
+          );
         }
 
         if (this.config.debug) {
@@ -249,11 +295,24 @@ export class HttpClient {
 
         // Handle abort (timeout) or network errors
         if (error instanceof Error) {
+          lastError = error;
+
           if (error.name === 'AbortError') {
+            // Retry timeouts like other network errors (except on last attempt)
+            if (attempt < maxAttempts - 1) {
+              if (this.config.debug) {
+                console.warn('[Mentiora SDK] Request timed out, retrying:', {
+                  timeout: this.config.timeout,
+                  attempt: attempt + 1,
+                  ...debugLabel,
+                });
+              }
+              const delay = getBackoffDelay(attempt);
+              await sleep(delay);
+              continue;
+            }
             throw new NetworkError(`Request timeout after ${this.config.timeout}ms`);
           }
-
-          lastError = error;
           if (this.config.debug) {
             console.error('[Mentiora SDK] Network error:', {
               error: error.message,
@@ -335,7 +394,22 @@ export class HttpClient {
       });
 
       if (!response.ok) {
-        throw new NetworkError(`Stream request failed: ${response.statusText}`, response.status);
+        const errorBody = await response.json().catch(() => ({}));
+        const { serverCode, serverMessage, detail } = extractErrorDetail(errorBody);
+        throw new NetworkError(
+          `Stream request failed: ${response.statusText}${detail}`,
+          response.status,
+          serverCode,
+          serverMessage
+        );
+      }
+
+      const contentType = response.headers.get('content-type') ?? '';
+      if (!contentType.includes('text/event-stream')) {
+        throw new NetworkError(
+          `Expected text/event-stream but received: ${contentType || '(none)'}`,
+          response.status
+        );
       }
 
       if (!response.body) {
