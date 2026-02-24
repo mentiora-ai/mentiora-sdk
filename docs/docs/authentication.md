@@ -1,6 +1,6 @@
 ---
 sidebar_position: 2
-description: "Create and manage API keys for the Mentiora SDK. Security best practices and troubleshooting."
+description: 'Create and manage API keys for the Mentiora SDK. Security best practices and troubleshooting.'
 ---
 
 # Authentication
@@ -11,7 +11,7 @@ Mentiora uses **project-scoped API keys** for SDK authentication. Keys are creat
 
 - Keys are managed in the **Settings** page of the dashboard
 - Each project can have up to **5 API keys**
-- Keys are hashed at rest (bcrypt) and the plaintext is only shown once at creation
+- Keys are hashed at rest and the plaintext is only shown once at creation
 
 ## Getting Your API Key
 
