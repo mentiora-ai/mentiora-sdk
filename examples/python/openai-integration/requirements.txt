@@ -1,2 +1,2 @@
--e ../../../python
+mentiora-ai-sdk[openai] @ git+https://github.com/mentiora-ai/mentiora-sdk.git#subdirectory=python
 python-dotenv

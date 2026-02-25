@@ -10,19 +10,19 @@ importers:
     dependencies:
       '@langchain/core':
         specifier: ^0.3.0
-        version: 0.3.80(openai@4.104.0(zod@3.25.76))
+        version: 0.3.80
       '@langchain/openai':
         specifier: ^0.3.0
-        version: 0.3.17(@langchain/core@0.3.80(openai@4.104.0(zod@3.25.76)))
+        version: 0.3.17(@langchain/core@0.3.80)
       '@mentiora.ai/sdk':
-        specifier: ../../../typescript
-        version: link:../../../typescript
+        specifier: latest
+        version: 0.3.0(@langchain/core@0.3.80)
       dotenv:
         specifier: ^16.4.5
         version: 16.6.1
       langchain:
         specifier: ^0.3.0
-        version: 0.3.37(@langchain/core@0.3.80(openai@4.104.0(zod@3.25.76)))(openai@4.104.0(zod@3.25.76))
+        version: 0.3.37(@langchain/core@0.3.80)
       uuid:
         specifier: ^11.0.0
         version: 11.1.0
@@ -213,6 +213,18 @@ packages:
     engines: {node: '>=18'}
     peerDependencies:
       '@langchain/core': '>=0.2.21 <0.4.0'
+
+  '@mentiora.ai/sdk@0.3.0':
+    resolution: {integrity: sha512-++8z8hXMvzwkt2hijkl+FH4qzz0n7sQqku4UnAzYNfI8Ys4Zq8XIaKXROIKS3Ihthhpn5WI64iNWtR+3m7DkOw==}
+    engines: {node: '>=20.0.0'}
+    peerDependencies:
+      '@langchain/core': '>=1.1.0'
+      openai: '>=6.0.0'
+    peerDependenciesMeta:
+      '@langchain/core':
+        optional: true
+      openai:
+        optional: true
 
   '@types/node-fetch@2.6.13':
     resolution: {integrity: sha512-QGpRVpzSaUs30JBSGPjOg4Uveu384erbHBoT1zeONvyCfwQxIkUshLAOqN/k9EjGviPRmWTTe6aH2qySWKTVSw==}
@@ -573,6 +585,10 @@ packages:
     resolution: {integrity: sha512-0/A9rDy9P7cJ+8w1c9WD9V//9Wj15Ce2MPz8Ri6032usz+NfePxx5AcN3bN+r6ZL6jEo066/yNYB3tn4pQEx+A==}
     hasBin: true
 
+  uuid@13.0.0:
+    resolution: {integrity: sha512-XQegIaBTVUjSHliKqcnFqYypAd4S+WCYt5NIeRs6w/UAry7z8Y9j5ZwRRL4kzq9U3sD6v+85er9FvkEaBpji2w==}
+    hasBin: true
+
   web-streams-polyfill@4.0.0-beta.3:
     resolution: {integrity: sha512-QW95TCTaHmsYfHDybGMwO5IJIM93I/6vTRk+daHTWFPhwh+C8Cg7j7XyKrwrj8Ib6vYXe0ocYNrmzY4xAAN6ug==}
     engines: {node: '>= 14'}
@@ -678,14 +694,14 @@ snapshots:
   '@esbuild/win32-x64@0.27.3':
     optional: true
 
-  '@langchain/core@0.3.80(openai@4.104.0(zod@3.25.76))':
+  '@langchain/core@0.3.80':
     dependencies:
       '@cfworker/json-schema': 4.1.1
       ansi-styles: 5.2.0
       camelcase: 6.3.0
       decamelize: 1.2.0
       js-tiktoken: 1.0.21
-      langsmith: 0.3.87(openai@4.104.0(zod@3.25.76))
+      langsmith: 0.3.87
       mustache: 4.2.0
       p-queue: 6.6.2
       p-retry: 4.6.2
@@ -698,9 +714,9 @@ snapshots:
       - '@opentelemetry/sdk-trace-base'
       - openai
 
-  '@langchain/openai@0.3.17(@langchain/core@0.3.80(openai@4.104.0(zod@3.25.76)))':
+  '@langchain/openai@0.3.17(@langchain/core@0.3.80)':
     dependencies:
-      '@langchain/core': 0.3.80(openai@4.104.0(zod@3.25.76))
+      '@langchain/core': 0.3.80
       js-tiktoken: 1.0.21
       openai: 4.104.0(zod@3.25.76)
       zod: 3.25.76
@@ -709,10 +725,16 @@ snapshots:
       - encoding
       - ws
 
-  '@langchain/textsplitters@0.1.0(@langchain/core@0.3.80(openai@4.104.0(zod@3.25.76)))':
+  '@langchain/textsplitters@0.1.0(@langchain/core@0.3.80)':
     dependencies:
-      '@langchain/core': 0.3.80(openai@4.104.0(zod@3.25.76))
+      '@langchain/core': 0.3.80
       js-tiktoken: 1.0.21
+
+  '@mentiora.ai/sdk@0.3.0(@langchain/core@0.3.80)':
+    dependencies:
+      uuid: 13.0.0
+    optionalDependencies:
+      '@langchain/core': 0.3.80
 
   '@types/node-fetch@2.6.13':
     dependencies:
@@ -907,15 +929,15 @@ snapshots:
 
   jsonpointer@5.0.1: {}
 
-  langchain@0.3.37(@langchain/core@0.3.80(openai@4.104.0(zod@3.25.76)))(openai@4.104.0(zod@3.25.76)):
+  langchain@0.3.37(@langchain/core@0.3.80):
     dependencies:
-      '@langchain/core': 0.3.80(openai@4.104.0(zod@3.25.76))
-      '@langchain/openai': 0.3.17(@langchain/core@0.3.80(openai@4.104.0(zod@3.25.76)))
-      '@langchain/textsplitters': 0.1.0(@langchain/core@0.3.80(openai@4.104.0(zod@3.25.76)))
+      '@langchain/core': 0.3.80
+      '@langchain/openai': 0.3.17(@langchain/core@0.3.80)
+      '@langchain/textsplitters': 0.1.0(@langchain/core@0.3.80)
       js-tiktoken: 1.0.21
       js-yaml: 4.1.1
       jsonpointer: 5.0.1
-      langsmith: 0.3.87(openai@4.104.0(zod@3.25.76))
+      langsmith: 0.3.87
       openapi-types: 12.1.3
       p-retry: 4.6.2
       uuid: 10.0.0
@@ -929,7 +951,7 @@ snapshots:
       - openai
       - ws
 
-  langsmith@0.3.87(openai@4.104.0(zod@3.25.76)):
+  langsmith@0.3.87:
     dependencies:
       '@types/uuid': 10.0.0
       chalk: 4.1.2
@@ -937,8 +959,6 @@ snapshots:
       p-queue: 6.6.2
       semver: 7.7.4
       uuid: 10.0.0
-    optionalDependencies:
-      openai: 4.104.0(zod@3.25.76)
 
   math-intrinsics@1.1.0: {}
 
@@ -1020,6 +1040,8 @@ snapshots:
   uuid@10.0.0: {}
 
   uuid@11.1.0: {}
+
+  uuid@13.0.0: {}
 
   web-streams-polyfill@4.0.0-beta.3: {}
 

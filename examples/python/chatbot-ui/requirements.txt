@@ -1,4 +1,4 @@
--e ../../../python
+mentiora-ai-sdk @ git+https://github.com/mentiora-ai/mentiora-sdk.git#subdirectory=python
 fastapi>=0.115.0
 uvicorn[standard]>=0.34.0
 python-dotenv>=1.0.1
