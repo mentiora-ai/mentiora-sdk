@@ -5,6 +5,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.0] - 2026-02-25
+
+### Breaking Changes
+
+- **TypeScript**: Plugin imports moved to subpath exports. Update your imports:
+  - `import { trackOpenAI } from '@mentiora.ai/sdk'` → `import { trackOpenAI } from '@mentiora.ai/sdk/openai'`
+  - `import { MentioraTracingLangChain } from '@mentiora.ai/sdk'` → `import { MentioraTracingLangChain } from '@mentiora.ai/sdk/langchain'`
+  - Plugin option types (`TrackOpenAIOptions`, `MentioraTracingLangChainOptions`) are now exported from their respective subpaths
+  - Core SDK imports (`MentioraClient`, `AgentsClient`, `createStreamResponse`, etc.) are unchanged
+
+### Changed
+
+- **TypeScript**: Split build into separate entry points via `tsup.config.ts` — main bundle no longer contains plugin code, eliminating false peer dependency errors (e.g. `@langchain/core` required even when not using the LangChain plugin)
+- **TypeScript**: Main bundle size reduced from ~66KB to ~31KB (CJS)
+
+### Notes
+
+- Python SDK version bumped to 0.3.0 for alignment — no API changes
+
 ## [0.2.0] - 2026-02-24
 
 ### Added

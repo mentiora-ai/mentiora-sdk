@@ -20,7 +20,8 @@
 
 import { ChatPromptTemplate } from '@langchain/core/prompts';
 import { ChatOpenAI } from '@langchain/openai';
-import { MentioraClient, MentioraTracingLangChain } from '@mentiora.ai/sdk';
+import { MentioraClient } from '@mentiora.ai/sdk';
+import { MentioraTracingLangChain } from '@mentiora.ai/sdk/langchain';
 import * as dotenv from 'dotenv';
 import { v7 as uuidv7 } from 'uuid';
 

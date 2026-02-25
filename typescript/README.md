@@ -322,7 +322,8 @@ npm install openai
 ```
 
 ```typescript
-import { MentioraClient, trackOpenAI } from '@mentiora.ai/sdk';
+import { MentioraClient } from '@mentiora.ai/sdk';
+import { trackOpenAI } from '@mentiora.ai/sdk/openai';
 import OpenAI from 'openai';
 
 const mentioraClient = new MentioraClient({
@@ -374,7 +375,8 @@ npm install @langchain/core
 ```
 
 ```typescript
-import { MentioraClient, MentioraTracingLangChain } from '@mentiora.ai/sdk';
+import { MentioraClient } from '@mentiora.ai/sdk';
+import { MentioraTracingLangChain } from '@mentiora.ai/sdk/langchain';
 import { ChatOpenAI } from '@langchain/openai';
 import { ChatPromptTemplate } from '@langchain/core/prompts';
 

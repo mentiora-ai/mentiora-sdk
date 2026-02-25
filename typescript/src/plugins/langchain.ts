@@ -10,6 +10,7 @@ import { v7 as uuidv7 } from 'uuid';
 import { ConfigurationError } from '../errors';
 import type { TraceEvent, TraceType, UsageInfo } from '../types';
 import type { MentioraTracingLangChainOptions } from './types';
+export type { MentioraTracingLangChainOptions } from './types';
 import { sendTraceSafely } from './utils';
 
 /**
@@ -189,7 +190,8 @@ interface ActiveRunData {
  *
  * @example
  * ```typescript
- * import { MentioraTracingLangChain, MentioraClient } from '@mentiora.ai/sdk';
+ * import { MentioraClient } from '@mentiora.ai/sdk';
+ * import { MentioraTracingLangChain } from '@mentiora.ai/sdk/langchain';
  *
  * const mentioraClient = new MentioraClient({ ... });
  * const callback = new MentioraTracingLangChain({ mentioraClient });

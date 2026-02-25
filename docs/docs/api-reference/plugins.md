@@ -44,7 +44,7 @@ function trackOpenAI(
 **Example:**
 
 ```typescript
-import { trackOpenAI } from '@mentiora.ai/sdk';
+import { trackOpenAI } from '@mentiora.ai/sdk/openai';
 import OpenAI from 'openai';
 
 const trackedClient = trackOpenAI(openaiClient, {
@@ -133,7 +133,7 @@ class MentioraTracingLangChain extends BaseCallbackHandler {
 **Example:**
 
 ```typescript
-import { MentioraTracingLangChain } from '@mentiora.ai/sdk';
+import { MentioraTracingLangChain } from '@mentiora.ai/sdk/langchain';
 
 const callback = new MentioraTracingLangChain({
   mentioraClient,

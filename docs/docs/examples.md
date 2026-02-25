@@ -84,7 +84,8 @@ Automatic tracing of OpenAI API calls with zero code changes to your existing Op
 <TabItem value="typescript">
 
 ```typescript
-import { MentioraClient, trackOpenAI } from '@mentiora.ai/sdk';
+import { MentioraClient } from '@mentiora.ai/sdk';
+import { trackOpenAI } from '@mentiora.ai/sdk/openai';
 import OpenAI from 'openai';
 
 const mentioraClient = new MentioraClient({
@@ -141,7 +142,8 @@ Automatic tracing of LangChain operations using a callback handler.
 <TabItem value="typescript">
 
 ```typescript
-import { MentioraClient, MentioraTracingLangChain } from '@mentiora.ai/sdk';
+import { MentioraClient } from '@mentiora.ai/sdk';
+import { MentioraTracingLangChain } from '@mentiora.ai/sdk/langchain';
 import { ChatOpenAI } from '@langchain/openai';
 import { ChatPromptTemplate } from '@langchain/core/prompts';
 

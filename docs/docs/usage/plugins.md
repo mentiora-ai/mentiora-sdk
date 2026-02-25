@@ -40,7 +40,8 @@ uv pip install openai
 <TabItem value="typescript">
 
 ```typescript
-import { trackOpenAI, MentioraClient } from '@mentiora.ai/sdk';
+import { MentioraClient } from '@mentiora.ai/sdk';
+import { trackOpenAI } from '@mentiora.ai/sdk/openai';
 import OpenAI from 'openai';
 
 // Initialize Mentiora client
@@ -117,7 +118,8 @@ To group multiple OpenAI calls into a conversation, provide a `threadId` (TypeSc
 <TabItem value="typescript">
 
 ```typescript
-import { trackOpenAI, MentioraClient } from '@mentiora.ai/sdk';
+import { MentioraClient } from '@mentiora.ai/sdk';
+import { trackOpenAI } from '@mentiora.ai/sdk/openai';
 import { v7 as uuidv7 } from 'uuid';
 
 // One threadId per conversation (see Thread ID section above)
@@ -238,7 +240,8 @@ uv pip install langchain langchain-core
 <TabItem value="typescript">
 
 ```typescript
-import { MentioraTracingLangChain, MentioraClient } from '@mentiora.ai/sdk';
+import { MentioraClient } from '@mentiora.ai/sdk';
+import { MentioraTracingLangChain } from '@mentiora.ai/sdk/langchain';
 import { ChatOpenAI } from '@langchain/openai';
 import { ChatPromptTemplate } from '@langchain/core/prompts';
 

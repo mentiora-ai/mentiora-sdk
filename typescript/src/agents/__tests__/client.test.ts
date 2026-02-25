@@ -6,6 +6,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { NetworkError, ValidationError } from '../../errors';
 import type { HttpClient, HttpResponse } from '../../http';
 import { AgentsClient } from '../client';
+import { AgentStreamEvent } from '../types';
 
 /**
  * Create a mock HttpClient with post() and postStream() methods.
@@ -263,7 +264,7 @@ describe('AgentsClient', () => {
       const httpClient = createMockHttpClient({ postStream: postStreamMock });
       const client = new AgentsClient(httpClient);
 
-      const events = [];
+      const events: AgentStreamEvent[] = [];
       for await (const event of client.stream({ tag: 'prod', message: 'Hello' })) {
         events.push(event);
       }
@@ -295,7 +296,7 @@ describe('AgentsClient', () => {
       });
       const client = new AgentsClient(httpClient);
 
-      const events = [];
+      const events: AgentStreamEvent[] = [];
       for await (const event of client.stream({ tag: 'prod', message: 'Hi' })) {
         events.push(event);
       }
@@ -323,7 +324,7 @@ describe('AgentsClient', () => {
       });
       const client = new AgentsClient(httpClient);
 
-      const events = [];
+      const events: AgentStreamEvent[] = [];
       for await (const event of client.stream({ tag: 'prod', message: 'Hi' })) {
         events.push(event);
       }
@@ -369,7 +370,7 @@ describe('AgentsClient', () => {
       });
       const client = new AgentsClient(httpClient);
 
-      const events = [];
+      const events: AgentStreamEvent[] = [];
       for await (const event of client.stream({ tag: 'prod', message: 'Search' })) {
         events.push(event);
       }
@@ -402,7 +403,7 @@ describe('AgentsClient', () => {
       });
       const client = new AgentsClient(httpClient);
 
-      const events = [];
+      const events: AgentStreamEvent[] = [];
       for await (const event of client.stream({ tag: 'prod', message: 'Hello' })) {
         events.push(event);
       }
@@ -430,7 +431,7 @@ describe('AgentsClient', () => {
       });
       const client = new AgentsClient(httpClient);
 
-      const events = [];
+      const events: AgentStreamEvent[] = [];
       for await (const event of client.stream({ tag: 'prod', message: 'Hello' })) {
         events.push(event);
       }
@@ -457,7 +458,7 @@ describe('AgentsClient', () => {
       });
       const client = new AgentsClient(httpClient);
 
-      const events = [];
+      const events: AgentStreamEvent[] = [];
       for await (const event of client.stream({ tag: 'prod', message: 'Hello' })) {
         events.push(event);
       }
@@ -602,7 +603,7 @@ describe('AgentsClient', () => {
       });
       const client = new AgentsClient(httpClient);
 
-      const events = [];
+      const events: AgentStreamEvent[] = [];
       for await (const event of client.stream({ tag: 'prod', message: 'Hi' })) {
         events.push(event);
       }
@@ -624,7 +625,7 @@ describe('AgentsClient', () => {
       const httpClient = createMockHttpClient({ postStream: postStreamMock });
       const client = new AgentsClient(httpClient);
 
-      const events = [];
+      const events: AgentStreamEvent[] = [];
       for await (const event of client.stream({
         agentId: 'agent-42',
         revision: 7,
@@ -663,7 +664,7 @@ describe('AgentsClient', () => {
       });
       const client = new AgentsClient(httpClient);
 
-      const events = [];
+      const events: AgentStreamEvent[] = [];
       for await (const event of client.stream({ tag: 'prod', message: 'Hi' })) {
         events.push(event);
       }
@@ -692,7 +693,7 @@ describe('AgentsClient', () => {
       });
       const client = new AgentsClient(httpClient);
 
-      const events = [];
+      const events: AgentStreamEvent[] = [];
       for await (const event of client.stream({ tag: 'prod', message: 'Hello' })) {
         events.push(event);
       }

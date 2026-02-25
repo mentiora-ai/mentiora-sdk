@@ -37,7 +37,8 @@ npm install @mentiora.ai/sdk
 **Tracing — Automatic OpenAI tracing:**
 
 ```typescript
-import { MentioraClient, trackOpenAI } from '@mentiora.ai/sdk';
+import { MentioraClient } from '@mentiora.ai/sdk';
+import { trackOpenAI } from '@mentiora.ai/sdk/openai';
 import OpenAI from 'openai';
 
 const mentiora = new MentioraClient({

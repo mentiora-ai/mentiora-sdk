@@ -1,6 +1,6 @@
 {
   "name": "@mentiora.ai/sdk",
-  "version": "0.2.1",
+  "version": "0.3.0",
   "description": "Official SDK for the Mentiora platform - AI observability and tracing",
   "type": "module",
   "sideEffects": false,
@@ -16,6 +16,26 @@
       "require": {
         "types": "./dist/index.d.cts",
         "default": "./dist/index.cjs"
+      }
+    },
+    "./openai": {
+      "import": {
+        "types": "./dist/plugins/openai.d.ts",
+        "default": "./dist/plugins/openai.js"
+      },
+      "require": {
+        "types": "./dist/plugins/openai.d.cts",
+        "default": "./dist/plugins/openai.cjs"
+      }
+    },
+    "./langchain": {
+      "import": {
+        "types": "./dist/plugins/langchain.d.ts",
+        "default": "./dist/plugins/langchain.js"
+      },
+      "require": {
+        "types": "./dist/plugins/langchain.d.cts",
+        "default": "./dist/plugins/langchain.cjs"
       }
     }
   },
@@ -52,7 +72,7 @@
     "directory": "typescript"
   },
   "scripts": {
-    "build": "tsup src/index.ts --format cjs,esm --dts",
+    "build": "tsup",
     "lint": "eslint src",
     "lint:fix": "eslint src --fix",
     "format": "prettier --write \"src/**/*.{ts,json,md}\"",

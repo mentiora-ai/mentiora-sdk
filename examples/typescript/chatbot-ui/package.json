@@ -8,7 +8,7 @@
     "start": "next start"
   },
   "dependencies": {
-    "@mentiora.ai/sdk": "../../../typescript",
+    "@mentiora.ai/sdk": "latest",
     "@tailwindcss/typography": "^0.5.19",
     "next": "^15.3.3",
     "react": "^19.1.0",

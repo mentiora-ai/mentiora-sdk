@@ -9,6 +9,7 @@ import { v7 as uuidv7 } from 'uuid';
 import { ConfigurationError } from '../errors';
 import type { TraceEvent, UsageInfo } from '../types';
 import type { TrackOpenAIOptions } from './types';
+export type { TrackOpenAIOptions } from './types';
 import { sendTraceSafely } from './utils';
 
 /**
@@ -592,7 +593,8 @@ function wrapMethod<T extends (...args: unknown[]) => Promise<unknown>>(
  *
  * @example
  * ```typescript
- * import { trackOpenAI, MentioraClient } from '@mentiora.ai/sdk';
+ * import { MentioraClient } from '@mentiora.ai/sdk';
+ * import { trackOpenAI } from '@mentiora.ai/sdk/openai';
  * import OpenAI from 'openai';
  *
  * const mentioraClient = new MentioraClient({ ... });

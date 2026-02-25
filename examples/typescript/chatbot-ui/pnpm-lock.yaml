@@ -9,8 +9,8 @@ importers:
   .:
     dependencies:
       '@mentiora.ai/sdk':
-        specifier: ../../../typescript
-        version: link:../../../typescript
+        specifier: latest
+        version: 0.2.1
       '@tailwindcss/typography':
         specifier: ^0.5.19
         version: 0.5.19(tailwindcss@4.2.0)
@@ -207,6 +207,18 @@ packages:
 
   '@jridgewell/trace-mapping@0.3.31':
     resolution: {integrity: sha512-zzNR+SdQSDJzc8joaeP8QQoCQr8NuYx2dIIytl1QeBEZHJ9uW6hebsrYgbz8hJwUQao3TWCMtmfV8Nu1twOLAw==}
+
+  '@mentiora.ai/sdk@0.2.1':
+    resolution: {integrity: sha512-W10r20UTeuuUsBtY5KMRYir/PKPExmzBfkrWlkctevRcs/Zyu8FxFae3keD6REyLsgYMemrKZ7xfbhKh5wnPvQ==}
+    engines: {node: '>=20.0.0'}
+    peerDependencies:
+      '@langchain/core': '>=1.1.0'
+      openai: '>=6.0.0'
+    peerDependenciesMeta:
+      '@langchain/core':
+        optional: true
+      openai:
+        optional: true
 
   '@next/env@15.5.12':
     resolution: {integrity: sha512-pUvdJN1on574wQHjaBfNGDt9Mz5utDSZFsIIQkMzPgNS8ZvT4H2mwOrOIClwsQOb6EGx5M76/CZr6G8i6pSpLg==}
@@ -816,6 +828,10 @@ packages:
   util-deprecate@1.0.2:
     resolution: {integrity: sha512-EPD5q1uXyFxJpCrLnCc1nHnq3gOa6DZBocAIiI2TaSCA7VCJ1UJDMagCzIkXNsUYfD1daK//LTEQ8xiIbrHtcw==}
 
+  uuid@13.0.0:
+    resolution: {integrity: sha512-XQegIaBTVUjSHliKqcnFqYypAd4S+WCYt5NIeRs6w/UAry7z8Y9j5ZwRRL4kzq9U3sD6v+85er9FvkEaBpji2w==}
+    hasBin: true
+
   vfile-message@4.0.3:
     resolution: {integrity: sha512-QTHzsGd1EhbZs4AsQ20JX1rC3cOlt/IWJruk893DfLRr57lcnOeMaWG4K0JrRta4mIJZKth2Au3mM3u03/JWKw==}
 
@@ -949,6 +965,10 @@ snapshots:
     dependencies:
       '@jridgewell/resolve-uri': 3.1.2
       '@jridgewell/sourcemap-codec': 1.5.5
+
+  '@mentiora.ai/sdk@0.2.1':
+    dependencies:
+      uuid: 13.0.0
 
   '@next/env@15.5.12': {}
 
@@ -1668,6 +1688,8 @@ snapshots:
       unist-util-visit-parents: 6.0.2
 
   util-deprecate@1.0.2: {}
+
+  uuid@13.0.0: {}
 
   vfile-message@4.0.3:
     dependencies:
