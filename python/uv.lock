@@ -457,14 +457,12 @@ wheels = [
 ]
 
 [[package]]
-name = "mentiora-sdk"
-version = "0.1.0"
+name = "mentiora-ai-sdk"
+version = "0.3.0"
 source = { editable = "." }
 dependencies = [
     { name = "httpx" },
     { name = "pydantic" },
-    { name = "typing-extensions" },
-    { name = "uuid-utils" },
 ]
 
 [package.optional-dependencies]
@@ -497,8 +495,6 @@ requires-dist = [
     { name = "pytest-httpx", marker = "extra == 'dev'", specifier = ">=0.36.0" },
     { name = "pytest-mock", marker = "extra == 'dev'", specifier = ">=3.14.0" },
     { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.14.14" },
-    { name = "typing-extensions", specifier = ">=4.8.0" },
-    { name = "uuid-utils", specifier = ">=0.14.0" },
 ]
 provides-extras = ["openai", "langchain", "dev"]
 

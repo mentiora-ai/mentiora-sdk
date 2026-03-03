@@ -7,7 +7,9 @@
 
 import { AgentsClient } from './agents';
 import { ConfigurationError } from './errors';
+import { FilesClient } from './files';
 import { HttpClient } from './http';
+import { KnowledgeClient } from './knowledge';
 import { TracingClient } from './tracing/client';
 import type { MentioraConfig } from './types';
 
@@ -22,6 +24,8 @@ const DEFAULT_BASE_URL = 'https://platform.mentiora.ai';
 export class MentioraClient {
   public readonly tracing: TracingClient;
   public readonly agents: AgentsClient;
+  public readonly files: FilesClient;
+  public readonly knowledge: KnowledgeClient;
   public readonly debug: boolean;
 
   private readonly httpClient: HttpClient;
@@ -51,6 +55,8 @@ export class MentioraClient {
     // Initialize feature clients
     this.tracing = new TracingClient(this.httpClient);
     this.agents = new AgentsClient(this.httpClient);
+    this.files = new FilesClient(this.httpClient);
+    this.knowledge = new KnowledgeClient(this.httpClient);
   }
 
   /**

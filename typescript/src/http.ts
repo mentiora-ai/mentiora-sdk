@@ -185,14 +185,24 @@ export class HttpClient {
   private async request(
     path: string,
     body: unknown,
-    debugContext?: Record<string, unknown>
+    debugContext?: Record<string, unknown>,
+    options?: { method?: string; params?: Record<string, string> }
   ): Promise<HttpResponse> {
-    const url = `${this.config.baseUrl}${path}`;
+    let url = `${this.config.baseUrl}${path}`;
+    const method = options?.method ?? 'POST';
     const headers = this.getHeaders();
     const debugLabel = debugContext ?? { path };
 
+    if (options?.params) {
+      const searchParams = new URLSearchParams(
+        Object.entries(options.params).filter(([, v]) => v != null)
+      );
+      const qs = searchParams.toString();
+      if (qs) url = `${url}?${qs}`;
+    }
+
     if (this.config.debug) {
-      console.log('[Mentiora SDK] Sending request:', { url, ...debugLabel });
+      console.log(`[Mentiora SDK] ${method} request:`, { url, ...debugLabel });
     }
 
     let lastError: Error | undefined;
@@ -209,12 +219,16 @@ export class HttpClient {
       const timeoutId = setTimeout(() => controller.abort(), this.config.timeout);
 
       try {
-        const response = await fetch(url, {
-          method: 'POST',
+        const fetchOptions: RequestInit = {
+          method,
           headers,
-          body: JSON.stringify(body),
           signal: controller.signal,
-        });
+        };
+        if (method !== 'GET' && method !== 'DELETE' && body != null) {
+          fetchOptions.body = JSON.stringify(body);
+        }
+
+        const response = await fetch(url, fetchOptions);
 
         const responseBody = await response.json().catch(() => ({}));
 
@@ -365,6 +379,42 @@ export class HttpClient {
    */
   async post(path: string, body: unknown): Promise<HttpResponse> {
     return this.request(path, body);
+  }
+
+  /**
+   * Send a GET request with retry logic.
+   *
+   * @param path - API path (e.g. '/api/v1/files').
+   * @param params - Optional query parameters.
+   * @returns The HTTP response with status and parsed body.
+   * @throws {@link NetworkError} on timeout, HTTP 4xx/5xx, or network failure after retries.
+   */
+  async get(path: string, params?: Record<string, string>): Promise<HttpResponse> {
+    return this.request(path, null, undefined, { method: 'GET', params });
+  }
+
+  /**
+   * Send a PUT request with retry logic.
+   *
+   * @param path - API path.
+   * @param body - JSON-serializable request body.
+   * @returns The HTTP response with status and parsed body.
+   * @throws {@link NetworkError} on timeout, HTTP 4xx/5xx, or network failure after retries.
+   */
+  async put(path: string, body: unknown): Promise<HttpResponse> {
+    return this.request(path, body, undefined, { method: 'PUT' });
+  }
+
+  /**
+   * Send a DELETE request with retry logic.
+   *
+   * @param path - API path.
+   * @param params - Optional query parameters.
+   * @returns The HTTP response with status and parsed body.
+   * @throws {@link NetworkError} on timeout, HTTP 4xx/5xx, or network failure after retries.
+   */
+  async delete(path: string, params?: Record<string, string>): Promise<HttpResponse> {
+    return this.request(path, null, undefined, { method: 'DELETE', params });
   }
 
   /**

@@ -549,6 +549,166 @@ class HttpClient:
             {'path': path},
         )
 
+    def get(self, path: str, params: dict[str, str] | None = None) -> HttpResponse:
+        """Send a GET request with retry logic (sync).
+
+        Args:
+            path: API path (e.g. ``'/api/v1/files'``).
+            params: Optional query parameters.
+
+        Returns:
+            HTTP response with status code and parsed body.
+
+        Raises:
+            NetworkError: On timeout, HTTP 4xx/5xx, or network failure after retries.
+        """
+        if self.debug:
+            logger.debug('[Mentiora SDK] GET %s', path)
+
+        url = f'{self.base_url}{path}'
+        if params:
+            from urllib.parse import urlencode
+
+            url = f'{url}?{urlencode({k: v for k, v in params.items() if v is not None})}'
+
+        def http_call(url: str, body: dict[str, Any]) -> httpx.Response:
+            return self._get_client().get(url)
+
+        return self._execute_with_retry(url, {}, http_call, time.sleep, {'path': path})
+
+    async def get_async(self, path: str, params: dict[str, str] | None = None) -> HttpResponse:
+        """Send a GET request with retry logic (async).
+
+        Args:
+            path: API path.
+            params: Optional query parameters.
+
+        Returns:
+            HTTP response with status code and parsed body.
+
+        Raises:
+            NetworkError: On timeout, HTTP 4xx/5xx, or network failure after retries.
+        """
+        if self.debug:
+            logger.debug('[Mentiora SDK] GET (async) %s', path)
+
+        url = f'{self.base_url}{path}'
+        if params:
+            from urllib.parse import urlencode
+
+            url = f'{url}?{urlencode({k: v for k, v in params.items() if v is not None})}'
+
+        async def http_call(url: str, body: dict[str, Any]) -> httpx.Response:
+            return await self._get_async_client().get(url)
+
+        return await self._execute_with_retry_async(
+            url, {}, http_call, asyncio.sleep, {'path': path}
+        )
+
+    def put(self, path: str, body: dict[str, Any]) -> HttpResponse:
+        """Send a PUT request with retry logic (sync).
+
+        Args:
+            path: API path.
+            body: JSON-serializable request body.
+
+        Returns:
+            HTTP response with status code and parsed body.
+
+        Raises:
+            NetworkError: On timeout, HTTP 4xx/5xx, or network failure after retries.
+        """
+        if self.debug:
+            logger.debug('[Mentiora SDK] PUT %s', path)
+
+        def http_call(url: str, body: dict[str, Any]) -> httpx.Response:
+            return self._get_client().put(url, json=body)
+
+        return self._execute_with_retry(
+            f'{self.base_url}{path}', body, http_call, time.sleep, {'path': path}
+        )
+
+    async def put_async(self, path: str, body: dict[str, Any]) -> HttpResponse:
+        """Send a PUT request with retry logic (async).
+
+        Args:
+            path: API path.
+            body: JSON-serializable request body.
+
+        Returns:
+            HTTP response with status code and parsed body.
+
+        Raises:
+            NetworkError: On timeout, HTTP 4xx/5xx, or network failure after retries.
+        """
+        if self.debug:
+            logger.debug('[Mentiora SDK] PUT (async) %s', path)
+
+        async def http_call(url: str, body: dict[str, Any]) -> httpx.Response:
+            return await self._get_async_client().put(url, json=body)
+
+        return await self._execute_with_retry_async(
+            f'{self.base_url}{path}', body, http_call, asyncio.sleep, {'path': path}
+        )
+
+    def delete(self, path: str, params: dict[str, str] | None = None) -> HttpResponse:
+        """Send a DELETE request with retry logic (sync).
+
+        Args:
+            path: API path.
+            params: Optional query parameters.
+
+        Returns:
+            HTTP response with status code and parsed body.
+
+        Raises:
+            NetworkError: On timeout, HTTP 4xx/5xx, or network failure after retries.
+        """
+        if self.debug:
+            logger.debug('[Mentiora SDK] DELETE %s', path)
+
+        url = f'{self.base_url}{path}'
+        if params:
+            from urllib.parse import urlencode
+
+            url = f'{url}?{urlencode({k: v for k, v in params.items() if v is not None})}'
+
+        def http_call(url: str, body: dict[str, Any]) -> httpx.Response:
+            return self._get_client().delete(url)
+
+        return self._execute_with_retry(url, {}, http_call, time.sleep, {'path': path})
+
+    async def delete_async(
+        self, path: str, params: dict[str, str] | None = None
+    ) -> HttpResponse:
+        """Send a DELETE request with retry logic (async).
+
+        Args:
+            path: API path.
+            params: Optional query parameters.
+
+        Returns:
+            HTTP response with status code and parsed body.
+
+        Raises:
+            NetworkError: On timeout, HTTP 4xx/5xx, or network failure after retries.
+        """
+        if self.debug:
+            logger.debug('[Mentiora SDK] DELETE (async) %s', path)
+
+        url = f'{self.base_url}{path}'
+        if params:
+            from urllib.parse import urlencode
+
+            url = f'{url}?{urlencode({k: v for k, v in params.items() if v is not None})}'
+
+        async def http_call(url: str, body: dict[str, Any]) -> httpx.Response:
+            return await self._get_async_client().delete(url)
+
+        return await self._execute_with_retry_async(
+            url, {}, http_call, asyncio.sleep, {'path': path}
+        )
+
     # ---- Streaming POST (SSE) ----
 
     _SSE_HEADERS: dict[str, str] = {'Accept': 'text/event-stream'}
