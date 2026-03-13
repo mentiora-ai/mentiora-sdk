@@ -40,6 +40,8 @@ export type {
   KnowledgeDetails,
   KnowledgeSummary,
   ListDocumentsResult,
+  ListKnowledgeResult,
+  PaginationOptions,
   UpdateKnowledgeParams,
 } from './knowledge';
 export { createStreamResponse, SSE_HEADERS } from './streaming';

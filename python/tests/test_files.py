@@ -15,7 +15,6 @@ from mentiora.files.types import (
 )
 from mentiora.http import HttpResponse
 
-
 FILE_METADATA_RESPONSE = {
     'file_id': 'file-123',
     'filename': 'test.pdf',
@@ -31,32 +30,30 @@ FILE_METADATA_RESPONSE = {
 def mock_http():
     mock = MagicMock()
     mock.debug = False
-    mock.post = MagicMock(
-        return_value=HttpResponse(201, {'file_id': 'file-123'})
-    )
-    mock.post_async = AsyncMock(
-        return_value=HttpResponse(201, {'file_id': 'file-123'})
-    )
+    mock.post = MagicMock(return_value=HttpResponse(201, {'file_id': 'file-123'}))
+    mock.post_async = AsyncMock(return_value=HttpResponse(201, {'file_id': 'file-123'}))
     mock.get = MagicMock(
-        return_value=HttpResponse(200, {
-            'object': 'list',
-            'data': [FILE_METADATA_RESPONSE],
-            'total_count': 1,
-        })
+        return_value=HttpResponse(
+            200,
+            {
+                'object': 'list',
+                'data': [FILE_METADATA_RESPONSE],
+                'total_count': 1,
+            },
+        )
     )
     mock.get_async = AsyncMock(
-        return_value=HttpResponse(200, {
-            'object': 'list',
-            'data': [FILE_METADATA_RESPONSE],
-            'total_count': 1,
-        })
+        return_value=HttpResponse(
+            200,
+            {
+                'object': 'list',
+                'data': [FILE_METADATA_RESPONSE],
+                'total_count': 1,
+            },
+        )
     )
-    mock.delete = MagicMock(
-        return_value=HttpResponse(200, {'deleted': True})
-    )
-    mock.delete_async = AsyncMock(
-        return_value=HttpResponse(200, {'deleted': True})
-    )
+    mock.delete = MagicMock(return_value=HttpResponse(200, {'deleted': True}))
+    mock.delete_async = AsyncMock(return_value=HttpResponse(200, {'deleted': True}))
     return mock
 
 
@@ -157,9 +154,7 @@ async def test_list_async(files_client, mock_http):
 
 def test_get_returns_metadata(files_client, mock_http):
     """Test get() returns file metadata."""
-    mock_http.get = MagicMock(
-        return_value=HttpResponse(200, FILE_METADATA_RESPONSE)
-    )
+    mock_http.get = MagicMock(return_value=HttpResponse(200, FILE_METADATA_RESPONSE))
     result = files_client.get('file-123')
 
     assert isinstance(result, FileMetadata)
@@ -171,9 +166,7 @@ def test_get_returns_metadata(files_client, mock_http):
 @pytest.mark.asyncio
 async def test_get_async(files_client, mock_http):
     """Test get_async() returns file metadata."""
-    mock_http.get_async = AsyncMock(
-        return_value=HttpResponse(200, FILE_METADATA_RESPONSE)
-    )
+    mock_http.get_async = AsyncMock(return_value=HttpResponse(200, FILE_METADATA_RESPONSE))
     result = await files_client.get_async('file-123')
     assert result.file_id == 'file-123'
 

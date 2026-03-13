@@ -69,6 +69,17 @@ export interface AddDocumentsResult {
 
 export interface ListDocumentsResult {
   data: DocumentSummary[];
+  totalCount: number;
+}
+
+export interface PaginationOptions {
+  offset?: number;
+  count?: number;
+}
+
+export interface ListKnowledgeResult {
+  data: KnowledgeSummary[];
+  totalCount: number;
 }
 
 export interface DeleteResult {

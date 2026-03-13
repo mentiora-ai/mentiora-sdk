@@ -89,19 +89,33 @@ describe('KnowledgeClient', () => {
   });
 
   describe('list()', () => {
-    it('returns parsed summaries', async () => {
+    it('returns parsed summaries with total count', async () => {
       const getMock = vi.fn().mockResolvedValue({
         status: 200,
-        body: { object: 'list', data: [KB_SUMMARY] },
+        body: { object: 'list', data: [KB_SUMMARY], total_count: 1 },
       });
       const client = new KnowledgeClient(createMockHttpClient({ get: getMock }));
 
       const result = await client.list();
 
-      expect(result).toHaveLength(1);
-      expect(result[0].knowledgeId).toBe('kb-1');
-      expect(result[0].name).toBe('Test KB');
-      expect(result[0].documentCount).toBe(3);
+      expect(result.data).toHaveLength(1);
+      expect(result.totalCount).toBe(1);
+      expect(result.data[0].knowledgeId).toBe('kb-1');
+      expect(result.data[0].name).toBe('Test KB');
+      expect(result.data[0].documentCount).toBe(3);
+    });
+
+    it('passes pagination params', async () => {
+      const getMock = vi.fn().mockResolvedValue({
+        status: 200,
+        body: { object: 'list', data: [KB_SUMMARY], total_count: 5 },
+      });
+      const client = new KnowledgeClient(createMockHttpClient({ get: getMock }));
+
+      const result = await client.list({ offset: 10, count: 5 });
+
+      expect(result.totalCount).toBe(5);
+      expect(getMock).toHaveBeenCalledWith('/api/v1/knowledge', { offset: '10', count: '5' });
     });
   });
 
@@ -181,18 +195,34 @@ describe('KnowledgeClient', () => {
   });
 
   describe('listDocuments()', () => {
-    it('returns document summaries', async () => {
+    it('returns document summaries with total count', async () => {
       const getMock = vi.fn().mockResolvedValue({
         status: 200,
-        body: { object: 'list', data: [DOC_SUMMARY] },
+        body: { object: 'list', data: [DOC_SUMMARY], total_count: 1 },
       });
       const client = new KnowledgeClient(createMockHttpClient({ get: getMock }));
 
       const result = await client.listDocuments('kb-1');
 
       expect(result.data).toHaveLength(1);
+      expect(result.totalCount).toBe(1);
       expect(result.data[0].filename).toBe('report.pdf');
-      expect(getMock).toHaveBeenCalledWith('/api/v1/knowledge/kb-1/documents');
+      expect(getMock).toHaveBeenCalledWith('/api/v1/knowledge/kb-1/documents', undefined);
+    });
+
+    it('passes pagination params', async () => {
+      const getMock = vi.fn().mockResolvedValue({
+        status: 200,
+        body: { object: 'list', data: [], total_count: 0 },
+      });
+      const client = new KnowledgeClient(createMockHttpClient({ get: getMock }));
+
+      await client.listDocuments('kb-1', { offset: 0, count: 10 });
+
+      expect(getMock).toHaveBeenCalledWith('/api/v1/knowledge/kb-1/documents', {
+        offset: '0',
+        count: '10',
+      });
     });
   });
 

@@ -10,5 +10,7 @@ export type {
   KnowledgeDetails,
   KnowledgeSummary,
   ListDocumentsResult,
+  ListKnowledgeResult,
+  PaginationOptions,
   UpdateKnowledgeParams,
 } from './types';

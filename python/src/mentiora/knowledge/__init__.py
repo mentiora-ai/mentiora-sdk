@@ -12,6 +12,7 @@ from .types import (
     KnowledgeDetails,
     KnowledgeSummary,
     ListDocumentsResult,
+    ListKnowledgeResult,
     UpdateKnowledgeParams,
 )
 
@@ -27,5 +28,6 @@ __all__ = [
     'KnowledgeDetails',
     'KnowledgeSummary',
     'ListDocumentsResult',
+    'ListKnowledgeResult',
     'UpdateKnowledgeParams',
 ]

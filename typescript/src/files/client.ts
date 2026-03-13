@@ -23,9 +23,17 @@ export class FilesClient {
    * @returns The uploaded file ID.
    */
   async upload(params: UploadFileParams): Promise<UploadFileResult> {
-    const contentBase64 = typeof Buffer !== 'undefined'
-      ? Buffer.from(params.content).toString('base64')
-      : btoa(String.fromCharCode(...params.content));
+    const contentBase64 =
+      typeof Buffer !== 'undefined'
+        ? Buffer.from(params.content).toString('base64')
+        : (() => {
+            const bytes = params.content;
+            let binary = '';
+            for (let i = 0; i < bytes.length; i++) {
+              binary += String.fromCharCode(bytes[i]);
+            }
+            return btoa(binary);
+          })();
 
     const body: Record<string, unknown> = {
       filename: params.filename,
@@ -59,7 +67,7 @@ export class FilesClient {
 
     const response = await this.httpClient.get(
       FILES_PATH,
-      Object.keys(params).length > 0 ? params : undefined,
+      Object.keys(params).length > 0 ? params : undefined
     );
     const body = response.body as Record<string, unknown>;
     const rawData = body.data as Array<Record<string, unknown>>;

@@ -14,6 +14,8 @@ import type {
   KnowledgeDetails,
   KnowledgeSummary,
   ListDocumentsResult,
+  ListKnowledgeResult,
+  PaginationOptions,
   UpdateKnowledgeParams,
 } from './types';
 
@@ -37,13 +39,23 @@ export class KnowledgeClient {
   }
 
   /**
-   * List all knowledge bases.
+   * List knowledge bases with optional pagination.
    */
-  async list(): Promise<KnowledgeSummary[]> {
-    const response = await this.httpClient.get(KNOWLEDGE_PATH);
+  async list(options?: PaginationOptions): Promise<ListKnowledgeResult> {
+    const params: Record<string, string> = {};
+    if (options?.offset !== undefined) params.offset = String(options.offset);
+    if (options?.count !== undefined) params.count = String(options.count);
+
+    const response = await this.httpClient.get(
+      KNOWLEDGE_PATH,
+      Object.keys(params).length > 0 ? params : undefined
+    );
     const body = response.body as Record<string, unknown>;
     const rawData = body.data as Array<Record<string, unknown>>;
-    return rawData.map(mapKnowledgeSummary);
+    return {
+      data: rawData.map(mapKnowledgeSummary),
+      totalCount: body.total_count as number,
+    };
   }
 
   /**
@@ -61,10 +73,7 @@ export class KnowledgeClient {
     const body: Record<string, unknown> = { name: params.name };
     if (params.description !== undefined) body.description = params.description;
 
-    const response = await this.httpClient.put(
-      `${KNOWLEDGE_PATH}/${params.knowledgeId}`,
-      body,
-    );
+    const response = await this.httpClient.put(`${KNOWLEDGE_PATH}/${params.knowledgeId}`, body);
     return mapKnowledgeDetails(response.body as Record<string, unknown>);
   }
 
@@ -85,7 +94,7 @@ export class KnowledgeClient {
   async addDocuments(params: AddDocumentsParams): Promise<AddDocumentsResult> {
     const response = await this.httpClient.post(
       `${KNOWLEDGE_PATH}/${params.knowledgeId}/documents`,
-      { file_ids: params.fileIds },
+      { file_ids: params.fileIds }
     );
     const body = response.body as Record<string, unknown>;
     const rawDocs = body.documents as Array<Record<string, unknown>>;
@@ -93,15 +102,26 @@ export class KnowledgeClient {
   }
 
   /**
-   * List documents in a knowledge base.
+   * List documents in a knowledge base with optional pagination.
    */
-  async listDocuments(knowledgeId: string): Promise<ListDocumentsResult> {
+  async listDocuments(
+    knowledgeId: string,
+    options?: PaginationOptions
+  ): Promise<ListDocumentsResult> {
+    const params: Record<string, string> = {};
+    if (options?.offset !== undefined) params.offset = String(options.offset);
+    if (options?.count !== undefined) params.count = String(options.count);
+
     const response = await this.httpClient.get(
       `${KNOWLEDGE_PATH}/${knowledgeId}/documents`,
+      Object.keys(params).length > 0 ? params : undefined
     );
     const body = response.body as Record<string, unknown>;
     const rawData = body.data as Array<Record<string, unknown>>;
-    return { data: rawData.map(mapDocumentSummary) };
+    return {
+      data: rawData.map(mapDocumentSummary),
+      totalCount: body.total_count as number,
+    };
   }
 
   /**
@@ -109,7 +129,7 @@ export class KnowledgeClient {
    */
   async getDocument(knowledgeId: string, documentId: string): Promise<DocumentDetails> {
     const response = await this.httpClient.get(
-      `${KNOWLEDGE_PATH}/${knowledgeId}/documents/${documentId}`,
+      `${KNOWLEDGE_PATH}/${knowledgeId}/documents/${documentId}`
     );
     return mapDocumentDetails(response.body as Record<string, unknown>);
   }
@@ -119,7 +139,7 @@ export class KnowledgeClient {
    */
   async deleteDocument(knowledgeId: string, documentId: string): Promise<DeleteResult> {
     const response = await this.httpClient.delete(
-      `${KNOWLEDGE_PATH}/${knowledgeId}/documents/${documentId}`,
+      `${KNOWLEDGE_PATH}/${knowledgeId}/documents/${documentId}`
     );
     const data = response.body as Record<string, unknown>;
     return { deleted: data.deleted as boolean };

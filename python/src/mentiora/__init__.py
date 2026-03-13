@@ -21,6 +21,12 @@ from .agents import (
     ToolCallResultEvent,
 )
 from .client import MentioraClient
+from .errors import (
+    ConfigurationError,
+    MentioraError,
+    NetworkError,
+    ValidationError,
+)
 from .files import (
     DeleteFileResult,
     FileMetadata,
@@ -42,12 +48,6 @@ from .knowledge import (
     KnowledgeSummary,
     ListDocumentsResult,
     UpdateKnowledgeParams,
-)
-from .errors import (
-    ConfigurationError,
-    MentioraError,
-    NetworkError,
-    ValidationError,
 )
 from .plugins.types import (
     MentioraTracingLangChainOptions,

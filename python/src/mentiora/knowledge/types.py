@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from typing import Any, Literal
-
 from pydantic import BaseModel, ConfigDict, Field
 
 
@@ -113,10 +111,18 @@ class AddDocumentsResult(BaseModel):
     documents: list[DocumentSummary]
 
 
+class ListKnowledgeResult(BaseModel):
+    """Result of listing knowledge bases."""
+
+    data: list[KnowledgeSummary]
+    total_count: int
+
+
 class ListDocumentsResult(BaseModel):
     """Result of listing documents."""
 
     data: list[DocumentSummary]
+    total_count: int
 
 
 class DeleteResult(BaseModel):

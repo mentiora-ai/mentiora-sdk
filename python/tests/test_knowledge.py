@@ -13,13 +13,11 @@ from mentiora.knowledge.types import (
     CreateKnowledgeResult,
     DeleteResult,
     DocumentDetails,
-    DocumentSummary,
     KnowledgeDetails,
     KnowledgeSummary,
     ListDocumentsResult,
     UpdateKnowledgeParams,
 )
-
 
 KB_SUMMARY_RESPONSE = {
     'knowledge_id': 'kb-1',
@@ -62,30 +60,22 @@ DOC_DETAILS_RESPONSE = {
 def mock_http():
     mock = MagicMock()
     mock.debug = False
-    mock.post = MagicMock(
-        return_value=HttpResponse(201, {'knowledge_id': 'kb-1'})
-    )
-    mock.post_async = AsyncMock(
-        return_value=HttpResponse(201, {'knowledge_id': 'kb-1'})
-    )
+    mock.post = MagicMock(return_value=HttpResponse(201, {'knowledge_id': 'kb-1'}))
+    mock.post_async = AsyncMock(return_value=HttpResponse(201, {'knowledge_id': 'kb-1'}))
     mock.get = MagicMock(
-        return_value=HttpResponse(200, {'object': 'list', 'data': [KB_SUMMARY_RESPONSE]})
+        return_value=HttpResponse(
+            200, {'object': 'list', 'data': [KB_SUMMARY_RESPONSE], 'total_count': 1}
+        )
     )
     mock.get_async = AsyncMock(
-        return_value=HttpResponse(200, {'object': 'list', 'data': [KB_SUMMARY_RESPONSE]})
+        return_value=HttpResponse(
+            200, {'object': 'list', 'data': [KB_SUMMARY_RESPONSE], 'total_count': 1}
+        )
     )
-    mock.put = MagicMock(
-        return_value=HttpResponse(200, KB_DETAILS_RESPONSE)
-    )
-    mock.put_async = AsyncMock(
-        return_value=HttpResponse(200, KB_DETAILS_RESPONSE)
-    )
-    mock.delete = MagicMock(
-        return_value=HttpResponse(200, {'deleted': True})
-    )
-    mock.delete_async = AsyncMock(
-        return_value=HttpResponse(200, {'deleted': True})
-    )
+    mock.put = MagicMock(return_value=HttpResponse(200, KB_DETAILS_RESPONSE))
+    mock.put_async = AsyncMock(return_value=HttpResponse(200, KB_DETAILS_RESPONSE))
+    mock.delete = MagicMock(return_value=HttpResponse(200, {'deleted': True}))
+    mock.delete_async = AsyncMock(return_value=HttpResponse(200, {'deleted': True}))
     return mock
 
 
@@ -135,21 +125,23 @@ async def test_create_async(kb_client, mock_http):
 
 
 def test_list_returns_summaries(kb_client, mock_http):
-    """Test list() returns parsed knowledge base summaries."""
+    """Test list() returns parsed knowledge base summaries with total count."""
     result = kb_client.list()
 
-    assert len(result) == 1
-    assert isinstance(result[0], KnowledgeSummary)
-    assert result[0].knowledge_id == 'kb-1'
-    assert result[0].name == 'Test KB'
-    assert result[0].document_count == 3
+    assert len(result.data) == 1
+    assert result.total_count == 1
+    assert isinstance(result.data[0], KnowledgeSummary)
+    assert result.data[0].knowledge_id == 'kb-1'
+    assert result.data[0].name == 'Test KB'
+    assert result.data[0].document_count == 3
 
 
 @pytest.mark.asyncio
 async def test_list_async(kb_client, mock_http):
-    """Test list_async() returns parsed summaries."""
+    """Test list_async() returns parsed summaries with total count."""
     result = await kb_client.list_async()
-    assert len(result) == 1
+    assert len(result.data) == 1
+    assert result.total_count == 1
 
 
 # ===========================================================================
@@ -236,9 +228,7 @@ def test_add_documents_sends_file_ids(kb_client, mock_http):
     mock_http.post = MagicMock(
         return_value=HttpResponse(201, {'documents': [DOC_SUMMARY_RESPONSE]})
     )
-    result = kb_client.add_documents(
-        AddDocumentsParams(knowledge_id='kb-1', file_ids=['file-1'])
-    )
+    result = kb_client.add_documents(AddDocumentsParams(knowledge_id='kb-1', file_ids=['file-1']))
 
     assert isinstance(result, AddDocumentsResult)
     assert len(result.documents) == 1
@@ -268,26 +258,32 @@ async def test_add_documents_async(kb_client, mock_http):
 
 
 def test_list_documents_returns_summaries(kb_client, mock_http):
-    """Test list_documents() returns document summaries."""
+    """Test list_documents() returns document summaries with total count."""
     mock_http.get = MagicMock(
-        return_value=HttpResponse(200, {'object': 'list', 'data': [DOC_SUMMARY_RESPONSE]})
+        return_value=HttpResponse(
+            200, {'object': 'list', 'data': [DOC_SUMMARY_RESPONSE], 'total_count': 1}
+        )
     )
     result = kb_client.list_documents('kb-1')
 
     assert isinstance(result, ListDocumentsResult)
     assert len(result.data) == 1
+    assert result.total_count == 1
     assert result.data[0].filename == 'report.pdf'
-    mock_http.get.assert_called_once_with('/api/v1/knowledge/kb-1/documents')
+    mock_http.get.assert_called_once_with('/api/v1/knowledge/kb-1/documents', None)
 
 
 @pytest.mark.asyncio
 async def test_list_documents_async(kb_client, mock_http):
     """Test list_documents_async() returns summaries."""
     mock_http.get_async = AsyncMock(
-        return_value=HttpResponse(200, {'object': 'list', 'data': [DOC_SUMMARY_RESPONSE]})
+        return_value=HttpResponse(
+            200, {'object': 'list', 'data': [DOC_SUMMARY_RESPONSE], 'total_count': 1}
+        )
     )
     result = await kb_client.list_documents_async('kb-1')
     assert len(result.data) == 1
+    assert result.total_count == 1
 
 
 # ===========================================================================
@@ -297,9 +293,7 @@ async def test_list_documents_async(kb_client, mock_http):
 
 def test_get_document_returns_details(kb_client, mock_http):
     """Test get_document() returns document details."""
-    mock_http.get = MagicMock(
-        return_value=HttpResponse(200, DOC_DETAILS_RESPONSE)
-    )
+    mock_http.get = MagicMock(return_value=HttpResponse(200, DOC_DETAILS_RESPONSE))
     result = kb_client.get_document('kb-1', 'doc-1')
 
     assert isinstance(result, DocumentDetails)
@@ -312,9 +306,7 @@ def test_get_document_returns_details(kb_client, mock_http):
 @pytest.mark.asyncio
 async def test_get_document_async(kb_client, mock_http):
     """Test get_document_async() returns details."""
-    mock_http.get_async = AsyncMock(
-        return_value=HttpResponse(200, DOC_DETAILS_RESPONSE)
-    )
+    mock_http.get_async = AsyncMock(return_value=HttpResponse(200, DOC_DETAILS_RESPONSE))
     result = await kb_client.get_document_async('kb-1', 'doc-1')
     assert result.chunk_count == 10
 
