@@ -243,6 +243,116 @@ describe('KnowledgeClient', () => {
     });
   });
 
+  describe('snake_case → camelCase field mapping', () => {
+    it('mapKnowledgeSummary maps every field', async () => {
+      const getMock = vi.fn().mockResolvedValue({
+        status: 200,
+        body: { object: 'list', data: [KB_SUMMARY], total_count: 1 },
+      });
+      const client = new KnowledgeClient(createMockHttpClient({ get: getMock }));
+
+      const result = await client.list();
+      const kb = result.data[0];
+
+      expect(kb).toEqual({
+        knowledgeId: 'kb-1',
+        name: 'Test KB',
+        description: 'A test knowledge base',
+        documentCount: 3,
+        lastIngestedAt: '2025-01-01T00:00:00Z',
+        createdAt: '2025-01-01T00:00:00Z',
+        updatedAt: '2025-01-01T00:00:00Z',
+      });
+      for (const [key, value] of Object.entries(kb)) {
+        expect(value, `field "${key}" should not be undefined`).not.toBeUndefined();
+      }
+    });
+
+    it('mapKnowledgeDetails maps statusCounts from status_counts', async () => {
+      const getMock = vi.fn().mockResolvedValue({
+        status: 200,
+        body: KB_DETAILS,
+      });
+      const client = new KnowledgeClient(createMockHttpClient({ get: getMock }));
+
+      const result = await client.get('kb-1');
+
+      expect(result.knowledgeId).toBe('kb-1');
+      expect(result.statusCounts).toEqual({ PENDING: 0, INGESTING: 0, READY: 3, FAILED: 0 });
+      expect(result.documentCount).toBe(3);
+      expect(result.lastIngestedAt).toBe('2025-01-01T00:00:00Z');
+      expect(result.createdAt).toBe('2025-01-01T00:00:00Z');
+      expect(result.updatedAt).toBe('2025-01-01T00:00:00Z');
+    });
+
+    it('mapDocumentSummary maps every field', async () => {
+      const getMock = vi.fn().mockResolvedValue({
+        status: 200,
+        body: { object: 'list', data: [DOC_SUMMARY], total_count: 1 },
+      });
+      const client = new KnowledgeClient(createMockHttpClient({ get: getMock }));
+
+      const result = await client.listDocuments('kb-1');
+      const doc = result.data[0];
+
+      expect(doc).toEqual({
+        documentId: 'doc-1',
+        knowledgeId: 'kb-1',
+        fileId: 'file-1',
+        filename: 'report.pdf',
+        mimeType: 'application/pdf',
+        fileSize: 2048,
+        status: 'PENDING',
+        lastIngestedAt: null,
+        createdAt: '2025-01-01T00:00:00Z',
+        updatedAt: '2025-01-01T00:00:00Z',
+        parseError: null,
+      });
+    });
+
+    it('mapDocumentDetails maps chunk and embedding fields', async () => {
+      const getMock = vi.fn().mockResolvedValue({
+        status: 200,
+        body: DOC_DETAILS,
+      });
+      const client = new KnowledgeClient(createMockHttpClient({ get: getMock }));
+
+      const result = await client.getDocument('kb-1', 'doc-1');
+
+      expect(result.documentId).toBe('doc-1');
+      expect(result.chunkCount).toBe(10);
+      expect(result.averageChunkSize).toBe(500.0);
+      expect(result.embeddingModel).toBe('text-embedding-3-small');
+      // Verify inherited summary fields are also mapped
+      expect(result.knowledgeId).toBe('kb-1');
+      expect(result.fileId).toBe('file-1');
+      expect(result.mimeType).toBe('application/pdf');
+      expect(result.fileSize).toBe(2048);
+    });
+
+    it('create() parses knowledge_id from response', async () => {
+      const postMock = vi.fn().mockResolvedValue({
+        status: 201,
+        body: { knowledge_id: 'kb-99' },
+      });
+      const client = new KnowledgeClient(createMockHttpClient({ post: postMock }));
+
+      const result = await client.create({ name: 'New KB' });
+      expect(result.knowledgeId).toBe('kb-99');
+    });
+
+    it('list() parses total_count from response', async () => {
+      const getMock = vi.fn().mockResolvedValue({
+        status: 200,
+        body: { object: 'list', data: [], total_count: 42 },
+      });
+      const client = new KnowledgeClient(createMockHttpClient({ get: getMock }));
+
+      const result = await client.list();
+      expect(result.totalCount).toBe(42);
+    });
+  });
+
   describe('deleteDocument()', () => {
     it('returns deletion result', async () => {
       const deleteMock = vi.fn().mockResolvedValue({

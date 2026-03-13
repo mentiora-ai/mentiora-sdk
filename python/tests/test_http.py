@@ -891,3 +891,125 @@ def test_post_4xx_fallback_when_no_json_body(mock_client_class):
     assert err.server_code is None
     assert err.server_message is None
     client.close()
+
+
+# ---- DELETE retry handling ----
+
+
+@patch('mentiora.http.httpx.Client')
+@patch('time.sleep')
+@patch('mentiora.http.random.random', return_value=0.5)
+def test_delete_retry_404_treated_as_success(mock_random, mock_sleep, mock_client_class):
+    """404 on DELETE retry should be treated as success (resource already deleted)."""
+    mock_client = MagicMock()
+    mock_client.delete.side_effect = [
+        httpx.ConnectError('Connection reset'),
+        MagicMock(
+            status_code=404,
+            reason_phrase='Not Found',
+            content=b'{"deleted": false}',
+            json=MagicMock(return_value={'deleted': False}),
+        ),
+    ]
+    mock_client_class.return_value = mock_client
+
+    client = HttpClient('https://test.mentiora.ai', 'test-key', retries=3)
+    result = client.delete('/api/v1/files/file-123')
+
+    assert result.status == 404
+    assert mock_client.delete.call_count == 2
+    client.close()
+
+
+@patch('mentiora.http.httpx.Client')
+def test_delete_first_attempt_404_raises_error(mock_client_class):
+    """404 on first DELETE attempt should raise NetworkError (genuine not found)."""
+    mock_client = MagicMock()
+    mock_client.delete.return_value = MagicMock(
+        status_code=404,
+        reason_phrase='Not Found',
+        content=b'{}',
+        json=MagicMock(return_value={}),
+    )
+    mock_client_class.return_value = mock_client
+
+    client = HttpClient('https://test.mentiora.ai', 'test-key', retries=3)
+    with pytest.raises(NetworkError) as exc_info:
+        client.delete('/api/v1/files/file-123')
+
+    assert exc_info.value.status_code == 404
+    assert mock_client.delete.call_count == 1
+    client.close()
+
+
+@patch('mentiora.http.httpx.Client')
+@patch('time.sleep')
+@patch('mentiora.http.random.random', return_value=0.5)
+def test_delete_retry_400_still_raises_error(mock_random, mock_sleep, mock_client_class):
+    """Non-404 4xx on DELETE retry should still raise NetworkError."""
+    mock_client = MagicMock()
+    mock_client.delete.side_effect = [
+        httpx.ConnectError('Connection reset'),
+        MagicMock(
+            status_code=400,
+            reason_phrase='Bad Request',
+            content=b'{}',
+            json=MagicMock(return_value={}),
+        ),
+    ]
+    mock_client_class.return_value = mock_client
+
+    client = HttpClient('https://test.mentiora.ai', 'test-key', retries=3)
+    with pytest.raises(NetworkError) as exc_info:
+        client.delete('/api/v1/files/file-123')
+
+    assert exc_info.value.status_code == 400
+    assert mock_client.delete.call_count == 2
+    client.close()
+
+
+async def test_delete_async_retry_404_treated_as_success():
+    """404 on async DELETE retry should be treated as success."""
+    with (
+        patch('mentiora.http.httpx.AsyncClient') as mock_async_client_class,
+        patch('mentiora.http.random.random', return_value=0.5),
+    ):
+        mock_client = AsyncMock()
+        mock_client.delete.side_effect = [
+            httpx.ConnectError('Connection reset'),
+            MagicMock(
+                status_code=404,
+                reason_phrase='Not Found',
+                content=b'{"deleted": false}',
+                json=MagicMock(return_value={'deleted': False}),
+            ),
+        ]
+        mock_async_client_class.return_value = mock_client
+
+        client = HttpClient('https://test.mentiora.ai', 'test-key', retries=3)
+        result = await client.delete_async('/api/v1/files/file-123')
+
+        assert result.status == 404
+        assert mock_client.delete.call_count == 2
+        client.close()
+
+
+async def test_delete_async_first_attempt_404_raises_error():
+    """404 on first async DELETE attempt should raise NetworkError."""
+    with patch('mentiora.http.httpx.AsyncClient') as mock_async_client_class:
+        mock_client = AsyncMock()
+        mock_client.delete.return_value = MagicMock(
+            status_code=404,
+            reason_phrase='Not Found',
+            content=b'{}',
+            json=MagicMock(return_value={}),
+        )
+        mock_async_client_class.return_value = mock_client
+
+        client = HttpClient('https://test.mentiora.ai', 'test-key', retries=3)
+        with pytest.raises(NetworkError) as exc_info:
+            await client.delete_async('/api/v1/files/file-123')
+
+        assert exc_info.value.status_code == 404
+        assert mock_client.delete.call_count == 1
+        client.close()

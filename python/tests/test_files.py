@@ -13,6 +13,7 @@ from mentiora.files.types import (
     UploadFileParams,
     UploadFileResult,
 )
+from mentiora.errors import NetworkError
 from mentiora.http import HttpResponse
 
 FILE_METADATA_RESPONSE = {
@@ -191,3 +192,126 @@ async def test_delete_async(files_client, mock_http):
     result = await files_client.delete_async('file-123')
     assert result.deleted is True
     mock_http.delete_async.assert_called_once()
+
+
+# ===========================================================================
+# Download tests
+# ===========================================================================
+
+
+def test_download_returns_bytes(files_client, mock_http):
+    """Test download() returns raw bytes from get_raw()."""
+    mock_http.get_raw = MagicMock(return_value=b'file content here')
+    result = files_client.download('file-123')
+
+    assert result == b'file content here'
+    mock_http.get_raw.assert_called_once_with('/api/v1/files/file-123/content')
+
+
+@pytest.mark.asyncio
+async def test_download_async(files_client, mock_http):
+    """Test download_async() returns raw bytes from get_raw_async()."""
+    mock_http.get_raw_async = AsyncMock(return_value=b'async file content')
+    result = await files_client.download_async('file-123')
+
+    assert result == b'async file content'
+    mock_http.get_raw_async.assert_called_once_with('/api/v1/files/file-123/content')
+
+
+# ===========================================================================
+# Error path tests
+# ===========================================================================
+
+
+def test_get_not_found_raises(files_client, mock_http):
+    """Test get() propagates 404 NetworkError."""
+    mock_http.get = MagicMock(
+        side_effect=NetworkError(
+            'Not found', status_code=404, server_code='not_found', server_message='File not found'
+        )
+    )
+    with pytest.raises(NetworkError) as exc:
+        files_client.get('nonexistent-id')
+    assert exc.value.status_code == 404
+    assert exc.value.server_code == 'not_found'
+
+
+@pytest.mark.asyncio
+async def test_get_async_not_found_raises(files_client, mock_http):
+    """Test get_async() propagates 404 NetworkError."""
+    mock_http.get_async = AsyncMock(
+        side_effect=NetworkError(
+            'Not found', status_code=404, server_code='not_found', server_message='File not found'
+        )
+    )
+    with pytest.raises(NetworkError) as exc:
+        await files_client.get_async('nonexistent-id')
+    assert exc.value.status_code == 404
+
+
+def test_delete_not_found_raises(files_client, mock_http):
+    """Test delete() propagates 404 NetworkError."""
+    mock_http.delete = MagicMock(
+        side_effect=NetworkError(
+            'Not found', status_code=404, server_code='not_found', server_message='File not found'
+        )
+    )
+    with pytest.raises(NetworkError) as exc:
+        files_client.delete('nonexistent-id')
+    assert exc.value.status_code == 404
+
+
+def test_delete_conflict_raises(files_client, mock_http):
+    """Test delete() propagates 409 Conflict NetworkError."""
+    mock_http.delete = MagicMock(
+        side_effect=NetworkError(
+            'Conflict', status_code=409, server_code='conflict', server_message='File is still referenced'
+        )
+    )
+    with pytest.raises(NetworkError) as exc:
+        files_client.delete('referenced-file-id')
+    assert exc.value.status_code == 409
+    assert exc.value.server_code == 'conflict'
+
+
+@pytest.mark.asyncio
+async def test_delete_async_conflict_raises(files_client, mock_http):
+    """Test delete_async() propagates 409 Conflict NetworkError."""
+    mock_http.delete_async = AsyncMock(
+        side_effect=NetworkError(
+            'Conflict', status_code=409, server_code='conflict', server_message='File is still referenced'
+        )
+    )
+    with pytest.raises(NetworkError) as exc:
+        await files_client.delete_async('referenced-file-id')
+    assert exc.value.status_code == 409
+
+
+def test_upload_bad_request_raises(files_client, mock_http):
+    """Test upload() propagates 400 Bad Request NetworkError."""
+    mock_http.post = MagicMock(
+        side_effect=NetworkError(
+            'Bad request',
+            status_code=400,
+            server_code='invalid_request',
+            server_message='Missing required field: filename',
+        )
+    )
+    with pytest.raises(NetworkError) as exc:
+        files_client.upload(
+            UploadFileParams(filename='', content=b'data', mime_type='text/plain')
+        )
+    assert exc.value.status_code == 400
+    assert exc.value.server_code == 'invalid_request'
+
+
+def test_download_not_found_raises(files_client, mock_http):
+    """Test download() propagates 404 NetworkError."""
+    mock_http.get_raw = MagicMock(
+        side_effect=NetworkError(
+            'Not found', status_code=404, server_code='not_found', server_message='File not found'
+        )
+    )
+    with pytest.raises(NetworkError) as exc:
+        files_client.download('nonexistent-id')
+    assert exc.value.status_code == 404

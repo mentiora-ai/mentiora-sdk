@@ -153,3 +153,29 @@ class FilesClient:
         """Delete a file (async)."""
         response = await self._http_client.delete_async(f'{FILES_PATH}/{file_id}')
         return DeleteFileResult.model_validate(response.body)
+
+    def download(self, file_id: str) -> bytes:
+        """Download file content (sync).
+
+        Args:
+            file_id: The file ID.
+
+        Returns:
+            Raw file content as bytes.
+        """
+        if self._debug:
+            logger.debug('[Mentiora SDK] files.download: file_id=%s', file_id)
+        return self._http_client.get_raw(f'{FILES_PATH}/{file_id}/content')
+
+    async def download_async(self, file_id: str) -> bytes:
+        """Download file content (async).
+
+        Args:
+            file_id: The file ID.
+
+        Returns:
+            Raw file content as bytes.
+        """
+        if self._debug:
+            logger.debug('[Mentiora SDK] files.download_async: file_id=%s', file_id)
+        return await self._http_client.get_raw_async(f'{FILES_PATH}/{file_id}/content')

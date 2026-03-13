@@ -259,6 +259,17 @@ export class HttpClient {
           throw new NetworkError('Rate limited: too many requests', 429);
         }
 
+        // Treat 404 on DELETE retry as success (resource already deleted)
+        if (response.status === 404 && method === 'DELETE' && attempt > 0) {
+          if (this.config.debug) {
+            console.log(
+              '[Mentiora SDK] DELETE retry got 404 — treating as success (already deleted):',
+              debugLabel
+            );
+          }
+          return { status: response.status, body: responseBody };
+        }
+
         // Don't retry on 4xx errors (client error)
         if (response.status >= 400 && response.status < 500) {
           const { serverCode, serverMessage, detail } = extractErrorDetail(responseBody);
@@ -391,6 +402,73 @@ export class HttpClient {
    */
   async get(path: string, params?: Record<string, string>): Promise<HttpResponse> {
     return this.request(path, null, undefined, { method: 'GET', params });
+  }
+
+  /**
+   * Send a GET request and return the raw response bytes.
+   *
+   * Unlike {@link get}, this does **not** parse the response as JSON.
+   * Useful for downloading binary content such as files.
+   *
+   * @param path - API path (e.g. '/api/v1/files/<id>/content').
+   * @returns Raw response body as a Uint8Array.
+   * @throws {@link NetworkError} on timeout, HTTP 4xx/5xx, or network failure.
+   */
+  async getRaw(path: string): Promise<Uint8Array> {
+    const url = `${this.config.baseUrl}${path}`;
+    const headers: Record<string, string> = {
+      Authorization: `Bearer ${this.config.apiKey}`,
+      'User-Agent': `mentiora-sdk-ts/${SDK_VERSION}`,
+    };
+
+    if (this.config.debug) {
+      console.log('[Mentiora SDK] GET (raw) request:', { url, path });
+    }
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), this.config.timeout);
+
+    try {
+      const response = await fetch(url, {
+        method: 'GET',
+        headers,
+        signal: controller.signal,
+      });
+
+      if (response.status >= 400 && response.status < 500) {
+        const body = await response.json().catch(() => ({}));
+        const { serverCode, serverMessage, detail } = extractErrorDetail(body);
+        throw new NetworkError(
+          `Client error: ${response.statusText}${detail}`,
+          response.status,
+          serverCode,
+          serverMessage
+        );
+      }
+
+      if (response.status >= 500) {
+        const body = await response.json().catch(() => ({}));
+        const { serverCode, serverMessage, detail } = extractErrorDetail(body);
+        throw new NetworkError(
+          `Server error: ${response.statusText}${detail}`,
+          response.status,
+          serverCode,
+          serverMessage
+        );
+      }
+
+      return new Uint8Array(await response.arrayBuffer());
+    } catch (error) {
+      if (error instanceof NetworkError) throw error;
+      if (error instanceof Error && error.name === 'AbortError') {
+        throw new NetworkError(`Request timeout after ${this.config.timeout}ms`);
+      }
+      throw new NetworkError(
+        `Network error: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
+    } finally {
+      clearTimeout(timeoutId);
+    }
   }
 
   /**

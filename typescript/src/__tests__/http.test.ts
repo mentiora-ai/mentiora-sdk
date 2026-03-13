@@ -780,4 +780,52 @@ describe('HttpClient', () => {
       }
     });
   });
+
+  describe('DELETE retry handling', () => {
+    it('treats 404 on DELETE retry as success', async () => {
+      Math.random = () => 0.5;
+      const abortError = new DOMException('The operation was aborted', 'AbortError');
+      mockFetch
+        .mockRejectedValueOnce(abortError) // first attempt times out
+        .mockResolvedValueOnce({
+          status: 404,
+          statusText: 'Not Found',
+          json: vi.fn().mockResolvedValue({ deleted: false }),
+        });
+
+      const client = createHttpClient({ retries: 2 });
+      const result = await client.delete('/api/v1/files/file-123');
+
+      expect(result.status).toBe(404);
+      expect(mockFetch).toHaveBeenCalledTimes(2);
+    });
+
+    it('throws on DELETE first attempt 404', async () => {
+      mockFetch.mockResolvedValueOnce({
+        status: 404,
+        statusText: 'Not Found',
+        json: vi.fn().mockResolvedValue({}),
+      });
+
+      const client = createHttpClient({ retries: 2 });
+      await expect(client.delete('/api/v1/files/file-123')).rejects.toThrow(NetworkError);
+      expect(mockFetch).toHaveBeenCalledOnce();
+    });
+
+    it('throws on DELETE retry with non-404 4xx', async () => {
+      Math.random = () => 0.5;
+      const abortError = new DOMException('The operation was aborted', 'AbortError');
+      mockFetch
+        .mockRejectedValueOnce(abortError) // first attempt times out
+        .mockResolvedValueOnce({
+          status: 400,
+          statusText: 'Bad Request',
+          json: vi.fn().mockResolvedValue({}),
+        });
+
+      const client = createHttpClient({ retries: 2 });
+      await expect(client.delete('/api/v1/files/file-123')).rejects.toThrow(NetworkError);
+      expect(mockFetch).toHaveBeenCalledTimes(2);
+    });
+  });
 });

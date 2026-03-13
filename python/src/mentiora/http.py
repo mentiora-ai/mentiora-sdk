@@ -7,6 +7,7 @@ import random
 import time
 from collections.abc import AsyncIterator, Awaitable, Callable, Iterator
 from typing import Any
+from urllib.parse import urlencode
 
 import httpx
 
@@ -168,6 +169,7 @@ class HttpClient:
         http_call_fn: Callable[[str, dict[str, Any]], httpx.Response],
         sleep_fn: Callable[[float], None],
         debug_context: dict[str, str] | None = None,
+        method: str = 'POST',
     ) -> HttpResponse:
         """Execute HTTP call with retry logic (sync)."""
         ctx = debug_context or {}
@@ -211,6 +213,16 @@ class HttpClient:
                         'Rate limited: too many requests',
                         429,
                     )
+
+                # Treat 404 on DELETE retry as success (resource already deleted)
+                if response.status_code == 404 and method == 'DELETE' and attempt > 0:
+                    if self.debug:
+                        logger.debug(
+                            '[Mentiora SDK] DELETE retry got 404 — treating as success: context=%s',
+                            ctx,
+                        )
+                    response_body = response.json() if response.content else {}
+                    return HttpResponse(response.status_code, response_body)
 
                 # Don't retry on 4xx errors (client error)
                 if 400 <= response.status_code < 500:
@@ -296,6 +308,7 @@ class HttpClient:
         http_call_fn: Callable[[str, dict[str, Any]], Awaitable[httpx.Response]],
         sleep_fn: Callable[[float], Awaitable[None]],
         debug_context: dict[str, str] | None = None,
+        method: str = 'POST',
     ) -> HttpResponse:
         """Execute HTTP call with retry logic (async)."""
         ctx = debug_context or {}
@@ -339,6 +352,16 @@ class HttpClient:
                         'Rate limited: too many requests',
                         429,
                     )
+
+                # Treat 404 on DELETE retry as success (resource already deleted)
+                if response.status_code == 404 and method == 'DELETE' and attempt > 0:
+                    if self.debug:
+                        logger.debug(
+                            '[Mentiora SDK] DELETE retry got 404 — treating as success: context=%s',
+                            ctx,
+                        )
+                    response_body = response.json() if response.content else {}
+                    return HttpResponse(response.status_code, response_body)
 
                 # Don't retry on 4xx errors (client error)
                 if 400 <= response.status_code < 500:
@@ -567,8 +590,6 @@ class HttpClient:
 
         url = f'{self.base_url}{path}'
         if params:
-            from urllib.parse import urlencode
-
             url = f'{url}?{urlencode({k: v for k, v in params.items() if v is not None})}'
 
         def http_call(url: str, body: dict[str, Any]) -> httpx.Response:
@@ -594,8 +615,6 @@ class HttpClient:
 
         url = f'{self.base_url}{path}'
         if params:
-            from urllib.parse import urlencode
-
             url = f'{url}?{urlencode({k: v for k, v in params.items() if v is not None})}'
 
         async def http_call(url: str, body: dict[str, Any]) -> httpx.Response:
@@ -604,6 +623,98 @@ class HttpClient:
         return await self._execute_with_retry_async(
             url, {}, http_call, asyncio.sleep, {'path': path}
         )
+
+    def get_raw(self, path: str) -> bytes:
+        """Send a GET request and return the raw response bytes (sync).
+
+        Unlike :meth:`get`, this does **not** parse the response as JSON.
+        Useful for downloading binary content such as files.
+
+        Args:
+            path: API path (e.g. ``'/api/v1/files/<id>/content'``).
+
+        Returns:
+            Raw response body bytes.
+
+        Raises:
+            NetworkError: On timeout, HTTP 4xx/5xx, or network failure.
+        """
+        if self.debug:
+            logger.debug('[Mentiora SDK] GET (raw) %s', path)
+
+        url = f'{self.base_url}{path}'
+
+        try:
+            response = self._get_client().get(url)
+        except httpx.TimeoutException as e:
+            raise NetworkError(f'Request timeout after {int(self.timeout * 1000)}ms') from e
+        except httpx.TransportError as e:
+            raise NetworkError(str(e)) from e
+
+        if 400 <= response.status_code < 500:
+            server_code, server_message, detail = self._extract_error_detail(response)
+            raise NetworkError(
+                f'Client error: {response.status_code} {response.reason_phrase}{detail}',
+                response.status_code,
+                server_code=server_code,
+                server_message=server_message,
+            )
+        if response.status_code >= 500:
+            server_code, server_message, detail = self._extract_error_detail(response)
+            raise NetworkError(
+                f'Server error: {response.status_code} {response.reason_phrase}{detail}',
+                response.status_code,
+                server_code=server_code,
+                server_message=server_message,
+            )
+
+        return response.content
+
+    async def get_raw_async(self, path: str) -> bytes:
+        """Send a GET request and return the raw response bytes (async).
+
+        Unlike :meth:`get_async`, this does **not** parse the response as JSON.
+        Useful for downloading binary content such as files.
+
+        Args:
+            path: API path (e.g. ``'/api/v1/files/<id>/content'``).
+
+        Returns:
+            Raw response body bytes.
+
+        Raises:
+            NetworkError: On timeout, HTTP 4xx/5xx, or network failure.
+        """
+        if self.debug:
+            logger.debug('[Mentiora SDK] GET (raw async) %s', path)
+
+        url = f'{self.base_url}{path}'
+
+        try:
+            response = await self._get_async_client().get(url)
+        except httpx.TimeoutException as e:
+            raise NetworkError(f'Request timeout after {int(self.timeout * 1000)}ms') from e
+        except httpx.TransportError as e:
+            raise NetworkError(str(e)) from e
+
+        if 400 <= response.status_code < 500:
+            server_code, server_message, detail = self._extract_error_detail(response)
+            raise NetworkError(
+                f'Client error: {response.status_code} {response.reason_phrase}{detail}',
+                response.status_code,
+                server_code=server_code,
+                server_message=server_message,
+            )
+        if response.status_code >= 500:
+            server_code, server_message, detail = self._extract_error_detail(response)
+            raise NetworkError(
+                f'Server error: {response.status_code} {response.reason_phrase}{detail}',
+                response.status_code,
+                server_code=server_code,
+                server_message=server_message,
+            )
+
+        return response.content
 
     def put(self, path: str, body: dict[str, Any]) -> HttpResponse:
         """Send a PUT request with retry logic (sync).
@@ -669,14 +780,12 @@ class HttpClient:
 
         url = f'{self.base_url}{path}'
         if params:
-            from urllib.parse import urlencode
-
             url = f'{url}?{urlencode({k: v for k, v in params.items() if v is not None})}'
 
         def http_call(url: str, body: dict[str, Any]) -> httpx.Response:
             return self._get_client().delete(url)
 
-        return self._execute_with_retry(url, {}, http_call, time.sleep, {'path': path})
+        return self._execute_with_retry(url, {}, http_call, time.sleep, {'path': path}, method='DELETE')
 
     async def delete_async(self, path: str, params: dict[str, str] | None = None) -> HttpResponse:
         """Send a DELETE request with retry logic (async).
@@ -696,15 +805,13 @@ class HttpClient:
 
         url = f'{self.base_url}{path}'
         if params:
-            from urllib.parse import urlencode
-
             url = f'{url}?{urlencode({k: v for k, v in params.items() if v is not None})}'
 
         async def http_call(url: str, body: dict[str, Any]) -> httpx.Response:
             return await self._get_async_client().delete(url)
 
         return await self._execute_with_retry_async(
-            url, {}, http_call, asyncio.sleep, {'path': path}
+            url, {}, http_call, asyncio.sleep, {'path': path}, method='DELETE'
         )
 
     # ---- Streaming POST (SSE) ----

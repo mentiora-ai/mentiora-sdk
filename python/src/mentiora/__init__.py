@@ -47,6 +47,7 @@ from .knowledge import (
     KnowledgeDetails,
     KnowledgeSummary,
     ListDocumentsResult,
+    ListKnowledgeResult,
     UpdateKnowledgeParams,
 )
 from .plugins.types import (
@@ -107,6 +108,7 @@ __all__ = [
     'KnowledgeDetails',
     'KnowledgeSummary',
     'ListDocumentsResult',
+    'ListKnowledgeResult',
     'UpdateKnowledgeParams',
     'SSE_HEADERS',
     'format_sse_event',

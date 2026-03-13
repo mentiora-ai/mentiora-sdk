@@ -101,6 +101,16 @@ export class FilesClient {
     const data = response.body as Record<string, unknown>;
     return { deleted: data.deleted as boolean };
   }
+
+  /**
+   * Download file content.
+   *
+   * @param fileId - The file ID.
+   * @returns Raw file content as a Uint8Array.
+   */
+  async download(fileId: string): Promise<Uint8Array> {
+    return this.httpClient.getRaw(`${FILES_PATH}/${fileId}/content`);
+  }
 }
 
 function mapFileMetadata(raw: Record<string, unknown>): FileMetadata {
