@@ -16,6 +16,7 @@ export type {
   ChatCompletedEvent,
   ModelParams,
   OutputTextDeltaEvent,
+  SuggestionsEvent,
   ToolCallDeltaEvent,
   ToolCallResultEvent,
 } from './agents';

@@ -265,6 +265,23 @@ export class AgentsClient {
           output: this.extractAssistantOutput(chat.output ?? data.output ?? ''),
         };
       }
+      case 'chat.suggestions': {
+        if (!Array.isArray(data.suggestions)) {
+          return null;
+        }
+        return {
+          type: 'suggestions',
+          suggestions: (data.suggestions as Array<Record<string, unknown>>)
+            .filter(
+              (s) =>
+                typeof s.label === 'string' &&
+                typeof s.message === 'string' &&
+                s.label.length <= 40
+            )
+            .slice(0, 6)
+            .map((s) => ({ label: s.label as string, message: s.message as string })),
+        };
+      }
       case 'error':
         return {
           type: 'error',

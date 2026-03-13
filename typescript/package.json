@@ -3,7 +3,9 @@
   "version": "0.3.0",
   "description": "Official SDK for the Mentiora platform - AI observability and tracing",
   "type": "module",
-  "sideEffects": false,
+  "sideEffects": [
+    "*.css"
+  ],
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -37,7 +39,38 @@
         "types": "./dist/plugins/langchain.d.cts",
         "default": "./dist/plugins/langchain.cjs"
       }
-    }
+    },
+    "./ui": {
+      "import": {
+        "types": "./dist/ui/index.d.ts",
+        "default": "./dist/ui/index.js"
+      },
+      "require": {
+        "types": "./dist/ui/index.d.cts",
+        "default": "./dist/ui/index.cjs"
+      }
+    },
+    "./ui/headless": {
+      "import": {
+        "types": "./dist/ui/headless.d.ts",
+        "default": "./dist/ui/headless.js"
+      },
+      "require": {
+        "types": "./dist/ui/headless.d.cts",
+        "default": "./dist/ui/headless.cjs"
+      }
+    },
+    "./ui/themes": {
+      "import": {
+        "types": "./dist/ui/themes.d.ts",
+        "default": "./dist/ui/themes.js"
+      },
+      "require": {
+        "types": "./dist/ui/themes.d.cts",
+        "default": "./dist/ui/themes.cjs"
+      }
+    },
+    "./ui/styles.css": "./dist/ui/themes/base.css"
   },
   "files": [
     "dist",
@@ -55,7 +88,10 @@
     "monitoring",
     "openai",
     "langchain",
-    "javascript"
+    "javascript",
+    "chat-widget",
+    "chatbot",
+    "react"
   ],
   "author": "Mentiora",
   "license": "Apache-2.0",
@@ -72,18 +108,18 @@
     "directory": "typescript"
   },
   "scripts": {
-    "build": "tsup",
+    "build": "tsup && mkdir -p dist/ui/themes && cp src/ui/themes/base.css dist/ui/themes/base.css",
     "lint": "eslint src",
     "lint:fix": "eslint src --fix",
-    "format": "prettier --write \"src/**/*.{ts,json,md}\"",
-    "format:check": "prettier --check \"src/**/*.{ts,json,md}\"",
-    "type-check": "tsc --noEmit",
+    "format": "prettier --write \"src/**/*.{ts,tsx,json,md,css}\"",
+    "format:check": "prettier --check \"src/**/*.{ts,tsx,json,md,css}\"",
+    "type-check": "tsc --noEmit && tsc --noEmit -p tsconfig.ui.json",
     "test": "vitest run",
     "test:watch": "vitest",
     "prepublishOnly": "npm run build"
   },
   "lint-staged": {
-    "*.{ts,json,md}": [
+    "*.{ts,tsx,json,md,css}": [
       "prettier --write",
       "eslint --fix"
     ]
@@ -93,7 +129,9 @@
   },
   "peerDependencies": {
     "@langchain/core": ">=1.1.0",
-    "openai": ">=6.0.0"
+    "openai": ">=6.0.0",
+    "react": "^18.0.0 || ^19.0.0",
+    "react-dom": "^18.0.0 || ^19.0.0"
   },
   "peerDependenciesMeta": {
     "openai": {
@@ -101,11 +139,19 @@
     },
     "@langchain/core": {
       "optional": true
+    },
+    "react": {
+      "optional": true
+    },
+    "react-dom": {
+      "optional": true
     }
   },
   "devDependencies": {
     "@langchain/core": "^1.1.16",
     "@types/node": "^25.0.9",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
     "@typescript-eslint/eslint-plugin": "^8.53.1",
     "@typescript-eslint/parser": "^8.53.1",
     "eslint": "^9.39.2",
