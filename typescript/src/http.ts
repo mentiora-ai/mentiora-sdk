@@ -9,14 +9,20 @@ import { SDK_VERSION } from './version';
 export interface HttpClientConfig {
   /** Base URL of the Mentiora platform API. */
   baseUrl: string;
-  /** Project API key used for Bearer authentication. */
-  apiKey: string;
   /** Request timeout in milliseconds. */
   timeout: number;
   /** Maximum number of retry attempts for failed requests. */
   retries: number;
   /** Enable verbose SDK logging. */
   debug: boolean;
+  /** Server mode: Project API key used for Bearer authentication. */
+  apiKey?: string;
+  /** Browser mode: Publishable key for X-Publishable-Key header. */
+  publishableKey?: string;
+  /** Browser mode: Current identity token (JWT) for X-Identity-Token header. */
+  identityToken?: string;
+  /** Browser mode: Callback to refresh identity token on 401. */
+  getIdentityToken?: () => Promise<string>;
 }
 
 export interface HttpResponse {
@@ -164,13 +170,32 @@ export class HttpClient {
 
   /**
    * Returns common HTTP headers for all requests.
+   * Server mode: Authorization Bearer header.
+   * Browser mode: X-Publishable-Key + optional X-Identity-Token.
    */
   private getHeaders(): Record<string, string> {
-    return {
+    const headers: Record<string, string> = {
       'Content-Type': 'application/json',
-      Authorization: `Bearer ${this.config.apiKey}`,
       'User-Agent': `mentiora-sdk-ts/${SDK_VERSION}`,
     };
+
+    if (this.config.apiKey) {
+      headers['Authorization'] = `Bearer ${this.config.apiKey}`;
+    } else if (this.config.publishableKey) {
+      headers['X-Publishable-Key'] = this.config.publishableKey;
+      if (this.config.identityToken) {
+        headers['X-Identity-Token'] = this.config.identityToken;
+      }
+    }
+
+    return headers;
+  }
+
+  /**
+   * Update the identity token (called after refresh).
+   */
+  setIdentityToken(token: string): void {
+    this.config.identityToken = token;
   }
 
   /**
@@ -206,6 +231,7 @@ export class HttpClient {
     }
 
     let lastError: Error | undefined;
+    let tokenRefreshed = false;
     const maxAttempts = this.config.retries + 1;
 
     for (let attempt = 0; attempt < maxAttempts; attempt++) {
@@ -268,6 +294,34 @@ export class HttpClient {
             );
           }
           return { status: response.status, body: responseBody };
+        }
+
+        // Token refresh: on 401 in browser mode with getIdentityToken callback,
+        // refresh the token and retry once (only one refresh attempt per request)
+        if (
+          response.status === 401
+          && !tokenRefreshed
+          && this.config.publishableKey
+          && this.config.getIdentityToken
+        ) {
+          if (this.config.debug) {
+            console.log('[Mentiora SDK] 401 received, attempting token refresh');
+          }
+          tokenRefreshed = true;
+          try {
+            const newToken = await this.config.getIdentityToken();
+            this.config.identityToken = newToken;
+            // Retry the request with new token — don't count this as a retry attempt
+            attempt--;
+            continue;
+          } catch (refreshError) {
+            throw new NetworkError(
+              'Identity token refresh failed',
+              401,
+              'token_refresh_failed',
+              refreshError instanceof Error ? refreshError.message : undefined
+            );
+          }
         }
 
         // Don't retry on 4xx errors (client error)
@@ -416,10 +470,7 @@ export class HttpClient {
    */
   async getRaw(path: string): Promise<Uint8Array> {
     const url = `${this.config.baseUrl}${path}`;
-    const headers: Record<string, string> = {
-      Authorization: `Bearer ${this.config.apiKey}`,
-      'User-Agent': `mentiora-sdk-ts/${SDK_VERSION}`,
-    };
+    const { 'Content-Type': _, ...headers } = this.getHeaders();
 
     if (this.config.debug) {
       console.log('[Mentiora SDK] GET (raw) request:', { url, path });
@@ -505,21 +556,33 @@ export class HttpClient {
    */
   async postStream(path: string, body: unknown): Promise<ReadableStream<Uint8Array>> {
     const url = `${this.config.baseUrl}${path}`;
-    const headers = {
-      ...this.getHeaders(),
-      Accept: 'text/event-stream',
-    };
 
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), this.config.timeout);
 
     try {
-      const response = await fetch(url, {
+      let response = await fetch(url, {
         method: 'POST',
-        headers,
+        headers: { ...this.getHeaders(), Accept: 'text/event-stream' },
         body: JSON.stringify(body),
         signal: controller.signal,
       });
+
+      // Token refresh on 401 for browser mode (one attempt)
+      if (
+        response.status === 401
+        && this.config.publishableKey
+        && this.config.getIdentityToken
+      ) {
+        const newToken = await this.config.getIdentityToken();
+        this.config.identityToken = newToken;
+        response = await fetch(url, {
+          method: 'POST',
+          headers: { ...this.getHeaders(), Accept: 'text/event-stream' },
+          body: JSON.stringify(body),
+          signal: controller.signal,
+        });
+      }
 
       if (!response.ok) {
         const errorBody = await response.json().catch(() => ({}));

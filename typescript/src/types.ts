@@ -65,13 +65,13 @@ export interface TraceEvent {
 }
 
 /**
- * Main SDK configuration.
- * Future: Additional feature-specific configs will be added here.
+ * Server-side configuration. API key is a secret — never embed in client-side code.
+ * Use this in Node.js API routes, backend services, and scripts.
  */
-export interface MentioraConfig {
-  /** Project API key (from Mentiora platform) */
+export interface MentioraServerConfig {
+  /** Project API key (secret, from Mentiora dashboard) */
   apiKey: string;
-  /** Base URL (defaults to https://platform.mentiora.ai if not provided) */
+  /** Base URL (defaults to https://platform.mentiora.ai) */
   baseUrl?: string;
   /** Request timeout in ms (default: 30000) */
   timeout?: number;
@@ -80,6 +80,30 @@ export interface MentioraConfig {
   /** Enable verbose SDK logging (HTTP requests, retries, responses) */
   debug?: boolean;
 }
+
+/**
+ * Browser-side configuration. PublishableKey is non-secret — safe for client-side code.
+ * Use this in React components, browser scripts, and widget embeddings.
+ */
+export interface MentioraBrowserConfig {
+  /** Publishable key (non-secret, pk_... prefix, from Mentiora dashboard) */
+  publishableKey: string;
+  /** Identity token for identified users (JWT, signed by customer backend) */
+  identityToken?: string;
+  /** Callback to refresh identity token when expired (called on 401) */
+  getIdentityToken?: () => Promise<string>;
+  /** Base URL (defaults to https://platform.mentiora.ai) */
+  baseUrl?: string;
+  /** Request timeout in ms (default: 30000) */
+  timeout?: number;
+  /** Max retry attempts (default: 3) */
+  retries?: number;
+  /** Enable verbose SDK logging (HTTP requests, retries, responses) */
+  debug?: boolean;
+}
+
+/** SDK configuration — provide either `apiKey` (server) or `publishableKey` (browser). */
+export type MentioraConfig = MentioraServerConfig | MentioraBrowserConfig;
 
 export interface SendTraceResult {
   /** Whether the trace was sent successfully. */
