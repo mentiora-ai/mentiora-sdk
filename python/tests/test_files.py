@@ -5,6 +5,7 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
+from mentiora.errors import NetworkError
 from mentiora.files.client import FilesClient
 from mentiora.files.types import (
     DeleteFileResult,
@@ -13,7 +14,6 @@ from mentiora.files.types import (
     UploadFileParams,
     UploadFileResult,
 )
-from mentiora.errors import NetworkError
 from mentiora.http import HttpResponse
 
 FILE_METADATA_RESPONSE = {
@@ -265,7 +265,10 @@ def test_delete_conflict_raises(files_client, mock_http):
     """Test delete() propagates 409 Conflict NetworkError."""
     mock_http.delete = MagicMock(
         side_effect=NetworkError(
-            'Conflict', status_code=409, server_code='conflict', server_message='File is still referenced'
+            'Conflict',
+            status_code=409,
+            server_code='conflict',
+            server_message='File is still referenced',
         )
     )
     with pytest.raises(NetworkError) as exc:
@@ -279,7 +282,10 @@ async def test_delete_async_conflict_raises(files_client, mock_http):
     """Test delete_async() propagates 409 Conflict NetworkError."""
     mock_http.delete_async = AsyncMock(
         side_effect=NetworkError(
-            'Conflict', status_code=409, server_code='conflict', server_message='File is still referenced'
+            'Conflict',
+            status_code=409,
+            server_code='conflict',
+            server_message='File is still referenced',
         )
     )
     with pytest.raises(NetworkError) as exc:
@@ -298,9 +304,7 @@ def test_upload_bad_request_raises(files_client, mock_http):
         )
     )
     with pytest.raises(NetworkError) as exc:
-        files_client.upload(
-            UploadFileParams(filename='', content=b'data', mime_type='text/plain')
-        )
+        files_client.upload(UploadFileParams(filename='', content=b'data', mime_type='text/plain'))
     assert exc.value.status_code == 400
     assert exc.value.server_code == 'invalid_request'
 

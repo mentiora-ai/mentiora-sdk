@@ -785,7 +785,9 @@ class HttpClient:
         def http_call(url: str, body: dict[str, Any]) -> httpx.Response:
             return self._get_client().delete(url)
 
-        return self._execute_with_retry(url, {}, http_call, time.sleep, {'path': path}, method='DELETE')
+        return self._execute_with_retry(
+            url, {}, http_call, time.sleep, {'path': path}, method='DELETE'
+        )
 
     async def delete_async(self, path: str, params: dict[str, str] | None = None) -> HttpResponse:
         """Send a DELETE request with retry logic (async).
