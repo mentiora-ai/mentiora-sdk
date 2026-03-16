@@ -9,6 +9,8 @@ from typing import Any
 from . import http
 from .agents.client import AgentsClient
 from .errors import ConfigurationError
+from .files.client import FilesClient
+from .knowledge.client import KnowledgeClient
 from .tracing import TracingClient
 from .types import MentioraConfig
 
@@ -51,6 +53,8 @@ class MentioraClient:
         # Initialize feature clients
         self.tracing = TracingClient(self._http_client)
         self.agents = AgentsClient(self._http_client)
+        self.files = FilesClient(self._http_client)
+        self.knowledge = KnowledgeClient(self._http_client)
 
     def _validate_config(self, config: MentioraConfig) -> None:
         """Validate configuration.
