@@ -274,9 +274,7 @@ export class AgentsClient {
           suggestions: (data.suggestions as Array<Record<string, unknown>>)
             .filter(
               (s) =>
-                typeof s.label === 'string' &&
-                typeof s.message === 'string' &&
-                s.label.length <= 40
+                typeof s.label === 'string' && typeof s.message === 'string' && s.label.length <= 40
             )
             .slice(0, 6)
             .map((s) => ({ label: s.label as string, message: s.message as string })),

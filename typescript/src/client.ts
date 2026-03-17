@@ -24,7 +24,10 @@ function isServerConfig(config: MentioraConfig): config is MentioraServerConfig 
 
 /** Type guard: config has publishableKey → browser mode. */
 function isBrowserConfig(config: MentioraConfig): config is MentioraBrowserConfig {
-  return 'publishableKey' in config && typeof (config as MentioraBrowserConfig).publishableKey === 'string';
+  return (
+    'publishableKey' in config &&
+    typeof (config as MentioraBrowserConfig).publishableKey === 'string'
+  );
 }
 
 /**
@@ -104,7 +107,7 @@ export class MentioraClient {
     if (!this._tracing) {
       throw new ConfigurationError(
         'tracing is only available in server mode (initialized with apiKey). ' +
-        'Browser mode (publishableKey) does not support sending traces.'
+          'Browser mode (publishableKey) does not support sending traces.'
       );
     }
     return this._tracing;
@@ -125,9 +128,7 @@ export class MentioraClient {
     }
 
     if (!hasApiKey && !hasPublishableKey) {
-      throw new ConfigurationError(
-        'Either apiKey or publishableKey is required'
-      );
+      throw new ConfigurationError('Either apiKey or publishableKey is required');
     }
 
     if (hasApiKey && !config.apiKey) {

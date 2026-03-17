@@ -299,10 +299,10 @@ export class HttpClient {
         // Token refresh: on 401 in browser mode with getIdentityToken callback,
         // refresh the token and retry once (only one refresh attempt per request)
         if (
-          response.status === 401
-          && !tokenRefreshed
-          && this.config.publishableKey
-          && this.config.getIdentityToken
+          response.status === 401 &&
+          !tokenRefreshed &&
+          this.config.publishableKey &&
+          this.config.getIdentityToken
         ) {
           if (this.config.debug) {
             console.log('[Mentiora SDK] 401 received, attempting token refresh');
@@ -569,11 +569,7 @@ export class HttpClient {
       });
 
       // Token refresh on 401 for browser mode (one attempt)
-      if (
-        response.status === 401
-        && this.config.publishableKey
-        && this.config.getIdentityToken
-      ) {
+      if (response.status === 401 && this.config.publishableKey && this.config.getIdentityToken) {
         const newToken = await this.config.getIdentityToken();
         this.config.identityToken = newToken;
         response = await fetch(url, {
