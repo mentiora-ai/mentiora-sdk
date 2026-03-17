@@ -62,6 +62,7 @@ export type AgentStreamEvent =
   | OutputTextDeltaEvent
   | ToolCallDeltaEvent
   | ToolCallResultEvent
+  | SuggestionsEvent
   | ChatCompletedEvent
   | AgentErrorEvent;
 
@@ -98,6 +99,11 @@ export interface ChatCompletedEvent {
   threadId: string;
   status: 'completed' | 'failed';
   output: string;
+}
+
+export interface SuggestionsEvent {
+  type: 'suggestions';
+  suggestions: Array<{ label: string; message: string }>;
 }
 
 export interface AgentErrorEvent {

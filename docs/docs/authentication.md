@@ -91,6 +91,47 @@ Click the delete icon next to a key and confirm in the dialog. **This is irrever
 
 The **"Last used"** column shows when each key was last used to send a trace.
 
+## Browser Mode (Publishable Keys)
+
+For client-side applications (websites, SPAs), use a **publishable key** instead of an API key. Publishable keys are safe to expose in browser code — they have restricted permissions and are scoped to specific allowed origins.
+
+### Setup
+
+Each API key has a corresponding publishable key, visible in the Settings page. Configure allowed origins to restrict which domains can use the key.
+
+### TypeScript
+
+```typescript
+import { MentioraClient } from '@mentiora.ai/sdk';
+
+const client = new MentioraClient({
+  publishableKey: 'pk_live_...',
+  baseUrl: 'https://platform.mentiora.ai',
+});
+```
+
+### Identity Tokens
+
+For authenticated end-users, use identity tokens to associate conversations with specific users. Generate tokens server-side using your API key's signing secret, then pass them to the browser client.
+
+```typescript
+const client = new MentioraClient({
+  publishableKey: 'pk_live_...',
+  // Callback to fetch/refresh identity tokens
+  getIdentityToken: async () => {
+    const res = await fetch('/api/mentiora-token');
+    const data = await res.json();
+    return data.token;
+  },
+});
+```
+
+The SDK automatically refreshes identity tokens on 401 responses (one retry attempt).
+
+### Allowed Origins
+
+Configure allowed origins per API key in **Settings → API Keys → Globe icon**. Only requests from matching origins will be accepted. Supports exact domains and wildcard subdomains (e.g. `https://*.example.com`).
+
 ## Security Best Practices
 
 1. **Never commit API keys to version control** — use `.env` files (added to `.gitignore`) or a secrets manager

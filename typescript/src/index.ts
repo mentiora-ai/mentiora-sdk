@@ -16,10 +16,12 @@ export type {
   ChatCompletedEvent,
   ModelParams,
   OutputTextDeltaEvent,
+  SuggestionsEvent,
   ToolCallDeltaEvent,
   ToolCallResultEvent,
 } from './agents';
 export { MentioraClient } from './client';
+export type { SdkMode } from './client';
 export { FilesClient } from './files';
 export type {
   DeleteFileResult,
@@ -48,7 +50,9 @@ export { createStreamResponse, SSE_HEADERS } from './streaming';
 export type { CreateStreamResponseOptions } from './streaming';
 export { ConfigurationError, MentioraError, NetworkError, ValidationError } from './errors';
 export type {
+  MentioraBrowserConfig,
   MentioraConfig,
+  MentioraServerConfig,
   SendTraceResult,
   TraceError,
   TraceEvent,

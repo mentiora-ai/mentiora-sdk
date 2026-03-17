@@ -68,6 +68,12 @@ This reflects the JavaScript ecosystem's preference for asynchronous operations.
 
 ## Configuration
 
+The SDK supports two modes: **server** (with `apiKey`) and **browser** (with `publishableKey`). Provide exactly one.
+
+### Server mode
+
+For Node.js backends, API routes, and scripts. Full access to all features.
+
 | Option    | Type      | Required | Default                        | Description                                                                 |
 | --------- | --------- | :------: | ------------------------------ | --------------------------------------------------------------------------- |
 | `apiKey`  | `string`  |   Yes    | —                              | Project API key ([Authentication](https://docs.mentiora.ai/authentication)) |
@@ -75,6 +81,44 @@ This reflects the JavaScript ecosystem's preference for asynchronous operations.
 | `timeout` | `number`  |    No    | `30000`                        | Request timeout in milliseconds                                             |
 | `retries` | `number`  |    No    | `3`                            | Max retry attempts                                                          |
 | `debug`   | `boolean` |    No    | `false`                        | Enable verbose SDK logging                                                  |
+
+### Browser mode
+
+For React components, browser scripts, and widget embeddings. Uses a non-secret publishable key.
+
+| Option              | Type                      | Required | Default                        | Description                                          |
+| ------------------- | ------------------------- | :------: | ------------------------------ | ---------------------------------------------------- |
+| `publishableKey`    | `string`                  |   Yes    | —                              | Publishable key (`pk_...`, from Mentiora dashboard)  |
+| `identityToken`     | `string`                  |    No    | —                              | Identity token (JWT) for identified end-users        |
+| `getIdentityToken`  | `() => Promise<string>`   |    No    | —                              | Callback to refresh identity token on 401            |
+| `baseUrl`           | `string`                  |    No    | `https://platform.mentiora.ai` | Override base URL                                    |
+| `timeout`           | `number`                  |    No    | `30000`                        | Request timeout in milliseconds                      |
+| `retries`           | `number`                  |    No    | `3`                            | Max retry attempts                                   |
+| `debug`             | `boolean`                 |    No    | `false`                        | Enable verbose SDK logging                           |
+
+```typescript
+// Server mode
+const client = new MentioraClient({
+  apiKey: process.env.MENTIORA_API_KEY,
+});
+
+// Browser mode (anonymous)
+const client = new MentioraClient({
+  publishableKey: 'pk_live_...',
+});
+
+// Browser mode (identified user with token refresh)
+const client = new MentioraClient({
+  publishableKey: 'pk_live_...',
+  getIdentityToken: async () => {
+    const res = await fetch('/api/identity-token');
+    const { token } = await res.json();
+    return token;
+  },
+});
+```
+
+> **Note:** `client.tracing` is only available in server mode. Calling it in browser mode throws a `ConfigurationError`.
 
 ## Core Tracing
 
@@ -242,7 +286,7 @@ interface ModelParams {
 
 ### AgentStreamEvent
 
-Streaming events are a discriminated union with six types:
+Streaming events are a discriminated union with seven types:
 
 | Event Type          | Description                                                     |
 | ------------------- | --------------------------------------------------------------- |
@@ -250,6 +294,7 @@ Streaming events are a discriminated union with six types:
 | `output_text_delta` | Text chunk from the agent (`delta`)                             |
 | `tool_call_delta`   | Tool call argument chunk (`argumentsDelta`)                     |
 | `tool_call_result`  | Completed tool call with `arguments` and `result`               |
+| `suggestions`       | Follow-up suggestion chips (`suggestions: { label, message }[]`) |
 | `chat_completed`    | Agent execution finished with `output` and `status`             |
 | `error`             | Error with `code` and `message`                                 |
 

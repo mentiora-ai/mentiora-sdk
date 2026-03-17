@@ -40,11 +40,16 @@ MentioraClient(config: MentioraConfig)
 
 | Option | Type | Required | Description |
 |--------|------|----------|-------------|
-| `apiKey` | string | Yes | Project API key — see [Authentication](/authentication) |
+| `apiKey` | string | ¹ | Project API key for **server-side** usage — see [Authentication](/authentication) |
+| `publishableKey` | string | ¹ | Publishable key for **browser-side** usage — safe to expose in client code |
 | `baseUrl` | string | No | Base URL (defaults to https://platform.mentiora.ai) |
 | `timeout` | number | No | Request timeout in ms (default: 30000) |
 | `retries` | number | No | Max retry attempts (default: 3) |
+| `identityToken` | string | No | Identity token for authenticated end-users (browser mode only) |
+| `getIdentityToken` | () => Promise\<string\> | No | Callback to fetch/refresh identity tokens (browser mode only) |
 | `debug` | boolean | No | Enable verbose SDK logging (default: false) |
+
+¹ Exactly one of `apiKey` or `publishableKey` is required.
 
 </TabItem>
 <TabItem value="python">
@@ -56,6 +61,10 @@ MentioraClient(config: MentioraConfig)
 | `timeout` | int | No | Request timeout in ms (default: 30000) |
 | `retries` | int | No | Max retry attempts (default: 3) |
 | `debug` | bool | No | Enable verbose SDK logging (default: False) |
+
+:::note
+Browser mode (`publishableKey`, `identityToken`, `getIdentityToken`) is only available in the TypeScript SDK — these are browser-specific features.
+:::
 
 </TabItem>
 </SdkTabs>

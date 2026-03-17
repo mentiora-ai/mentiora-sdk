@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.1] - 2026-03-17
+
+### Added
+
+- **Browser/server dual-mode SDK**: `MentioraClient` now accepts either `apiKey` (server mode) or `publishableKey` (browser mode). Browser mode sends `X-Publishable-Key` and `X-Identity-Token` headers instead of `Authorization: Bearer`.
+- **Identity token support**: New `identityToken` and `getIdentityToken` config options for browser mode. The SDK automatically refreshes tokens on 401 responses by calling the `getIdentityToken` callback.
+- **`SuggestionsEvent`**: New streaming event type (`chat.suggestions`) for follow-up suggestion chips. Validates max 6 items with labels up to 40 characters.
+- New exported types: `SdkMode`, `MentioraServerConfig`, `MentioraBrowserConfig`, `SuggestionsEvent`
+
+### Changed
+
+- `client.tracing` is now a getter that throws `ConfigurationError` in browser mode (tracing requires an API key)
+- `MentioraConfig` is now a discriminated union of `MentioraServerConfig` and `MentioraBrowserConfig` (backward compatible — existing `apiKey` configs work unchanged)
+
 ## [0.3.0] - 2026-02-25
 
 ### Breaking Changes
