@@ -347,6 +347,7 @@ type AgentStreamEvent =
   | OutputTextDeltaEvent
   | ToolCallDeltaEvent
   | ToolCallResultEvent
+  | SuggestionsEvent
   | ChatCompletedEvent
   | AgentErrorEvent;
 ```
@@ -360,6 +361,7 @@ AgentStreamEvent = (
     | OutputTextDeltaEvent
     | ToolCallDeltaEvent
     | ToolCallResultEvent
+    | SuggestionsEvent
     | ChatCompletedEvent
     | AgentErrorEvent
 )
@@ -483,6 +485,39 @@ class ToolCallResultEvent:
     name: str
     arguments: Any
     result: Any
+```
+
+</TabItem>
+</SdkTabs>
+
+### SuggestionsEvent
+
+Emitted when the agent provides follow-up suggestion prompts. Typically sent after the agent's response is complete. The SDK validates suggestions (max 6 items, label ≤ 40 chars) and silently drops invalid entries.
+
+<SdkTabs>
+<TabItem value="typescript">
+
+```typescript
+interface SuggestionsEvent {
+  type: 'suggestions';
+  suggestions: Array<{
+    label: string;  // Display text (max 40 chars)
+    message: string; // Message to send when clicked
+  }>;
+}
+```
+
+</TabItem>
+<TabItem value="python">
+
+```python
+class SuggestionsEvent:
+    type: 'suggestions'
+    suggestions: list[SuggestionItem]
+
+class SuggestionItem:
+    label: str   # Display text (max 40 chars)
+    message: str # Message to send when clicked
 ```
 
 </TabItem>

@@ -570,8 +570,17 @@ export class HttpClient {
 
       // Token refresh on 401 for browser mode (one attempt)
       if (response.status === 401 && this.config.publishableKey && this.config.getIdentityToken) {
-        const newToken = await this.config.getIdentityToken();
-        this.config.identityToken = newToken;
+        try {
+          const newToken = await this.config.getIdentityToken();
+          this.config.identityToken = newToken;
+        } catch (refreshError) {
+          throw new NetworkError(
+            'Identity token refresh failed',
+            401,
+            'token_refresh_failed',
+            refreshError instanceof Error ? refreshError.message : undefined
+          );
+        }
         response = await fetch(url, {
           method: 'POST',
           headers: { ...this.getHeaders(), Accept: 'text/event-stream' },
