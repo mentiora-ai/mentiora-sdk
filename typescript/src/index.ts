@@ -14,6 +14,7 @@ export type {
   AgentStreamEvent,
   AgentToolCall,
   ChatCompletedEvent,
+  CustomEvent,
   ModelParams,
   OutputTextDeltaEvent,
   SuggestionsEvent,
