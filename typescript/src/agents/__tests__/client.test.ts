@@ -465,7 +465,11 @@ describe('AgentsClient', () => {
 
       expect(events).toHaveLength(3);
       expect(events[0].type).toBe('custom');
-      expect(events[0]).toEqual({ type: 'custom', event: 'future.new_event', data: { some: 'data' } });
+      expect(events[0]).toEqual({
+        type: 'custom',
+        event: 'future.new_event',
+        data: { some: 'data' },
+      });
       expect(events[1].type).toBe('output_text_delta');
       expect(events[2].type).toBe('chat_completed');
     });
