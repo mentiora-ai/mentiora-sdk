@@ -305,7 +305,7 @@ class ModelParams:
 
 ### AgentStreamEvent
 
-Streaming events are a discriminated union with six types:
+Streaming events are a discriminated union with eight types:
 
 | Event Type          | Description                                                      |
 | ------------------- | ---------------------------------------------------------------- |
@@ -313,8 +313,10 @@ Streaming events are a discriminated union with six types:
 | `output_text_delta` | Text chunk from the agent (`delta`)                              |
 | `tool_call_delta`   | Tool call argument chunk (`arguments_delta`)                     |
 | `tool_call_result`  | Completed tool call with `arguments` and `result`                |
+| `suggestions`       | Follow-up suggestion prompts (`suggestions`)                     |
 | `chat_completed`    | Agent execution finished with `output` and `status`              |
 | `error`             | Error with `code` and `message`                                  |
+| `custom`            | Unknown SSE event passthrough (`event`, `data`)                  |
 
 ## Streaming Helpers
 

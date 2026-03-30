@@ -15,6 +15,8 @@ Agents are resolved by **tag** (e.g. `'production'`, `'staging'`) or by explicit
 
 The SDK provides two interaction modes: `run()` waits for the agent to finish and returns the complete result, while `stream()` yields incremental events (text deltas, tool calls, completion) as they arrive via Server-Sent Events. Use `run()` for simple request/response patterns and `stream()` when you need real-time output in a UI.
 
+Unknown SSE event names are passed through as `custom` events so application code can handle domain-specific payloads without waiting for a new SDK release.
+
 **Note:** Unlike tracing methods (which return `SendTraceResult` and never throw), agent methods **throw exceptions** on errors (`ValidationError`, `NetworkError`).
 
 ## Quick Start
@@ -69,6 +71,9 @@ for await (const event of client.agents.stream({
     case 'output_text_delta':
       process.stdout.write(event.delta);
       break;
+    case 'custom':
+      console.log(`\nCustom event: ${event.event}`, event.data);
+      break;
     case 'chat_completed':
       console.log(`\nDone: ${event.status}`);
       break;
@@ -93,6 +98,8 @@ async for event in client.agents.stream_async(AgentRunParams(
 )):
     if event.type == 'output_text_delta':
         print(event.delta, end='', flush=True)
+    elif event.type == 'custom':
+        print(f'\nCustom event: {event.event} {event.data}')
     elif event.type == 'chat_completed':
         print(f'\nDone: {event.status}')
     elif event.type == 'error':
@@ -108,6 +115,8 @@ for event in client.agents.stream(AgentRunParams(
 )):
     if event.type == 'output_text_delta':
         print(event.delta, end='', flush=True)
+    elif event.type == 'custom':
+        print(f'\nCustom event: {event.event} {event.data}')
     elif event.type == 'chat_completed':
         print(f'\nDone: {event.status}')
     elif event.type == 'error':
