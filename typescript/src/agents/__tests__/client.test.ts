@@ -444,7 +444,7 @@ describe('AgentsClient', () => {
       });
     });
 
-    it('skips unknown event types (forward compatibility)', async () => {
+    it('passes through unknown event types as CustomEvent', async () => {
       const stream = createMockSSEStream([
         { event: 'future.new_event', data: JSON.stringify({ some: 'data' }) },
         { event: 'chat.output_text.delta', data: JSON.stringify({ delta: 'Hello' }) },
@@ -463,9 +463,11 @@ describe('AgentsClient', () => {
         events.push(event);
       }
 
-      expect(events).toHaveLength(2);
-      expect(events[0].type).toBe('output_text_delta');
-      expect(events[1].type).toBe('chat_completed');
+      expect(events).toHaveLength(3);
+      expect(events[0].type).toBe('custom');
+      expect(events[0]).toEqual({ type: 'custom', event: 'future.new_event', data: { some: 'data' } });
+      expect(events[1].type).toBe('output_text_delta');
+      expect(events[2].type).toBe('chat_completed');
     });
 
     it('throws ValidationError for invalid params', async () => {
