@@ -13,8 +13,10 @@ from mentiora.agents.types import (
     AgentRunResult,
     AgentStreamEvent,
     ChatCompletedEvent,
+    CustomEvent,
     ModelParams,
     OutputTextDeltaEvent,
+    SuggestionsEvent,
     ToolCallDeltaEvent,
     ToolCallResultEvent,
     UsageInfo,
@@ -317,8 +319,37 @@ def test_agents_stream_stops_on_error_event(mock_agents_http_client):
     assert events[1].message == 'Something went wrong'
 
 
-def test_agents_stream_skips_unknown_events(mock_agents_http_client):
-    """Test stream() silently skips unknown event types."""
+def test_agents_stream_yields_suggestions(mock_agents_http_client):
+    """Test stream() yields validated suggestions events."""
+    mock_agents_http_client.post_stream = MagicMock(
+        return_value=iter(
+            [
+                _make_sse(
+                    'chat.suggestions',
+                    {
+                        'suggestions': [
+                            {'label': 'Next step', 'message': 'What should I do next?'},
+                            {'label': 'x' * 41, 'message': 'too long'},
+                            {'label': 'Valid', 'message': 'Tell me more'},
+                        ]
+                    },
+                ),
+            ]
+        )
+    )
+
+    client = AgentsClient(mock_agents_http_client)
+    events = list(client.stream(AgentRunParams(tag='prod', message='Hi')))
+
+    assert len(events) == 1
+    assert isinstance(events[0], SuggestionsEvent)
+    assert len(events[0].suggestions) == 2
+    assert events[0].suggestions[0].label == 'Next step'
+    assert events[0].suggestions[1].message == 'Tell me more'
+
+
+def test_agents_stream_passes_through_unknown_events(mock_agents_http_client):
+    """Test stream() passes through unknown event types as CustomEvent."""
     mock_agents_http_client.post_stream = MagicMock(
         return_value=iter(
             [
@@ -332,9 +363,13 @@ def test_agents_stream_skips_unknown_events(mock_agents_http_client):
     client = AgentsClient(mock_agents_http_client)
     events = list(client.stream(AgentRunParams(tag='prod', message='Hi')))
 
-    assert len(events) == 2
-    assert events[0].delta == 'Hello'  # type: ignore[union-attr]
-    assert events[1].delta == ' world'  # type: ignore[union-attr]
+    assert len(events) == 3
+    assert isinstance(events[0], OutputTextDeltaEvent)
+    assert isinstance(events[1], CustomEvent)
+    assert events[1].event == 'unknown.future.event'
+    assert events[1].data == {'foo': 'bar'}
+    assert isinstance(events[2], OutputTextDeltaEvent)
+    assert events[2].delta == ' world'
 
 
 def test_agents_stream_validation_errors(agents_client):
@@ -514,6 +549,37 @@ async def test_agents_stream_async_stops_on_error(mock_agents_http_client):
     assert len(events) == 2
     assert isinstance(events[1], AgentErrorEvent)
     assert events[1].code == 'TIMEOUT'
+
+
+async def test_agents_stream_async_yields_suggestions_and_custom_events(mock_agents_http_client):
+    """Test stream_async() yields suggestions and custom passthrough events."""
+
+    async def _mock_post_stream_async(*args, **kwargs):
+        for sse in [
+            _make_sse(
+                'chat.suggestions',
+                {
+                    'suggestions': [
+                        {'label': 'Retry', 'message': 'Try again'},
+                        {'label': 'Explain', 'message': 'Explain more'},
+                    ]
+                },
+            ),
+            _make_sse('cx.workflow.ui', {'elements': [{'type': 'button', 'label': 'Continue'}]}),
+        ]:
+            yield sse
+
+    mock_agents_http_client.post_stream_async = _mock_post_stream_async
+
+    client = AgentsClient(mock_agents_http_client)
+    events = [e async for e in client.stream_async(AgentRunParams(tag='prod', message='Hi'))]
+
+    assert len(events) == 2
+    assert isinstance(events[0], SuggestionsEvent)
+    assert events[0].suggestions[0].label == 'Retry'
+    assert isinstance(events[1], CustomEvent)
+    assert events[1].event == 'cx.workflow.ui'
+    assert events[1].data == {'elements': [{'type': 'button', 'label': 'Continue'}]}
 
 
 # ===========================================================================

@@ -17,7 +17,9 @@ from .types import (
     AgentRunResult,
     AgentStreamEvent,
     ChatCompletedEvent,
+    CustomEvent,
     OutputTextDeltaEvent,
+    SuggestionsEvent,
     ToolCallDeltaEvent,
     ToolCallResultEvent,
 )
@@ -215,11 +217,23 @@ class AgentsClient:
                     status=chat.get('status', 'completed'),
                     output=self._extract_assistant_output(chat.get('output', '')),
                 )
+            case 'chat.suggestions':
+                suggestions = data.get('suggestions')
+                if not isinstance(suggestions, list):
+                    return None
+                valid_suggestions = [
+                    item
+                    for item in suggestions
+                    if isinstance(item, dict)
+                    and isinstance(item.get('label'), str)
+                    and isinstance(item.get('message'), str)
+                    and len(item['label']) <= 40
+                ][:6]
+                return SuggestionsEvent.model_validate({'suggestions': valid_suggestions})
             case 'error':
                 return AgentErrorEvent(
                     code=data.get('code', 'UNKNOWN'),
                     message=data.get('message', 'Unknown error'),
                 )
             case _:
-                # Unknown events silently skipped (forward compatibility)
-                return None
+                return CustomEvent(event=sse.event, data=data)

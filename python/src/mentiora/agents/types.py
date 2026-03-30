@@ -151,6 +151,20 @@ class ChatCompletedEvent(BaseModel):
     output: str
 
 
+class SuggestionItem(BaseModel):
+    """A follow-up suggestion prompt."""
+
+    label: str
+    message: str
+
+
+class SuggestionsEvent(BaseModel):
+    """Emitted when the agent provides follow-up suggestions."""
+
+    type: Literal['suggestions'] = 'suggestions'
+    suggestions: list[SuggestionItem]
+
+
 class AgentErrorEvent(BaseModel):
     """Error event from the agent backend."""
 
@@ -161,12 +175,22 @@ class AgentErrorEvent(BaseModel):
     message: str
 
 
+class CustomEvent(BaseModel):
+    """Pass-through event for unknown SSE event names."""
+
+    type: Literal['custom'] = 'custom'
+    event: str
+    data: Any
+
+
 # Union type for stream consumers
 AgentStreamEvent = (
     AgentResolvedEvent
     | OutputTextDeltaEvent
     | ToolCallDeltaEvent
     | ToolCallResultEvent
+    | SuggestionsEvent
     | ChatCompletedEvent
     | AgentErrorEvent
+    | CustomEvent
 )

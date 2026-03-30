@@ -349,7 +349,8 @@ type AgentStreamEvent =
   | ToolCallResultEvent
   | SuggestionsEvent
   | ChatCompletedEvent
-  | AgentErrorEvent;
+  | AgentErrorEvent
+  | CustomEvent;
 ```
 
 </TabItem>
@@ -364,6 +365,7 @@ AgentStreamEvent = (
     | SuggestionsEvent
     | ChatCompletedEvent
     | AgentErrorEvent
+    | CustomEvent
 )
 ```
 
@@ -576,6 +578,34 @@ class AgentErrorEvent:
     type: 'error'
     code: str
     message: str
+```
+
+</TabItem>
+</SdkTabs>
+
+### CustomEvent
+
+Pass-through event for unknown SSE event names. Use this for domain-specific events that are not yet promoted to first-class SDK event types.
+
+<SdkTabs>
+<TabItem value="typescript">
+
+```typescript
+interface CustomEvent {
+  type: 'custom';
+  event: string;
+  data: Record<string, unknown>;
+}
+```
+
+</TabItem>
+<TabItem value="python">
+
+```python
+class CustomEvent:
+    type: 'custom'
+    event: str
+    data: Any
 ```
 
 </TabItem>

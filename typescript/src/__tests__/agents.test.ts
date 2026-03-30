@@ -451,7 +451,7 @@ describe('AgentsClient stream() event parsing', () => {
     ).rejects.toThrow('Malformed agent.resolved');
   });
 
-  it('skips unknown event types (forward compatibility)', async () => {
+  it('passes through unknown event types as CustomEvent', async () => {
     const stream = buildSSEStream([
       { event: 'chat.output_text.delta', data: JSON.stringify({ delta: 'hi' }) },
       { event: 'some.future.event', data: JSON.stringify({ foo: 'bar' }) },
@@ -462,8 +462,10 @@ describe('AgentsClient stream() event parsing', () => {
 
     const events = await collectStreamEvents(client.stream({ message: 'hi', tag: 'prod' }));
 
-    expect(events).toHaveLength(1);
+    expect(events).toHaveLength(2);
     expect(events[0].type).toBe('output_text_delta');
+    expect(events[1].type).toBe('custom');
+    expect(events[1]).toEqual({ type: 'custom', event: 'some.future.event', data: { foo: 'bar' } });
   });
 
   it('parses a full streaming sequence with all event types', async () => {

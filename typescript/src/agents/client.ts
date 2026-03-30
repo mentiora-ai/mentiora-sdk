@@ -287,8 +287,10 @@ export class AgentsClient {
           message: typeof data.message === 'string' ? data.message : 'Unknown error',
         };
       default:
-        // Unknown events are silently skipped (forward compatibility)
-        return null;
+        // Pass through unknown events as CustomEvent so application code can
+        // handle domain-specific SSE events (e.g. cx.workflow.ui) without
+        // requiring SDK changes for each new event type.
+        return { type: 'custom' as const, event: sse.event, data };
     }
   }
 }

@@ -64,7 +64,8 @@ export type AgentStreamEvent =
   | ToolCallResultEvent
   | SuggestionsEvent
   | ChatCompletedEvent
-  | AgentErrorEvent;
+  | AgentErrorEvent
+  | CustomEvent;
 
 export interface AgentResolvedEvent {
   type: 'agent_resolved';
@@ -110,6 +111,14 @@ export interface AgentErrorEvent {
   type: 'error';
   code: string;
   message: string;
+}
+
+export interface CustomEvent {
+  type: 'custom';
+  /** The raw SSE event name (e.g. "cx.workflow.ui"). */
+  event: string;
+  /** The parsed JSON payload. */
+  data: Record<string, unknown>;
 }
 
 // ── API Wire Format (snake_case — internal use only) ──
