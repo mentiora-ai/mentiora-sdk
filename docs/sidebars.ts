@@ -13,6 +13,7 @@ const sidebars: SidebarsConfig = {
       items: [
         'usage/tracing',
         'usage/agents',
+        'usage/files',
         'usage/plugins',
         'usage/streaming-helpers',
       ],
@@ -26,6 +27,7 @@ const sidebars: SidebarsConfig = {
         'api-reference/client',
         'api-reference/tracing',
         'api-reference/agents',
+        'api-reference/files',
         'api-reference/streaming-helpers',
         'api-reference/plugins',
         'api-reference/errors',
